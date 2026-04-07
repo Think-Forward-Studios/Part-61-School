@@ -1,2 +1,5 @@
 #!/usr/bin/env sh
+# Skip gracefully when pnpm isn't on PATH (e.g. CI sandboxes, agent environments).
+# Developers should `corepack enable` to get pnpm and re-enable the hook.
+command -v pnpm >/dev/null 2>&1 || exit 0
 pnpm exec lint-staged
