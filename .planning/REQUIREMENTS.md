@@ -166,17 +166,92 @@ Explicitly excluded — documented to prevent scope creep.
 
 ## Traceability
 
-Empty until roadmap creation maps each requirement to a phase.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| FND-01 | Phase 1 | Pending |
+| FND-02 | Phase 1 | Pending |
+| FND-03 | Phase 1 | Pending |
+| FND-04 | Phase 1 | Pending |
+| FND-05 | Phase 1 | Pending |
+| FND-06 | Phase 1 | Pending |
+| FND-07 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Pending |
+| AUTH-07 | Phase 1 | Pending |
+| AUTH-08 | Phase 1 | Pending |
+| ADM-01 | Phase 2 | Pending |
+| ADM-02 | Phase 2 | Pending |
+| ADM-03 | Phase 2 | Pending |
+| ADM-04 | Phase 2 | Pending |
+| ADM-05 | Phase 2 | Pending |
+| ADM-06 | Phase 2 | Pending |
+| ADM-07 | Phase 2 | Pending |
+| FLT-01 | Phase 2 | Pending |
+| FLT-02 | Phase 2 | Pending |
+| FLT-03 | Phase 2 | Pending |
+| FLT-04 | Phase 3 | Pending |
+| FLT-05 | Phase 2 | Pending |
+| FLT-06 | Phase 2 | Pending |
+| SCH-01 | Phase 3 | Pending |
+| SCH-02 | Phase 3 | Pending |
+| SCH-03 | Phase 3 | Pending |
+| SCH-04 | Phase 3 | Pending |
+| SCH-05 | Phase 5 | Pending |
+| SCH-06 | Phase 3 | Pending |
+| SCH-07 | Phase 3 | Pending |
+| SCH-08 | Phase 3 | Pending |
+| SCH-09 | Phase 3 | Pending |
+| SCH-10 | Phase 7 | Pending |
+| MNT-01 | Phase 4 | Pending |
+| MNT-02 | Phase 4 | Pending |
+| MNT-03 | Phase 4 | Pending |
+| MNT-04 | Phase 4 | Pending |
+| MNT-05 | Phase 4 | Pending |
+| MNT-06 | Phase 4 | Pending |
+| MNT-07 | Phase 4 | Pending |
+| MNT-08 | Phase 4 | Pending |
+| MNT-09 | Phase 4 | Pending |
+| MNT-10 | Phase 4 | Pending |
+| MNT-11 | Phase 4 | Pending |
+| SYL-01 | Phase 5 | Pending |
+| SYL-02 | Phase 5 | Pending |
+| SYL-03 | Phase 5 | Pending |
+| SYL-04 | Phase 5 | Pending |
+| SYL-05 | Phase 5 | Pending |
+| SYL-06 | Phase 5 | Pending |
+| SYL-07 | Phase 5 | Pending |
+| SYL-08 | Phase 5 | Pending |
+| SYL-09 | Phase 5 | Pending |
+| SYL-10 | Phase 5 | Pending |
+| SYL-11 | Phase 5 | Pending |
+| SYL-12 | Phase 5 | Pending |
+| STU-01 | Phase 7 | Pending |
+| STU-02 | Phase 5 | Pending |
+| STU-03 | Phase 5 | Pending |
+| STU-04 | Phase 7 | Pending |
+| INS-01 | Phase 7 | Pending |
+| INS-02 | Phase 7 | Pending |
+| INS-03 | Phase 7 | Pending |
+| INS-04 | Phase 3 | Pending |
+| ADS-01 | Phase 6 | Pending |
+| ADS-02 | Phase 6 | Pending |
+| ADS-03 | Phase 6 | Pending |
+| ADS-04 | Phase 6 | Pending |
+| ADS-05 | Phase 6 | Pending |
+| ADS-06 | Phase 6 | Pending |
+| ADS-07 | Phase 6 | Pending |
+| NOT-01 | Phase 7 | Pending |
+| NOT-02 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 75 total
-- Mapped to phases: 0
-- Unmapped: 75 ⚠️ (will be resolved by roadmapper)
+- Mapped to phases: 75
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after initial definition*
+*Last updated: 2026-04-06 after roadmap creation*
