@@ -12,10 +12,17 @@
   },
   "dependencies": {
     "@part61/db": "workspace:*",
-    "@part61/domain": "workspace:*"
+    "@part61/domain": "workspace:*",
+    "@supabase/supabase-js": "^2.101.1",
+    "@t3-oss/env-core": "^0.13.11",
+    "@trpc/server": "^11.16.0",
+    "drizzle-orm": "^0.36.4",
+    "superjson": "^2.2.6",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@part61/config": "workspace:*",
+    "@types/node": "^25.5.2",
     "typescript": "^5.6.3"
   }
 }
