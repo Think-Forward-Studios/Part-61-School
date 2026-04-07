@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm -r typecheck
+
+      - run: pnpm -r lint
+
+      - run: pnpm -r test
+
+      - run: pnpm --filter web build
+
+      # <!--
+      # PHASE-02 INSERT POINT — Supabase CLI + db:migrate
+      #
+      # Plans 02-03 will add steps here that:
+      #   1. Install the Supabase CLI (`supabase/setup-cli@v1`)
+      #   2. Spin up an ephemeral preview branch via `supabase db branch create`
+      #      (or run `supabase db reset` against a CI Postgres service)
+      #   3. Run `pnpm --filter @part61/db db:migrate` against the branch
+      #   4. Run the cross-tenant RLS isolation harness (FND-02 gate)
+      #   5. Tear the branch down on job completion
+      #
+      # All of the above will read DATABASE_URL / DIRECT_DATABASE_URL /
+      # SUPABASE_* values from repo secrets — none of which exist yet,
+      # which is why this stays a comment until plan 02 lands.
+      # -->
