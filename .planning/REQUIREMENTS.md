@@ -57,6 +57,14 @@
 - [ ] **SCH-08**: Reservation lifecycle: requested → approved → dispatched (briefing complete) → flown (Hobbs in/out captured) → closed → archived
 - [ ] **SCH-09**: No-show, weather scrub, and cancellation each have distinct close-out states with required reason
 - [ ] **SCH-10**: Student and instructor receive notification (in-app + email) on reservation request, approval, change, and reminder
+- [ ] **SCH-11**: System verifies **instructor currencies and qualifications** required by the lesson (per SYL-18) before allowing the reservation to be confirmed
+- [ ] **SCH-12**: System verifies **student qualifications and currencies** required by the lesson (per SYL-19 rules + SYL-12) before allowing the reservation
+- [ ] **SCH-13**: Schedulable resource types include **flight, simulator, oral, academic/ground**, and miscellaneous (safety meeting, briefing) — not only flight reservations
+- [ ] **SCH-14**: **ETA-style "next activity" suggestion** — when scheduling a student, system proposes the next lesson the student is due to take based on syllabus progress, prerequisites, and currencies
+- [ ] **SCH-15**: Personnel can schedule **unavailability** (vacation, doctor, dental, sick) that blocks reservations against them
+- [ ] **SCH-16**: **Block scheduling** — admin can pre-define recurring blocks of (instructor + aircraft + slot) and students request into those blocks
+- [ ] **SCH-17**: Schedule view distinguishes flight, sim, oral, academic, and unavailability with visual cues
+- [ ] **SCH-18**: Resource availability (aircraft maintenance status, instructor unavailability, room booking) is integrated into a single conflict check
 
 ### Maintenance (CAMP-style)
 
@@ -74,18 +82,31 @@
 
 ### Syllabus & Training Records
 
-- [ ] **SYL-01**: Syllabus data model: Course → Stage → Lesson → Task, mirroring Part 141 TCO structure (used internally; not labeled "141" in UI)
+- [ ] **SYL-01**: Syllabus data model: Course → Stage → Phase → Unit → Lesson → Line Item (training objective), mirroring TalonETA-style hierarchy and the 141 TCO structure (used internally; not labeled "141" in UI)
 - [ ] **SYL-02**: System ships with seed templates for Private Pilot, Instrument Rating, and Commercial Single-Engine, derived from publicly available 141 TCOs, that the school can fork and customize
 - [ ] **SYL-03**: School can create a custom syllabus from scratch or by forking a template
 - [ ] **SYL-04**: Syllabuses are versioned; an enrolled student is locked to the version they started on, and a chief instructor can publish revisions without disrupting in-flight students
 - [ ] **SYL-05**: Student can be enrolled in one or more syllabuses; current progress is visible (lessons complete, current stage, next lesson)
-- [ ] **SYL-06**: Each lesson has tasks with grading scale (e.g. Introduce / Practice / Perform / Mastered or 1-5)
-- [ ] **SYL-07**: Instructor grades a lesson after a flight; grades are append-only and require an electronic signature with timestamp
+- [ ] **SYL-06**: Each line item has a grading scale; school can choose absolute grading (Introduce/Practice/Perform/Mastered) or relative grading (1-5 against standard) per syllabus
+- [ ] **SYL-07**: Instructor grades line items after a lesson; grades are append-only and require an electronic signature with timestamp
 - [ ] **SYL-08**: Stage check workflow: stage check assigned, conducted by a different instructor, recorded with pass/fail and remarks
 - [ ] **SYL-09**: Endorsement library (AC 61-65 templates) — instructor can issue an endorsement to a student; endorsement is captured in training record with date and instructor signature
 - [ ] **SYL-10**: Training record per student: chronological list of lessons, grades, endorsements, stage checks, instructor sign-offs — exportable as PDF in the format required by 14 CFR 141.101 (used internally as a record-keeping standard)
 - [ ] **SYL-11**: IACRA-friendly export: student progress summary in a format that helps an instructor fill out IACRA when the student is ready for a checkride
 - [ ] **SYL-12**: Currency tracking: BFR, IPC, medical class+expiration, solo endorsement scope+expiration, day/night/PIC currency — surfaced on student profile and used by SCH-05
+- [ ] **SYL-13**: Every course component (Stage, Phase, Unit, Lesson, Line Item) can carry **Objectives** and **Completion Standards** as structured text fields shown to instructor on the grade sheet
+- [ ] **SYL-14**: Line items can be flagged **Required**, **Optional**, or **Must Pass**; course completion logic respects these flags
+- [ ] **SYL-15**: **Incomplete line items auto-roll forward** — any Required or Must Pass line item not satisfactorily completed in a lesson is automatically inserted into the next lesson's grade sheet until satisfied
+- [ ] **SYL-16**: **Prerequisite enforcement** — a lesson cannot be scheduled or graded until all prerequisite lessons/line items are complete
+- [ ] **SYL-17**: **Management override** — admin/chief instructor can authorize a student to perform a lesson out of syllabus order; override is logged with reason, authorizer, and timestamp, and surfaces in the audit trail
+- [ ] **SYL-18**: Lesson definition can specify **unit duration** (planned hours), **required resources** (aircraft type, sim type), **resource configuration** (e.g. IFR-equipped, complex), and **instructor qualifications/currencies** required to teach it
+- [ ] **SYL-19**: Syllabus rules engine — multiple rules per course component (e.g. "Must hold solo endorsement before this lesson", "Aircraft must be IFR-equipped", "Instructor must hold CFII"); rules evaluated at scheduling and grading time
+- [ ] **SYL-20**: Authorized repeats — each line item / lesson can declare maximum repeat count for unsatisfactory completion before management review is required
+- [ ] **SYL-21**: Per-student **course minimums tracker** (FAA hour minimums: dual, solo, night, cross-country, instrument, etc.) updated in real time after each flight close-out
+- [ ] **SYL-22**: **Ahead/behind training plan indicator** — projects expected progress at current pace and shows whether the student is on, ahead of, or behind plan
+- [ ] **SYL-23**: **Projected checkride and course completion date** — derived from remaining required hours/lessons and the student's recent training cadence
+- [ ] **SYL-24**: **Automated training record audit** — nightly job verifies every student's record for missing lessons, missing endorsements, missing hours, missing stage checks; surfaces exceptions on the admin audit dashboard
+- [ ] **SYL-25**: **Test grade entry** — instructor can record written/oral test scores against any course component (knowledge test, end-of-stage test, end-of-course oral)
 
 ### Student Experience
 
@@ -100,6 +121,61 @@
 - [ ] **INS-02**: Instructor can view any of their students' training records (read+grade, no destructive actions)
 - [ ] **INS-03**: Instructor can grade a lesson, sign endorsements, and approve reservation requests from a single workflow
 - [ ] **INS-04**: Instructor can mark a flight closed and capture Hobbs/tach in/out, fuel, oil, route, and any squawks observed
+
+### Personnel Management
+
+- [ ] **PER-01**: Personnel record holds full biographic and demographic data (name, DOB, address, phone, email, FAA airman cert number, citizenship status for TSA AFSP)
+- [ ] **PER-02**: **Online student self-registration** with admin approval queue (configurable per school)
+- [ ] **PER-03**: **Emergency contact** information on every personnel record, immediately accessible from their profile and dispatch screen
+- [ ] **PER-04**: **Student information release authorizations** (who is allowed to receive training info — parents, employer, sponsor)
+- [ ] **PER-05**: Student can be placed on **hold or grounded** with reason; held/grounded students cannot be scheduled until cleared by admin
+- [ ] **PER-06**: Instructor can be **grounded** by admin with reason; grounded instructors cannot be scheduled to teach
+- [ ] **PER-07**: **Student no-show records** — every no-show is logged on the student's profile with date, scheduled activity, and instructor; aggregate no-show count visible
+- [ ] **PER-08**: **Rental customer** record type (non-student pilot renting an aircraft) with currency tracking, checkout requirements, and rental history
+- [ ] **PER-09**: **Student training history** view — every course the student has been enrolled in (current and past) with completion status
+- [ ] **PER-10**: **Instructor flight experience history** — career hours by category, recent activity, instructor's own pilot log
+
+### Instructor Performance & Workload
+
+- [ ] **IPF-01**: Track instructor **currencies** with expiration dates (CFI, CFII, MEI, medical, BFR, IPC) and auto-warn before expiration
+- [ ] **IPF-02**: Track instructor **qualifications** (aircraft type ratings, sim authorizations, course authorizations to teach)
+- [ ] **IPF-03**: **Instructor pass rate** — for each instructor, percentage of their students who pass checkrides on first attempt, displayed on the instructor profile
+- [ ] **IPF-04**: **Instructor flight/duty hour violation warnings** — system warns when scheduling would push an instructor past configurable daily/weekly hour limits (FAR 61.195)
+- [ ] **IPF-05**: **Instructor workload monitor** — admin dashboard panel showing each instructor's scheduled hours this week, students assigned, pending grades
+- [ ] **IPF-06**: **Management alerts** for any training activity flown out of syllabus order, beyond authorized repeats, or otherwise non-conforming (consumes SYL-17/SYL-20 events)
+
+### Flight Tracking & Dispatch
+
+- [ ] **FTR-01**: **Real-time schedule execution** — dispatch screen shows what's currently flying, what's about to fly, what's overdue, color-coded
+- [ ] **FTR-02**: **Electronic student check-in** — student arrives, checks in via the app; instructor electronically authorizes (releases the flight)
+- [ ] **FTR-03**: **Aircraft check-out / check-in** — captures Hobbs/tach out at dispatch, Hobbs/tach in at return, updates fleet log
+- [ ] **FTR-04**: **Overdue aircraft alert** — if a flight is past its expected end time + grace window, dispatch screen raises an alarm and notifies admin/duty instructor
+- [ ] **FTR-05**: **Cross-country flight following** — for XC flights, dispatcher can record planned route, ETE, intermediate stops; integrates with ADS-B map view (Phase 6) when available
+- [ ] **FTR-06**: **Electronic passenger manifest** — for any flight with passengers, captures passenger names, weights, emergency contact; printable
+- [ ] **FTR-07**: **Flight Information File (FIF)** — admin posts notices/NOTAMs/policy items; pilots must acknowledge sign-off before dispatch
+- [ ] **FTR-08**: Flight close-out workflow consolidates: Hobbs/tach in, fuel/oil, route flown, line-item grading, squawks observed, next-lesson preview — all in one screen
+
+### Audit & Reporting
+
+- [ ] **REP-01**: Every change to safety-relevant or training-relevant data is logged with **who, what, when, and prior value** — single audit log queryable by user, by record, or by date range
+- [ ] **REP-02**: **Training activity audit trail** — for every scheduled activity, captures who scheduled it, who authorized it, ramp-out time, ramp-in time, and completion record (TalonETA-style)
+- [ ] **REP-03**: **Up-to-the-minute training cost** for a student — sums billable hours × rate + instructor cost + surcharges, even before invoicing exists (uses simple per-hour rates configured by admin)
+- [ ] **REP-04**: **Projected total cost through course completion** — uses remaining required hours × current rates
+- [ ] **REP-05**: Standard reports: fleet utilization, instructor utilization, student progress, no-show rate, squawk turnaround, course completion rate
+- [ ] **REP-06**: All reports exportable as CSV and PDF
+
+### Messaging & Operations
+
+- [ ] **MSG-01**: **Internal instant messaging** between users (student↔instructor, admin↔anyone) within the app, with unread badge
+- [ ] **MSG-02**: Admin can broadcast a notice to all users in a role (e.g. "All instructors: meeting Thursday")
+- [ ] **MSG-03**: **Active session view for admin** — admin can see which users are currently logged in and IM them directly
+- [ ] **MSG-04**: Audio/visual cue on dispatch screen for high-priority events (overdue aircraft, grounded aircraft attempted use, urgent message)
+
+### Multi-Location Support
+
+- [ ] **MUL-01**: A school can have multiple **training locations** (bases); aircraft, instructors, and rooms are scoped to a base
+- [ ] **MUL-02**: User can switch active base context if they hold roles at more than one
+- [ ] **MUL-03**: Reports and dashboards can be filtered by base or rolled up across all bases
 
 ### ADS-B Fleet Visibility (integration with existing ADS-B Tracker)
 
@@ -127,11 +203,19 @@ Deferred to a follow-on release.
 - **MOB-03**: Student check-in / Hobbs entry from phone
 - **MOB-04**: Mobile fleet map
 
-### Billing & Payments
+### Cashier, Billing & Payroll
 
 - **BIL-01**: Student account balance, lesson invoicing, dispatch holds when balance is overdue
 - **BIL-02**: Stripe integration for payment collection
 - **BIL-03**: Aircraft block-time accounting
+- **BIL-04**: Cashier check-out flow for "pay as you go" customers
+- **BIL-05**: Contract rates per student / per course / per aircraft, with surcharges
+- **BIL-06**: Debit accounts with low-balance warnings and hard-stop dispatch holds
+- **BIL-07**: Electronic + paper invoice (aircraft time, instructor time, misc charges)
+- **BIL-08**: Merchandise / pilot supply sales tracking
+- **BIL-09**: Comprehensive financial reports — debit account balances, transactions, trial balance
+- **BIL-10**: **Auto payroll entries for hourly instructors** — at flight close-out, generate a payroll line for the instructor's billable time
+- **BIL-11**: AICC / SCORM compliance for integrating third-party CBT content
 
 ### Migration & Onboarding
 
@@ -165,6 +249,8 @@ Explicitly excluded — documented to prevent scope creep.
 | AI-authored grades | Liability and pedagogical concerns — humans grade |
 
 ## Traceability
+
+*Will be repopulated by roadmapper after this expansion. Original 75 requirements grew to 145 with TalonETA-style additions; roadmap will be regenerated.*
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -248,9 +334,9 @@ Explicitly excluded — documented to prevent scope creep.
 | NOT-02 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 75 total
-- Mapped to phases: 75
-- Unmapped: 0
+- v1 requirements: 145 total (after TalonETA-style expansion)
+- Mapped to phases: pending re-roadmap
+- Unmapped: pending re-roadmap
 
 ---
 *Requirements defined: 2026-04-06*
