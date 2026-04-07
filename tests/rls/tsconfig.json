@@ -1,0 +1,7 @@
+{
+  "extends": "@part61/config/tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["."]
+}

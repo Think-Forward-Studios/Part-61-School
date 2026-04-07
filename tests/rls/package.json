@@ -1,0 +1,19 @@
+{
+  "name": "@part61/rls-tests",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@part61/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "postgres": "^3.4.4",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
