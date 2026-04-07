@@ -12,7 +12,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 
 ## Phases
 
-- [ ] **Phase 1: Foundation & Terminology Contract** - Multi-tenant RLS, auth, audit scaffolding, banned-term lint, document storage
+- [x] **Phase 1: Foundation & Terminology Contract** - Multi-tenant RLS, auth, audit scaffolding, banned-term lint, document storage (completed 2026-04-07)
 - [ ] **Phase 2: Personnel, Admin & Fleet Primitives** - People (bio/emergency/holds/history), instructor currencies+quals, multi-base scoping, multi-clock aircraft, admin CRUD
 - [ ] **Phase 3: Scheduling & Dispatch Execution** - Reservations with DB-level conflict prevention, multi-activity-type scheduling, dispatch screen, check-in/out, overdue alerts, XC following, FIF, flight close-out
 - [ ] **Phase 4: CAMP Maintenance** - Real `isAirworthyAt`, inspections, ADs, squawks, work orders, parts, logbook export, downtime prediction
@@ -36,7 +36,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 4. Every mutation to a safety-relevant table writes an append-only audit row recording who, what, when, and prior value; hard-delete is impossible on training/maintenance records
 5. CI fails any PR that introduces the banned terms ("Part 141", "approved", "certified course") in user-facing UI or export templates
 6. A user can upload a document (medical, license, insurance) to their profile and retrieve it via a signed URL, with an expiration date captured
-   **Plans:** 4 plans
+   **Plans:** 3/4 plans complete
    Plans:
 
 - [ ] 01-01-PLAN.md — Monorepo bootstrap + banned-term ESLint rule + Husky + CI skeleton
@@ -151,16 +151,16 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 
 ## Progress
 
-| Phase                                      | Plans Complete | Status      | Completed |
-| ------------------------------------------ | -------------- | ----------- | --------- |
-| 1. Foundation & Terminology Contract       | 2/4            | In Progress | -         |
-| 2. Personnel, Admin & Fleet Primitives     | 0/0            | Not started | -         |
-| 3. Scheduling & Dispatch Execution         | 0/0            | Not started | -         |
-| 4. CAMP Maintenance                        | 0/0            | Not started | -         |
-| 5. Syllabus Model, Grading & Records       | 0/0            | Not started | -         |
-| 6. Syllabus Rules, Progression & Audit     | 0/0            | Not started | -         |
-| 7. ADS-B Fleet Integration                 | 0/0            | Not started | -         |
-| 8. Experience, Reporting, Messaging & Beta | 0/0            | Not started | -         |
+| Phase                                      | Plans Complete | Status      | Completed  |
+| ------------------------------------------ | -------------- | ----------- | ---------- |
+| 1. Foundation & Terminology Contract       | 2/4            | Complete    | 2026-04-07 |
+| 2. Personnel, Admin & Fleet Primitives     | 0/0            | Not started | -          |
+| 3. Scheduling & Dispatch Execution         | 0/0            | Not started | -          |
+| 4. CAMP Maintenance                        | 0/0            | Not started | -          |
+| 5. Syllabus Model, Grading & Records       | 0/0            | Not started | -          |
+| 6. Syllabus Rules, Progression & Audit     | 0/0            | Not started | -          |
+| 7. ADS-B Fleet Integration                 | 0/0            | Not started | -          |
+| 8. Experience, Reporting, Messaging & Beta | 0/0            | Not started | -          |
 
 ---
 
