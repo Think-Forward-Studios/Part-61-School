@@ -1,0 +1,65 @@
+## Supabase local development config.
+##
+## This file is consumed by `supabase start` (Supabase CLI). It pins the
+## Postgres major version, configures local ports, and registers the
+## custom access token hook so signed-in users get school_id / roles /
+## active_role claims in their JWTs (FND-01 wiring).
+##
+## See https://supabase.com/docs/guides/cli/config
+
+project_id = "part61-school"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 16
+
+[db.pooler]
+enabled = false
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = false
+enable_confirmations = true
+
+# -----------------------------------------------------------------------------
+# Custom Access Token Hook — FND-01 wiring
+# -----------------------------------------------------------------------------
+# Registers public.custom_access_token_hook (defined in
+# packages/db/migrations/0000_init.sql) so Supabase Auth invokes it
+# whenever an access token is minted or refreshed. The hook injects
+# school_id / roles / active_role claims that drive every RLS policy.
+#
+# If this section is not honored by the installed Supabase CLI version,
+# manually register the hook in the Supabase Dashboard
+# (Auth → Hooks → Custom Access Token) and document it in
+# supabase/README.md.
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/custom_access_token_hook"
