@@ -19,6 +19,8 @@ create or replace function public.custom_access_token_hook(event jsonb)
 returns jsonb
 language plpgsql
 stable
+security definer
+set search_path = public
 as $$
 declare
   claims        jsonb;
@@ -68,3 +70,11 @@ $$;
 -- Lock down execution: only Supabase Auth's internal admin role may call it.
 grant execute on function public.custom_access_token_hook(jsonb) to supabase_auth_admin;
 revoke execute on function public.custom_access_token_hook(jsonb) from authenticated, anon, public;
+
+-- Even though the function is SECURITY DEFINER (runs as the function owner,
+-- which is `postgres`), the supabase_auth_admin role still needs basic schema
+-- access for the function body's references to compile/resolve. Grant the
+-- minimum needed to read the user/role lookups.
+grant usage on schema public to supabase_auth_admin;
+grant select on public.users to supabase_auth_admin;
+grant select on public.user_roles to supabase_auth_admin;

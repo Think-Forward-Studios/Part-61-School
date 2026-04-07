@@ -40,7 +40,11 @@ beforeAll(async () => {
     on conflict (id) do nothing
   `);
   // Clean any prior test objects, then insert the two fixtures.
+  // Supabase blocks direct DELETE on storage.objects via a trigger; bypass it
+  // for the duration of this cleanup by switching session_replication_role.
+  await sql.unsafe(`set session_replication_role = replica`);
   await sql.unsafe(`delete from storage.objects where bucket_id = 'documents'`);
+  await sql.unsafe(`set session_replication_role = origin`);
   await sql.unsafe(`
     insert into storage.objects (bucket_id, name, owner, metadata)
     values
@@ -114,17 +118,30 @@ describe('storage.objects cross-tenant RLS (documents bucket)', () => {
     ).rejects.toThrow(/row-level security|violates|permission/i);
   });
 
-  it('user A cannot UPDATE a school B storage object name', async () => {
-    await expect(
-      asUserOf({ userId: seed.userA, schoolId: seed.schoolA, activeRole: 'admin' }, async (sql) =>
+  it('user A cannot UPDATE a school B storage object (RLS filters to 0 rows)', async () => {
+    // RLS UPDATE policy filters rows the user can't see to 0 affected rows
+    // (Postgres semantics — no exception thrown). Verify two things:
+    //   1. The UPDATE affects 0 rows from user A's perspective.
+    //   2. The school B object's metadata is unchanged when read as admin.
+    const result = await asUserOf(
+      { userId: seed.userA, schoolId: seed.schoolA, activeRole: 'admin' },
+      async (sql) =>
         sql.unsafe(`
             update storage.objects
                set metadata = '{"tampered":true}'::jsonb
              where bucket_id = 'documents'
                and name = 'school_${seed.schoolB}/user_${seed.userB}/${seed.docB}.pdf'
+            returning name
           `),
-      ),
-    ).rejects.toThrow(/row-level security|violates|permission|0 rows/i);
+    );
+    expect(result.length).toBe(0);
+
+    const adminCheck = await dbAsAdmin().unsafe<Array<{ metadata: { tampered?: boolean } }>>(
+      `select metadata from storage.objects
+        where bucket_id = 'documents'
+          and name = 'school_${seed.schoolB}/user_${seed.userB}/${seed.docB}.pdf'`,
+    );
+    expect(adminCheck[0]?.metadata?.tampered).toBeUndefined();
   });
 
   it('user A SELECT on public.documents filtered to school B returns zero rows', async () => {

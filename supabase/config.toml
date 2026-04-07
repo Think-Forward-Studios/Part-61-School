@@ -19,7 +19,7 @@ max_rows = 1000
 [db]
 port = 54322
 shadow_port = 54320
-major_version = 16
+major_version = 17
 
 [db.pooler]
 enabled = false
@@ -45,8 +45,11 @@ enable_signup = false
 enable_anonymous_sign_ins = false
 
 [auth.email]
-enable_signup = false
-enable_confirmations = true
+# Master enable for the email provider. Master signup gate is in [auth] above
+# (enable_signup = false), which prevents self-registration. Admin invite still
+# works because it goes through the auth admin API, not signup.
+enable_signup = true
+enable_confirmations = false
 
 # -----------------------------------------------------------------------------
 # Custom Access Token Hook — FND-01 wiring
