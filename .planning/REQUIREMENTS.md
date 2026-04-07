@@ -11,7 +11,7 @@
 - [ ] **FND-02**: Single-tenant deploy for partner school, but architecture supports onboarding additional schools without schema changes
 - [ ] **FND-03**: Audit trail (who/what/when) on every mutation to safety-relevant data (aircraft, maintenance, training records, schedules, sign-offs)
 - [ ] **FND-04**: Append-only event log for maintenance and training records (soft delete only, never hard delete)
-- [ ] **FND-05**: CI-enforced banned-term lint that prevents the words "Part 141", "approved", "certified course" from appearing in user-facing UI/exports
+- [x] **FND-05**: CI-enforced banned-term lint that prevents the words "Part 141", "approved", "certified course" from appearing in user-facing UI/exports
 - [ ] **FND-06**: Timezone-correct date handling (`timestamptz` everywhere, `date-fns-tz` in app, school-local timezone configurable)
 - [ ] **FND-07**: Document storage for medicals, licenses, insurance scans (S3-compatible / Supabase Storage), with expiration tracking
 
@@ -235,165 +235,167 @@ Deferred to a follow-on release.
 
 Explicitly excluded — documented to prevent scope creep.
 
-| Feature | Reason |
-|---------|--------|
-| Actual FAA Part 141 certification workflow | We mirror the structure as a voluntary internal standard; we do not certify schools |
-| Use of "Part 141" or "approved" language in user-facing UI/exports | Regulatory risk to the partner school — we are a Part 61 tool with rigor, not a certified course |
-| Local ADS-B receiver ingestion (dump1090/PiAware) | Existing ADS-B Tracker already covers this via FAA SWIM SCDS — no need to duplicate |
-| FlightAware / OpenSky / ADSBexchange paid feeds | FAA SWIM SCDS via existing ADS-B Tracker is government data, free, and broader |
-| Weather briefing, flight planning, weight & balance | Pilots have ForeFlight; we don't compete with cockpit apps |
-| Full mechanic labor billing | Out per PROJECT.md — only sign-off is tracked, not labor hours |
-| Mobile app in v1 | Deferred to v1.1; web-first to ship faster |
-| Student tuition collection / Stripe in v1 | Deferred to v2 |
-| Replacement for an FAA-certified electronic logbook on a pilot's phone | Pilots use LogTen Pro / ForeFlight Logbook for their personal log |
-| AI-authored grades | Liability and pedagogical concerns — humans grade |
+| Feature                                                                | Reason                                                                                           |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Actual FAA Part 141 certification workflow                             | We mirror the structure as a voluntary internal standard; we do not certify schools              |
+| Use of "Part 141" or "approved" language in user-facing UI/exports     | Regulatory risk to the partner school — we are a Part 61 tool with rigor, not a certified course |
+| Local ADS-B receiver ingestion (dump1090/PiAware)                      | Existing ADS-B Tracker already covers this via FAA SWIM SCDS — no need to duplicate              |
+| FlightAware / OpenSky / ADSBexchange paid feeds                        | FAA SWIM SCDS via existing ADS-B Tracker is government data, free, and broader                   |
+| Weather briefing, flight planning, weight & balance                    | Pilots have ForeFlight; we don't compete with cockpit apps                                       |
+| Full mechanic labor billing                                            | Out per PROJECT.md — only sign-off is tracked, not labor hours                                   |
+| Mobile app in v1                                                       | Deferred to v1.1; web-first to ship faster                                                       |
+| Student tuition collection / Stripe in v1                              | Deferred to v2                                                                                   |
+| Replacement for an FAA-certified electronic logbook on a pilot's phone | Pilots use LogTen Pro / ForeFlight Logbook for their personal log                                |
+| AI-authored grades                                                     | Liability and pedagogical concerns — humans grade                                                |
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| FND-01 | Phase 1 | Pending |
-| FND-02 | Phase 1 | Pending |
-| FND-03 | Phase 1 | Pending |
-| FND-04 | Phase 1 | Pending |
-| FND-05 | Phase 1 | Pending |
-| FND-06 | Phase 1 | Pending |
-| FND-07 | Phase 1 | Pending |
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| AUTH-05 | Phase 1 | Pending |
-| AUTH-06 | Phase 1 | Pending |
-| AUTH-07 | Phase 1 | Pending |
-| AUTH-08 | Phase 1 | Pending |
-| ADM-01 | Phase 2 | Pending |
-| ADM-02 | Phase 2 | Pending |
-| ADM-03 | Phase 2 | Pending |
-| ADM-04 | Phase 2 | Pending |
-| ADM-05 | Phase 2 | Pending |
-| ADM-06 | Phase 2 | Pending |
-| ADM-07 | Phase 2 | Pending |
-| FLT-01 | Phase 2 | Pending |
-| FLT-02 | Phase 2 | Pending |
-| FLT-03 | Phase 2 | Pending |
-| FLT-04 | Phase 3 | Pending |
-| FLT-05 | Phase 2 | Pending |
-| FLT-06 | Phase 2 | Pending |
-| PER-01 | Phase 2 | Pending |
-| PER-02 | Phase 2 | Pending |
-| PER-03 | Phase 2 | Pending |
-| PER-04 | Phase 2 | Pending |
-| PER-05 | Phase 2 | Pending |
-| PER-06 | Phase 2 | Pending |
-| PER-07 | Phase 2 | Pending |
-| PER-08 | Phase 2 | Pending |
-| PER-09 | Phase 2 | Pending |
-| PER-10 | Phase 2 | Pending |
-| IPF-01 | Phase 2 | Pending |
-| IPF-02 | Phase 2 | Pending |
-| MUL-01 | Phase 2 | Pending |
-| MUL-02 | Phase 2 | Pending |
-| SCH-01 | Phase 3 | Pending |
-| SCH-02 | Phase 3 | Pending |
-| SCH-03 | Phase 3 | Pending |
-| SCH-04 | Phase 3 | Pending |
-| SCH-05 | Phase 6 | Pending |
-| SCH-06 | Phase 3 | Pending |
-| SCH-07 | Phase 3 | Pending |
-| SCH-08 | Phase 3 | Pending |
-| SCH-09 | Phase 3 | Pending |
-| SCH-10 | Phase 8 | Pending |
-| SCH-11 | Phase 6 | Pending |
-| SCH-12 | Phase 5 | Pending |
-| SCH-13 | Phase 3 | Pending |
-| SCH-14 | Phase 6 | Pending |
-| SCH-15 | Phase 3 | Pending |
-| SCH-16 | Phase 3 | Pending |
-| SCH-17 | Phase 3 | Pending |
-| SCH-18 | Phase 3 | Pending |
-| INS-04 | Phase 3 | Pending |
-| FTR-01 | Phase 3 | Pending |
-| FTR-02 | Phase 3 | Pending |
-| FTR-03 | Phase 3 | Pending |
-| FTR-04 | Phase 3 | Pending |
-| FTR-05 | Phase 3 | Pending |
-| FTR-06 | Phase 3 | Pending |
-| FTR-07 | Phase 3 | Pending |
-| FTR-08 | Phase 3 | Pending |
-| MNT-01 | Phase 4 | Pending |
-| MNT-02 | Phase 4 | Pending |
-| MNT-03 | Phase 4 | Pending |
-| MNT-04 | Phase 4 | Pending |
-| MNT-05 | Phase 4 | Pending |
-| MNT-06 | Phase 4 | Pending |
-| MNT-07 | Phase 4 | Pending |
-| MNT-08 | Phase 4 | Pending |
-| MNT-09 | Phase 4 | Pending |
-| MNT-10 | Phase 4 | Pending |
-| MNT-11 | Phase 4 | Pending |
-| SYL-01 | Phase 5 | Pending |
-| SYL-02 | Phase 5 | Pending |
-| SYL-03 | Phase 5 | Pending |
-| SYL-04 | Phase 5 | Pending |
-| SYL-05 | Phase 5 | Pending |
-| SYL-06 | Phase 5 | Pending |
-| SYL-07 | Phase 5 | Pending |
-| SYL-08 | Phase 5 | Pending |
-| SYL-09 | Phase 5 | Pending |
-| SYL-10 | Phase 5 | Pending |
-| SYL-11 | Phase 5 | Pending |
-| SYL-12 | Phase 5 | Pending |
-| SYL-13 | Phase 5 | Pending |
-| SYL-14 | Phase 5 | Pending |
-| SYL-15 | Phase 6 | Pending |
-| SYL-16 | Phase 6 | Pending |
-| SYL-17 | Phase 6 | Pending |
-| SYL-18 | Phase 6 | Pending |
-| SYL-19 | Phase 6 | Pending |
-| SYL-20 | Phase 6 | Pending |
-| SYL-21 | Phase 6 | Pending |
-| SYL-22 | Phase 6 | Pending |
-| SYL-23 | Phase 6 | Pending |
-| SYL-24 | Phase 6 | Pending |
-| SYL-25 | Phase 5 | Pending |
-| STU-01 | Phase 8 | Pending |
-| STU-02 | Phase 5 | Pending |
-| STU-03 | Phase 5 | Pending |
-| STU-04 | Phase 8 | Pending |
-| INS-01 | Phase 8 | Pending |
-| INS-02 | Phase 8 | Pending |
-| INS-03 | Phase 8 | Pending |
-| IPF-03 | Phase 8 | Pending |
-| IPF-04 | Phase 8 | Pending |
-| IPF-05 | Phase 8 | Pending |
-| IPF-06 | Phase 6 | Pending |
-| REP-01 | Phase 8 | Pending |
-| REP-02 | Phase 8 | Pending |
-| REP-03 | Phase 8 | Pending |
-| REP-04 | Phase 8 | Pending |
-| REP-05 | Phase 8 | Pending |
-| REP-06 | Phase 8 | Pending |
-| MSG-01 | Phase 8 | Pending |
-| MSG-02 | Phase 8 | Pending |
-| MSG-03 | Phase 8 | Pending |
-| MSG-04 | Phase 8 | Pending |
-| MUL-03 | Phase 8 | Pending |
-| ADS-01 | Phase 7 | Pending |
-| ADS-02 | Phase 7 | Pending |
-| ADS-03 | Phase 7 | Pending |
-| ADS-04 | Phase 7 | Pending |
-| ADS-05 | Phase 7 | Pending |
-| ADS-06 | Phase 7 | Pending |
-| ADS-07 | Phase 7 | Pending |
-| NOT-01 | Phase 8 | Pending |
-| NOT-02 | Phase 8 | Pending |
+| Requirement | Phase   | Status   |
+| ----------- | ------- | -------- |
+| FND-01      | Phase 1 | Pending  |
+| FND-02      | Phase 1 | Pending  |
+| FND-03      | Phase 1 | Pending  |
+| FND-04      | Phase 1 | Pending  |
+| FND-05      | Phase 1 | Complete |
+| FND-06      | Phase 1 | Pending  |
+| FND-07      | Phase 1 | Pending  |
+| AUTH-01     | Phase 1 | Pending  |
+| AUTH-02     | Phase 1 | Pending  |
+| AUTH-03     | Phase 1 | Pending  |
+| AUTH-04     | Phase 1 | Pending  |
+| AUTH-05     | Phase 1 | Pending  |
+| AUTH-06     | Phase 1 | Pending  |
+| AUTH-07     | Phase 1 | Pending  |
+| AUTH-08     | Phase 1 | Pending  |
+| ADM-01      | Phase 2 | Pending  |
+| ADM-02      | Phase 2 | Pending  |
+| ADM-03      | Phase 2 | Pending  |
+| ADM-04      | Phase 2 | Pending  |
+| ADM-05      | Phase 2 | Pending  |
+| ADM-06      | Phase 2 | Pending  |
+| ADM-07      | Phase 2 | Pending  |
+| FLT-01      | Phase 2 | Pending  |
+| FLT-02      | Phase 2 | Pending  |
+| FLT-03      | Phase 2 | Pending  |
+| FLT-04      | Phase 3 | Pending  |
+| FLT-05      | Phase 2 | Pending  |
+| FLT-06      | Phase 2 | Pending  |
+| PER-01      | Phase 2 | Pending  |
+| PER-02      | Phase 2 | Pending  |
+| PER-03      | Phase 2 | Pending  |
+| PER-04      | Phase 2 | Pending  |
+| PER-05      | Phase 2 | Pending  |
+| PER-06      | Phase 2 | Pending  |
+| PER-07      | Phase 2 | Pending  |
+| PER-08      | Phase 2 | Pending  |
+| PER-09      | Phase 2 | Pending  |
+| PER-10      | Phase 2 | Pending  |
+| IPF-01      | Phase 2 | Pending  |
+| IPF-02      | Phase 2 | Pending  |
+| MUL-01      | Phase 2 | Pending  |
+| MUL-02      | Phase 2 | Pending  |
+| SCH-01      | Phase 3 | Pending  |
+| SCH-02      | Phase 3 | Pending  |
+| SCH-03      | Phase 3 | Pending  |
+| SCH-04      | Phase 3 | Pending  |
+| SCH-05      | Phase 6 | Pending  |
+| SCH-06      | Phase 3 | Pending  |
+| SCH-07      | Phase 3 | Pending  |
+| SCH-08      | Phase 3 | Pending  |
+| SCH-09      | Phase 3 | Pending  |
+| SCH-10      | Phase 8 | Pending  |
+| SCH-11      | Phase 6 | Pending  |
+| SCH-12      | Phase 5 | Pending  |
+| SCH-13      | Phase 3 | Pending  |
+| SCH-14      | Phase 6 | Pending  |
+| SCH-15      | Phase 3 | Pending  |
+| SCH-16      | Phase 3 | Pending  |
+| SCH-17      | Phase 3 | Pending  |
+| SCH-18      | Phase 3 | Pending  |
+| INS-04      | Phase 3 | Pending  |
+| FTR-01      | Phase 3 | Pending  |
+| FTR-02      | Phase 3 | Pending  |
+| FTR-03      | Phase 3 | Pending  |
+| FTR-04      | Phase 3 | Pending  |
+| FTR-05      | Phase 3 | Pending  |
+| FTR-06      | Phase 3 | Pending  |
+| FTR-07      | Phase 3 | Pending  |
+| FTR-08      | Phase 3 | Pending  |
+| MNT-01      | Phase 4 | Pending  |
+| MNT-02      | Phase 4 | Pending  |
+| MNT-03      | Phase 4 | Pending  |
+| MNT-04      | Phase 4 | Pending  |
+| MNT-05      | Phase 4 | Pending  |
+| MNT-06      | Phase 4 | Pending  |
+| MNT-07      | Phase 4 | Pending  |
+| MNT-08      | Phase 4 | Pending  |
+| MNT-09      | Phase 4 | Pending  |
+| MNT-10      | Phase 4 | Pending  |
+| MNT-11      | Phase 4 | Pending  |
+| SYL-01      | Phase 5 | Pending  |
+| SYL-02      | Phase 5 | Pending  |
+| SYL-03      | Phase 5 | Pending  |
+| SYL-04      | Phase 5 | Pending  |
+| SYL-05      | Phase 5 | Pending  |
+| SYL-06      | Phase 5 | Pending  |
+| SYL-07      | Phase 5 | Pending  |
+| SYL-08      | Phase 5 | Pending  |
+| SYL-09      | Phase 5 | Pending  |
+| SYL-10      | Phase 5 | Pending  |
+| SYL-11      | Phase 5 | Pending  |
+| SYL-12      | Phase 5 | Pending  |
+| SYL-13      | Phase 5 | Pending  |
+| SYL-14      | Phase 5 | Pending  |
+| SYL-15      | Phase 6 | Pending  |
+| SYL-16      | Phase 6 | Pending  |
+| SYL-17      | Phase 6 | Pending  |
+| SYL-18      | Phase 6 | Pending  |
+| SYL-19      | Phase 6 | Pending  |
+| SYL-20      | Phase 6 | Pending  |
+| SYL-21      | Phase 6 | Pending  |
+| SYL-22      | Phase 6 | Pending  |
+| SYL-23      | Phase 6 | Pending  |
+| SYL-24      | Phase 6 | Pending  |
+| SYL-25      | Phase 5 | Pending  |
+| STU-01      | Phase 8 | Pending  |
+| STU-02      | Phase 5 | Pending  |
+| STU-03      | Phase 5 | Pending  |
+| STU-04      | Phase 8 | Pending  |
+| INS-01      | Phase 8 | Pending  |
+| INS-02      | Phase 8 | Pending  |
+| INS-03      | Phase 8 | Pending  |
+| IPF-03      | Phase 8 | Pending  |
+| IPF-04      | Phase 8 | Pending  |
+| IPF-05      | Phase 8 | Pending  |
+| IPF-06      | Phase 6 | Pending  |
+| REP-01      | Phase 8 | Pending  |
+| REP-02      | Phase 8 | Pending  |
+| REP-03      | Phase 8 | Pending  |
+| REP-04      | Phase 8 | Pending  |
+| REP-05      | Phase 8 | Pending  |
+| REP-06      | Phase 8 | Pending  |
+| MSG-01      | Phase 8 | Pending  |
+| MSG-02      | Phase 8 | Pending  |
+| MSG-03      | Phase 8 | Pending  |
+| MSG-04      | Phase 8 | Pending  |
+| MUL-03      | Phase 8 | Pending  |
+| ADS-01      | Phase 7 | Pending  |
+| ADS-02      | Phase 7 | Pending  |
+| ADS-03      | Phase 7 | Pending  |
+| ADS-04      | Phase 7 | Pending  |
+| ADS-05      | Phase 7 | Pending  |
+| ADS-06      | Phase 7 | Pending  |
+| ADS-07      | Phase 7 | Pending  |
+| NOT-01      | Phase 8 | Pending  |
+| NOT-02      | Phase 8 | Pending  |
 
 **Coverage:**
+
 - v1 requirements: 136 total
 - Mapped to phases: 136/136
 - Unmapped: 0
 
 ---
-*Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after roadmap revision (75→136 requirements, 7→8 phases)*
+
+_Requirements defined: 2026-04-06_
+_Last updated: 2026-04-06 after roadmap revision (75→136 requirements, 7→8 phases)_
