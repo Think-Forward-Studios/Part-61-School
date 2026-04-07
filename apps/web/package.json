@@ -11,9 +11,21 @@
     "test": "echo 'no tests yet'"
   },
   "dependencies": {
+    "@part61/api": "workspace:^",
+    "@part61/db": "workspace:^",
+    "@part61/domain": "workspace:^",
+    "@supabase/ssr": "^0.10.0",
+    "@supabase/supabase-js": "^2.101.1",
+    "@tanstack/react-query": "^5.96.2",
+    "@trpc/client": "^11.16.0",
+    "@trpc/react-query": "^11.16.0",
+    "@trpc/server": "^11.16.0",
+    "drizzle-orm": "^0.36.4",
     "next": "^15.1.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "superjson": "^2.2.6",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@part61/config": "workspace:*",
