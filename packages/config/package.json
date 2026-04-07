@@ -1,0 +1,26 @@
+{
+  "name": "@part61/config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.js",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./prettier": "./prettier.config.js",
+    "./eslint": "./eslint.config.js",
+    "./banned-terms": "./banned-terms.json"
+  },
+  "scripts": {
+    "typecheck": "echo 'no ts sources in config pkg'",
+    "lint": "echo 'no lint for config pkg'",
+    "test": "node --test eslint-rules/no-banned-terms.test.js",
+    "build": "echo 'nothing to build'"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@part61/db",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "echo 'no tests yet'",
+    "build": "echo 'nothing to build'"
+  },
+  "devDependencies": {
+    "@part61/config": "workspace:*",
+    "typescript": "^5.6.3"
+  }
+}
