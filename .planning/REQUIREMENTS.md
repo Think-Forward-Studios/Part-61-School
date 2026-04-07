@@ -60,7 +60,7 @@
 - [ ] **SCH-11**: System verifies **instructor currencies and qualifications** required by the lesson (per SYL-18) before allowing the reservation to be confirmed
 - [ ] **SCH-12**: System verifies **student qualifications and currencies** required by the lesson (per SYL-19 rules + SYL-12) before allowing the reservation
 - [ ] **SCH-13**: Schedulable resource types include **flight, simulator, oral, academic/ground**, and miscellaneous (safety meeting, briefing) — not only flight reservations
-- [ ] **SCH-14**: **ETA-style "next activity" suggestion** — when scheduling a student, system proposes the next lesson the student is due to take based on syllabus progress, prerequisites, and currencies
+- [ ] **SCH-14**: **"Next activity" suggestion** — when scheduling a student, system proposes the next lesson the student is due to take based on syllabus progress, prerequisites, and currencies
 - [ ] **SCH-15**: Personnel can schedule **unavailability** (vacation, doctor, dental, sick) that blocks reservations against them
 - [ ] **SCH-16**: **Block scheduling** — admin can pre-define recurring blocks of (instructor + aircraft + slot) and students request into those blocks
 - [ ] **SCH-17**: Schedule view distinguishes flight, sim, oral, academic, and unavailability with visual cues
@@ -82,7 +82,7 @@
 
 ### Syllabus & Training Records
 
-- [ ] **SYL-01**: Syllabus data model: Course → Stage → Phase → Unit → Lesson → Line Item (training objective), mirroring TalonETA-style hierarchy and the 141 TCO structure (used internally; not labeled "141" in UI)
+- [ ] **SYL-01**: Syllabus data model: Course → Stage → Phase → Unit → Lesson → Line Item (training objective), mirroring the 141 TCO structure (used internally; not labeled "141" in UI)
 - [ ] **SYL-02**: System ships with seed templates for Private Pilot, Instrument Rating, and Commercial Single-Engine, derived from publicly available 141 TCOs, that the school can fork and customize
 - [ ] **SYL-03**: School can create a custom syllabus from scratch or by forking a template
 - [ ] **SYL-04**: Syllabuses are versioned; an enrolled student is locked to the version they started on, and a chief instructor can publish revisions without disrupting in-flight students
@@ -150,7 +150,7 @@
 - [ ] **FTR-02**: **Electronic student check-in** — student arrives, checks in via the app; instructor electronically authorizes (releases the flight)
 - [ ] **FTR-03**: **Aircraft check-out / check-in** — captures Hobbs/tach out at dispatch, Hobbs/tach in at return, updates fleet log
 - [ ] **FTR-04**: **Overdue aircraft alert** — if a flight is past its expected end time + grace window, dispatch screen raises an alarm and notifies admin/duty instructor
-- [ ] **FTR-05**: **Cross-country flight following** — for XC flights, dispatcher can record planned route, ETE, intermediate stops; integrates with ADS-B map view (Phase 6) when available
+- [ ] **FTR-05**: **Cross-country flight following** — for XC flights, dispatcher can record planned route, ETE, intermediate stops; integrates with ADS-B map view (Phase 7) when available
 - [ ] **FTR-06**: **Electronic passenger manifest** — for any flight with passengers, captures passenger names, weights, emergency contact; printable
 - [ ] **FTR-07**: **Flight Information File (FIF)** — admin posts notices/NOTAMs/policy items; pilots must acknowledge sign-off before dispatch
 - [ ] **FTR-08**: Flight close-out workflow consolidates: Hobbs/tach in, fuel/oil, route flown, line-item grading, squawks observed, next-lesson preview — all in one screen
@@ -158,7 +158,7 @@
 ### Audit & Reporting
 
 - [ ] **REP-01**: Every change to safety-relevant or training-relevant data is logged with **who, what, when, and prior value** — single audit log queryable by user, by record, or by date range
-- [ ] **REP-02**: **Training activity audit trail** — for every scheduled activity, captures who scheduled it, who authorized it, ramp-out time, ramp-in time, and completion record (TalonETA-style)
+- [ ] **REP-02**: **Training activity audit trail** — for every scheduled activity, captures who scheduled it, who authorized it, ramp-out time, ramp-in time, and completion record
 - [ ] **REP-03**: **Up-to-the-minute training cost** for a student — sums billable hours × rate + instructor cost + surcharges, even before invoicing exists (uses simple per-hour rates configured by admin)
 - [ ] **REP-04**: **Projected total cost through course completion** — uses remaining required hours × current rates
 - [ ] **REP-05**: Standard reports: fleet utilization, instructor utilization, student progress, no-show rate, squawk turnaround, course completion rate
@@ -250,8 +250,6 @@ Explicitly excluded — documented to prevent scope creep.
 
 ## Traceability
 
-*Will be repopulated by roadmapper after this expansion. Original 75 requirements grew to 145 with TalonETA-style additions; roadmap will be regenerated.*
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | FND-01 | Phase 1 | Pending |
@@ -282,16 +280,47 @@ Explicitly excluded — documented to prevent scope creep.
 | FLT-04 | Phase 3 | Pending |
 | FLT-05 | Phase 2 | Pending |
 | FLT-06 | Phase 2 | Pending |
+| PER-01 | Phase 2 | Pending |
+| PER-02 | Phase 2 | Pending |
+| PER-03 | Phase 2 | Pending |
+| PER-04 | Phase 2 | Pending |
+| PER-05 | Phase 2 | Pending |
+| PER-06 | Phase 2 | Pending |
+| PER-07 | Phase 2 | Pending |
+| PER-08 | Phase 2 | Pending |
+| PER-09 | Phase 2 | Pending |
+| PER-10 | Phase 2 | Pending |
+| IPF-01 | Phase 2 | Pending |
+| IPF-02 | Phase 2 | Pending |
+| MUL-01 | Phase 2 | Pending |
+| MUL-02 | Phase 2 | Pending |
 | SCH-01 | Phase 3 | Pending |
 | SCH-02 | Phase 3 | Pending |
 | SCH-03 | Phase 3 | Pending |
 | SCH-04 | Phase 3 | Pending |
-| SCH-05 | Phase 5 | Pending |
+| SCH-05 | Phase 6 | Pending |
 | SCH-06 | Phase 3 | Pending |
 | SCH-07 | Phase 3 | Pending |
 | SCH-08 | Phase 3 | Pending |
 | SCH-09 | Phase 3 | Pending |
-| SCH-10 | Phase 7 | Pending |
+| SCH-10 | Phase 8 | Pending |
+| SCH-11 | Phase 6 | Pending |
+| SCH-12 | Phase 5 | Pending |
+| SCH-13 | Phase 3 | Pending |
+| SCH-14 | Phase 6 | Pending |
+| SCH-15 | Phase 3 | Pending |
+| SCH-16 | Phase 3 | Pending |
+| SCH-17 | Phase 3 | Pending |
+| SCH-18 | Phase 3 | Pending |
+| INS-04 | Phase 3 | Pending |
+| FTR-01 | Phase 3 | Pending |
+| FTR-02 | Phase 3 | Pending |
+| FTR-03 | Phase 3 | Pending |
+| FTR-04 | Phase 3 | Pending |
+| FTR-05 | Phase 3 | Pending |
+| FTR-06 | Phase 3 | Pending |
+| FTR-07 | Phase 3 | Pending |
+| FTR-08 | Phase 3 | Pending |
 | MNT-01 | Phase 4 | Pending |
 | MNT-02 | Phase 4 | Pending |
 | MNT-03 | Phase 4 | Pending |
@@ -315,29 +344,56 @@ Explicitly excluded — documented to prevent scope creep.
 | SYL-10 | Phase 5 | Pending |
 | SYL-11 | Phase 5 | Pending |
 | SYL-12 | Phase 5 | Pending |
-| STU-01 | Phase 7 | Pending |
+| SYL-13 | Phase 5 | Pending |
+| SYL-14 | Phase 5 | Pending |
+| SYL-15 | Phase 6 | Pending |
+| SYL-16 | Phase 6 | Pending |
+| SYL-17 | Phase 6 | Pending |
+| SYL-18 | Phase 6 | Pending |
+| SYL-19 | Phase 6 | Pending |
+| SYL-20 | Phase 6 | Pending |
+| SYL-21 | Phase 6 | Pending |
+| SYL-22 | Phase 6 | Pending |
+| SYL-23 | Phase 6 | Pending |
+| SYL-24 | Phase 6 | Pending |
+| SYL-25 | Phase 5 | Pending |
+| STU-01 | Phase 8 | Pending |
 | STU-02 | Phase 5 | Pending |
 | STU-03 | Phase 5 | Pending |
-| STU-04 | Phase 7 | Pending |
-| INS-01 | Phase 7 | Pending |
-| INS-02 | Phase 7 | Pending |
-| INS-03 | Phase 7 | Pending |
-| INS-04 | Phase 3 | Pending |
-| ADS-01 | Phase 6 | Pending |
-| ADS-02 | Phase 6 | Pending |
-| ADS-03 | Phase 6 | Pending |
-| ADS-04 | Phase 6 | Pending |
-| ADS-05 | Phase 6 | Pending |
-| ADS-06 | Phase 6 | Pending |
-| ADS-07 | Phase 6 | Pending |
-| NOT-01 | Phase 7 | Pending |
-| NOT-02 | Phase 7 | Pending |
+| STU-04 | Phase 8 | Pending |
+| INS-01 | Phase 8 | Pending |
+| INS-02 | Phase 8 | Pending |
+| INS-03 | Phase 8 | Pending |
+| IPF-03 | Phase 8 | Pending |
+| IPF-04 | Phase 8 | Pending |
+| IPF-05 | Phase 8 | Pending |
+| IPF-06 | Phase 6 | Pending |
+| REP-01 | Phase 8 | Pending |
+| REP-02 | Phase 8 | Pending |
+| REP-03 | Phase 8 | Pending |
+| REP-04 | Phase 8 | Pending |
+| REP-05 | Phase 8 | Pending |
+| REP-06 | Phase 8 | Pending |
+| MSG-01 | Phase 8 | Pending |
+| MSG-02 | Phase 8 | Pending |
+| MSG-03 | Phase 8 | Pending |
+| MSG-04 | Phase 8 | Pending |
+| MUL-03 | Phase 8 | Pending |
+| ADS-01 | Phase 7 | Pending |
+| ADS-02 | Phase 7 | Pending |
+| ADS-03 | Phase 7 | Pending |
+| ADS-04 | Phase 7 | Pending |
+| ADS-05 | Phase 7 | Pending |
+| ADS-06 | Phase 7 | Pending |
+| ADS-07 | Phase 7 | Pending |
+| NOT-01 | Phase 8 | Pending |
+| NOT-02 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 145 total (after TalonETA-style expansion)
-- Mapped to phases: pending re-roadmap
-- Unmapped: pending re-roadmap
+- v1 requirements: 136 total
+- Mapped to phases: 136/136
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after roadmap creation*
+*Last updated: 2026-04-06 after roadmap revision (75→136 requirements, 7→8 phases)*

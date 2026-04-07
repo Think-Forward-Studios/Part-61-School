@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Part 61 School is a multi-pillar flight school operations platform that unifies four domains — scheduling, CAMP-grade maintenance, 141-style syllabus/training records, and live ADS-B fleet visibility — into one role-gated web + mobile app. Research confirms that no incumbent (Flight Schedule Pro, Flight Circle, TalonETA, FlightLogger) covers all four pillars; that three-way gap (real maintenance + 141-grade records + ADS-B) IS the product thesis and the partner-school wedge.
+Part 61 School is a multi-pillar flight school operations platform that unifies four domains — scheduling, CAMP-grade maintenance, 141-style syllabus/training records, and live ADS-B fleet visibility — into one role-gated web + mobile app. Research confirms that no incumbent in the flight school management space covers all four pillars; that three-way gap (real maintenance + 141-grade records + ADS-B) IS the product thesis and the partner-school wedge.
 
 The prescriptive stack is a pnpm + Turborepo monorepo with Next.js 15 (web) and Expo SDK 52+ (mobile) sharing a tRPC API layer over Supabase Postgres. Drizzle ORM is chosen specifically for first-class RLS primitives, which are non-negotiable for the multi-tenant-ready-but-single-tenant-deployed architecture mandated by PROJECT.md. Supabase Auth + Realtime + Storage consolidate auth, live schedule fanout, and document vault needs. ADS-B ingestion uses FlightAware AeroAPI via Trigger.dev scheduled jobs, behind a provider-abstraction interface so the feed can be swapped later.
 
@@ -192,7 +192,7 @@ Phases with standard patterns (can skip deep research):
 - Louisiana Tech PPL/IR/Commercial TCO documents (real 141 TCO examples)
 
 ### Secondary (MEDIUM confidence)
-- Flight Schedule Pro, Flight Circle, TalonETA, FlightLogger vendor docs
+- Various flight school management vendor docs
 - Drizzle vs Prisma 2026 comparisons, Supabase vs Neon 2026 comparisons
 - Aviatize industry analyses of Part 61 vs 141 and scheduling software pricing
 - Mapbox license change context + MapLibre / RN map comparison posts

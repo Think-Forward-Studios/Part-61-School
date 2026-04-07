@@ -9,7 +9,7 @@
 The competitive set breaks into three tiers:
 
 1. **Scheduling-first, maintenance-light** — Flight Circle, Flight Schedule Pro (classic), Schedule Master. Strong at calendars, dispatch, squawks, basic maintenance reminders. Weak at structured syllabus and training records.
-2. **Training-first, 141-grade** — TalonETA (Embry-Riddle, WMU), FlightLogger (EASA/ATO heavy, 60K+ users, CBTA-capable). Strong at TCO-mirrored curriculum, grading, stage checks, compliance recordkeeping. Weak or absent on ADS-B and real maintenance (CAMP-style).
+2. **Training-first, 141-grade** — large-school-focused systems (used at Embry-Riddle, WMU) and FlightLogger (EASA/ATO heavy, 60K+ users, CBTA-capable). Strong at TCO-mirrored curriculum, grading, stage checks, compliance recordkeeping. Weak or absent on ADS-B and real maintenance (CAMP-style).
 3. **Pilot-logbook adjacents** — Coradine LogTen Pro, MyFlightTrain. Personal logbook territory, not school ops.
 
 **No single incumbent** unifies (a) student-driven scheduling with maintenance-aware dispatch, (b) CAMP-grade maintenance with downtime prediction, (c) 141-structured training records, and (d) live ADS-B fleet visibility. That gap IS the product thesis.
@@ -20,7 +20,7 @@ A Part 141 school is held to 14 CFR 141.101: chronological log of attendance, su
 
 ### Table Stakes (Users Expect These)
 
-Missing any of these = the partner school won't adopt. Instructors trained on TalonETA/FSP will immediately notice absence.
+Missing any of these = the partner school won't adopt. Instructors trained on the major incumbents will immediately notice absence.
 
 #### Scheduling
 
@@ -53,7 +53,7 @@ Missing any of these = the partner school won't adopt. Instructors trained on Ta
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Part 141 TCO-structured syllabus (PPL, IR, Commercial SEL) | TalonETA mirrors TCOs exactly; this is the gold standard | HIGH | Course → Stage → Lesson → Task/Maneuver hierarchy; each lesson has objectives, completion standards, minimum hours |
+| Part 141 TCO-structured syllabus (PPL, IR, Commercial SEL) | Large-school incumbents mirror TCOs exactly; this is the gold standard | HIGH | Course → Stage → Lesson → Task/Maneuver hierarchy; each lesson has objectives, completion standards, minimum hours |
 | Custom syllabus support (clone and edit) | Partner school will want to deviate | MEDIUM | Versioning is important — a student mid-stream cannot have the syllabus silently changed under them |
 | Per-lesson grading (task-by-task, e.g. 1–4 or CBTA competency) | FlightLogger CBTA is the modern standard; legacy is 1–4 scale | MEDIUM | Grade locks after instructor signature |
 | Stage checks (end-of-stage with different/"check" instructor) | Required by 141; also a quality signal | MEDIUM | Workflow: assign check instructor, gate progression to next stage |
@@ -94,7 +94,7 @@ Features Flight Schedule Pro and Flight Circle do not do well (or at all). These
 |---------|-------------------|------------|-------|
 | **Maintenance-aware scheduler** (unified scheduling + maintenance state) | Competitors bolt these together; owner wants one source of truth so a student cannot even see bookable slots on an aircraft that will be in annual | MEDIUM | Scheduler query must join aircraft.maintenance_status — architectural, not a feature bolt-on |
 | **Downtime prediction from historical data + upcoming inspections** | PROJECT.md explicit; no competitor does this | HIGH | Requires clean Hobbs history + inspection calendar; start with linear-projection heuristic before any ML |
-| **141-shaped records on a 61 school** | Partner school's core pain; TalonETA targets 141 and is overkill, FSP is under-kill | HIGH | The hierarchy + grading + endorsement + export bundle IS the pillar |
+| **141-shaped records on a 61 school** | Partner school's core pain; large-school products target 141 and are overkill, generalist scheduling tools are under-kill | HIGH | The hierarchy + grading + endorsement + export bundle IS the pillar |
 | **IACRA-ready hours export with category/class breakdown** | Every student hits this at checkride; most platforms produce raw CSV | MEDIUM | Report generator that maps internal schema to 61.51(e) buckets |
 | **Live ADS-B fleet map integrated with dispatch** | No school management platform does this; owner has domain comfort | MEDIUM | "Is N12345 actually airborne right now?" answerable inside the app |
 | **Geofence alerts (aircraft outside training area, crossed Bravo shelf, went below floor)** | Safety differentiator; uses ADS-B data already ingested | MEDIUM | Admin defines polygons; alerts route via notifications |
@@ -240,7 +240,7 @@ The bar: partner school could move off their current scheduling tool onto this a
 
 ## Competitor Feature Analysis
 
-| Feature | Flight Schedule Pro | Flight Circle | TalonETA | FlightLogger | Our Approach |
+| Feature | Generalist scheduler | Maintenance-aware scheduler | Large-school 141 system | EASA-focused training | Our Approach |
 |---|---|---|---|---|---|
 | Scheduling | Strong (Intelligent Scheduling) | Strong, maintenance-linked | Strong, curriculum-linked | Strong | Maintenance-linked + currency-linked + mobile-first |
 | Squawks | Basic | **Reference impl** (Squawk Manager, grounds aircraft) | Light | Light | Match Flight Circle, add mechanic RTS sign-off |
@@ -250,7 +250,7 @@ The bar: partner school could move off their current scheduling tool onto this a
 | Stage checks | Yes | No | Yes | Yes | Yes, check-instructor workflow |
 | Grading | Basic | No | Yes | **Reference impl** (airborne, offline) | 1–4 scale v1; CBTA v2; offline mobile v1.x |
 | Endorsements | Yes | Partial | Yes | Yes | Template library with expiry → dispatch block |
-| 141.101 records | Partial | No | **Reference impl** | Strong | Match TalonETA shape; simpler UI |
+| 141.101 records | Partial | No | **Reference impl** | Strong | Match the large-school shape; simpler UI |
 | IACRA export | Partial | No | Yes | Partial | First-class, with 61.51(e) breakdown |
 | ADS-B live map | **No** | **No** | **No** | **No** | **Differentiator** |
 | Geofence alerts | No | No | No | No | **Differentiator** (v1.x) |
@@ -258,7 +258,7 @@ The bar: partner school could move off their current scheduling tool onto this a
 | Billing | Yes | Yes | Yes | Yes | **Deliberately not in v1** (PROJECT.md) |
 | Pricing model | Per user (complaint) | Per aircraft ($10/mo) | Enterprise quote | Per user | Per aircraft (align to Flight Circle anchor; product decision, not feature) |
 
-**Summary of the gap:** No competitor unifies real maintenance + 141-grade records + ADS-B. TalonETA owns 141 records but ignores ADS-B and isn't maintenance-first. Flight Circle owns squawks/maintenance-linked scheduling but has no syllabus. Flight Schedule Pro is the generalist and does none of the three deeply. **That three-way gap is the product.**
+**Summary of the gap:** No competitor unifies real maintenance + 141-grade records + ADS-B. The large-school 141 systems own training records but ignore ADS-B and aren't maintenance-first. Maintenance-aware schedulers own squawks but have no syllabus. The generalist schedulers do none of the three deeply. **That three-way gap is the product.**
 
 ## Sources
 
@@ -266,7 +266,7 @@ The bar: partner school could move off their current scheduling tool onto this a
 - [Flight Schedule Pro — Next Gen Platform](https://www.flightschedulepro.com/blog/flight-schedule-pro-releases-boosted-next-gen-platform) (MEDIUM)
 - [Flight Circle](https://www.flightcircle.com/) and [Squawks / Discrepancies docs](https://www.flightcircle.com/blog/docs/administrators/squawks/) (HIGH — product docs)
 - [Flight Circle — Maintenance Reminders docs](https://www.flightcircle.com/blog/docs/administrators/aircraft/maintenance-reminders/) (HIGH)
-- [TalonETA — Talon Systems](https://talonsystems.com/taloneta/) (MEDIUM — vendor)
+- (Large-school 141 management vendor docs — references redacted at owner request)
 - [FlightLogger — Logging & Grading](https://flightlogger.net/features/logging-grading/) (MEDIUM)
 - [FlightLogger — Who is it for](https://flightlogger.net/whoisitfor/) (MEDIUM)
 - [Louisiana Tech PPL Airplane TCO (real 141 TCO example)](https://liberalarts.latech.edu/documents/2025/08/private-pilot-airplane-tco.pdf) (HIGH — primary source)
