@@ -40,7 +40,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
    Plans:
 
 - [ ] 01-01-PLAN.md — Monorepo bootstrap + banned-term ESLint rule + Husky + CI skeleton
-- [ ] 01-02-PLAN.md — Drizzle schema, audit triggers, RLS policies, custom access token hook, cross-tenant Vitest harness
+- [x] 01-02-PLAN.md — Drizzle schema, audit triggers, RLS policies, custom access token hook, cross-tenant Vitest harness
 - [ ] 01-03-PLAN.md — tRPC server (auth/tenant/role middleware), Supabase SSR auth, admin-invite flow, active-role switcher, protected dashboard
 - [ ] 01-04-PLAN.md — Document storage: bucket RLS, tRPC documents router, upload/download UI, final Phase 1 verification
 
@@ -153,7 +153,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 
 | Phase                                      | Plans Complete | Status      | Completed |
 | ------------------------------------------ | -------------- | ----------- | --------- |
-| 1. Foundation & Terminology Contract       | 0/4            | Planned     | -         |
+| 1. Foundation & Terminology Contract       | 2/4            | In Progress | -         |
 | 2. Personnel, Admin & Fleet Primitives     | 0/0            | Not started | -         |
 | 3. Scheduling & Dispatch Execution         | 0/0            | Not started | -         |
 | 4. CAMP Maintenance                        | 0/0            | Not started | -         |

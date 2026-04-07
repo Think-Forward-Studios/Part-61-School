@@ -7,12 +7,12 @@
 
 ### Foundation
 
-- [ ] **FND-01**: Multi-tenant Postgres schema with `school_id` on every business table, enforced by Row Level Security
-- [ ] **FND-02**: Single-tenant deploy for partner school, but architecture supports onboarding additional schools without schema changes
-- [ ] **FND-03**: Audit trail (who/what/when) on every mutation to safety-relevant data (aircraft, maintenance, training records, schedules, sign-offs)
-- [ ] **FND-04**: Append-only event log for maintenance and training records (soft delete only, never hard delete)
+- [x] **FND-01**: Multi-tenant Postgres schema with `school_id` on every business table, enforced by Row Level Security
+- [x] **FND-02**: Single-tenant deploy for partner school, but architecture supports onboarding additional schools without schema changes
+- [x] **FND-03**: Audit trail (who/what/when) on every mutation to safety-relevant data (aircraft, maintenance, training records, schedules, sign-offs)
+- [x] **FND-04**: Append-only event log for maintenance and training records (soft delete only, never hard delete)
 - [x] **FND-05**: CI-enforced banned-term lint that prevents the words "Part 141", "approved", "certified course" from appearing in user-facing UI/exports
-- [ ] **FND-06**: Timezone-correct date handling (`timestamptz` everywhere, `date-fns-tz` in app, school-local timezone configurable)
+- [x] **FND-06**: Timezone-correct date handling (`timestamptz` everywhere, `date-fns-tz` in app, school-local timezone configurable)
 - [ ] **FND-07**: Document storage for medicals, licenses, insurance scans (S3-compatible / Supabase Storage), with expiration tracking
 
 ### Authentication & Authorization
@@ -22,8 +22,8 @@
 - [ ] **AUTH-03**: User can reset password via email link
 - [ ] **AUTH-04**: User session persists across browser refresh
 - [ ] **AUTH-05**: User can log out from any page
-- [ ] **AUTH-06**: System supports four roles: Student, Instructor, Mechanic, Admin (a user may hold multiple roles)
-- [ ] **AUTH-07**: Mechanic role distinguishes A&P from IA authority (only IA can sign annual inspections, only A&P/IA can sign 100hr/return-to-service)
+- [x] **AUTH-06**: System supports four roles: Student, Instructor, Mechanic, Admin (a user may hold multiple roles)
+- [x] **AUTH-07**: Mechanic role distinguishes A&P from IA authority (only IA can sign annual inspections, only A&P/IA can sign 100hr/return-to-service)
 - [ ] **AUTH-08**: All role-gated UI is also enforced server-side (UI hiding is not security)
 
 ### Admin

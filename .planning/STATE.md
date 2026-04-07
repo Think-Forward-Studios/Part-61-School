@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: 'Phase 1 in progress — plan 01-01 (foundation bootstrap) complete'
-last_updated: '2026-04-07T02:37:01.500Z'
+status: 'Phase 1 in progress — plans 01-01 + 01-02 complete'
+last_updated: '2026-04-07T02:42:15Z'
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 25
+  completed_plans: 2
+  percent: 50
 ---
 
 # STATE: Part 61 School
 
-**Last updated:** 2026-04-07 (post 01-01 execution)
+**Last updated:** 2026-04-07 (post 01-02 execution)
 
 ## Project Reference
 
@@ -25,19 +25,20 @@ progress:
 ## Current Position
 
 - **Phase:** 01-foundation-terminology-contract
-- **Plan:** 01-02 (next)
-- **Status:** Plan 01-01 complete (monorepo + banned-term rule + CI)
-- **Progress:** Phase 1 [███░░░░░░░] 25% (1/4 plans) · Project 0/8 phases
+- **Plan:** 01-03 (next)
+- **Status:** Plans 01-01 + 01-02 complete (monorepo, banned-term, Drizzle schema, RLS, audit, Supabase hook, RLS harness)
+- **Progress:** Phase 1 [█████░░░░░] 50% (2/4 plans) · Project 0/8 phases
 
 ## Performance Metrics
 
 - Phases complete: 0/8
-- Plans complete: 1 (01-01)
+- Plans complete: 2 (01-01, 01-02)
 - v1 requirements mapped: 136/136
 
 | Phase | Plan | Duration | Tasks | Files |
 | ----- | ---- | -------- | ----- | ----- |
 | 01    | 01   | ~6m      | 3     | 33    |
+| 01    | 02   | 12m      | 3     | 27    |
 
 ## Accumulated Context
 
@@ -61,6 +62,16 @@ progress:
 - Allow-comment lookup walks parent statements so `// allow-banned-term: <reason>` above a `const x = 'Part 141'` works
 - CI pipeline shape locked: install → typecheck → lint → test → build; Supabase steps stubbed as YAML comment for plan 02 to insert
 
+### Decisions (01-02)
+
+- pgPolicy `to:` field uses raw `sql\`authenticated\`` literal (not `authenticatedRole` from `drizzle-orm/supabase`) — import-path-stable across Drizzle versions
+- `packages/db/migrations/0000_init.sql` hand-authored (toolchain unavailable); plan 01-03 must diff against `drizzle-kit generate --name init` output
+- `audit_log.user_id` is nullable; system-originated mutations set `actor_kind != 'user'`
+- `audit_log` INSERT policy is `with check (false)`; only the SECURITY DEFINER trigger writes rows; UPDATE/DELETE revoked from authenticated/anon/public
+- RLS Vitest harness uses raw postgres-js (not Drizzle, not supabase-js) so it can manipulate `request.jwt.claims` GUC and `set role authenticated` per call
+- `users.id` is NOT defaultRandom — it mirrors Supabase `auth.users.id`
+- Active role lives in `app.active_role` GUC (not JWT); the access token hook emits it for client convenience only
+
 ### Revision History
 
 - 2026-04-06: Initial 7-phase roadmap created (75 requirements)
@@ -72,13 +83,13 @@ progress:
 
 ### Blockers
 
-- (none)
+- Plan 01-03 must pick up 6 deferred items from `.planning/phases/01-foundation-terminology-contract/deferred-items.md` BEFORE running verification gates: (1) add drizzle-orm/postgres/drizzle-kit to packages/db/package.json, (2) add `tests/*` to pnpm-workspace.yaml, (3) add Supabase setup+migrate steps to .github/workflows/ci.yml, (4) diff hand-authored 0000_init.sql against drizzle-kit generate, (5) fix husky pre-commit pnpm dependency, (6) verify Supabase CLI honors `[auth.hook.custom_access_token]` in config.toml
 
 ## Session Continuity
 
-**Next action:** Execute plan 01-02 of Phase 1.
+**Next action:** Execute plan 01-03 of Phase 1 (tRPC + Supabase SSR auth + admin-invite + active-role switcher + protected dashboard), starting by resolving the 6 deferred items from 01-02.
 
-**Last session stopped at:** Completed 01-01-PLAN.md (commits a6dda65, 7513ba6, e0ef104).
+**Last session stopped at:** Completed 01-02-PLAN.md (commits 21efd53, b9874f3, 2ea642d, 8a0ce0d).
 
 **Files:**
 
