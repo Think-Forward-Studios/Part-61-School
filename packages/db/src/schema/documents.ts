@@ -50,19 +50,19 @@ export const documents = pgTable(
     pgPolicy('documents_select_own_school', {
       as: 'permissive',
       for: 'select',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
     pgPolicy('documents_insert_own_school', {
       as: 'permissive',
       for: 'insert',
-      to: sql`authenticated`,
+      to: 'authenticated',
       withCheck: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
     pgPolicy('documents_update_own_school', {
       as: 'permissive',
       for: 'update',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
       withCheck: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),

@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@part61/config": "workspace:*",
+    "@types/node": "^22.10.0",
     "drizzle-kit": "^0.28.1",
     "typescript": "^5.6.3"
   }

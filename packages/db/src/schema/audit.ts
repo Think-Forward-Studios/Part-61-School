@@ -47,7 +47,7 @@ export const auditLog = pgTable(
     pgPolicy('audit_log_select_own_school', {
       as: 'permissive',
       for: 'select',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
     // Direct client INSERTs are rejected; only the trigger (SECURITY
@@ -56,7 +56,7 @@ export const auditLog = pgTable(
     pgPolicy('audit_log_insert_blocked', {
       as: 'permissive',
       for: 'insert',
-      to: sql`authenticated`,
+      to: 'authenticated',
       withCheck: sql`false`,
     }),
   ],

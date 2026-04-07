@@ -44,13 +44,13 @@ export const users = pgTable(
     pgPolicy('users_select_own_school', {
       as: 'permissive',
       for: 'select',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
     pgPolicy('users_update_own_school', {
       as: 'permissive',
       for: 'update',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
       withCheck: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
@@ -78,13 +78,13 @@ export const userRoles = pgTable(
     pgPolicy('user_roles_select_own_school', {
       as: 'permissive',
       for: 'select',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`user_id in (select id from public.users where school_id = (auth.jwt() ->> 'school_id')::uuid)`,
     }),
     pgPolicy('user_roles_modify_own_school', {
       as: 'permissive',
       for: 'all',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`user_id in (select id from public.users where school_id = (auth.jwt() ->> 'school_id')::uuid)`,
       withCheck: sql`user_id in (select id from public.users where school_id = (auth.jwt() ->> 'school_id')::uuid)`,
     }),

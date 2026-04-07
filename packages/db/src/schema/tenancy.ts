@@ -36,13 +36,13 @@ export const schools = pgTable(
     pgPolicy('schools_select_own', {
       as: 'permissive',
       for: 'select',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
     pgPolicy('schools_update_own', {
       as: 'permissive',
       for: 'update',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`id = (auth.jwt() ->> 'school_id')::uuid`,
       withCheck: sql`id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
@@ -70,19 +70,19 @@ export const bases = pgTable(
     pgPolicy('bases_select_own_school', {
       as: 'permissive',
       for: 'select',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
     pgPolicy('bases_insert_own_school', {
       as: 'permissive',
       for: 'insert',
-      to: sql`authenticated`,
+      to: 'authenticated',
       withCheck: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
     pgPolicy('bases_update_own_school', {
       as: 'permissive',
       for: 'update',
-      to: sql`authenticated`,
+      to: 'authenticated',
       using: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
       withCheck: sql`school_id = (auth.jwt() ->> 'school_id')::uuid`,
     }),
