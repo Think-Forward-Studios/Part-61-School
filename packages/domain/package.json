@@ -10,6 +10,9 @@
     "test": "echo 'no tests yet'",
     "build": "echo 'nothing to build'"
   },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
     "@part61/config": "workspace:*",
     "typescript": "^5.6.3"
