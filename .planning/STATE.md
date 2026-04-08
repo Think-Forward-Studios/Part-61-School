@@ -2,14 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-04-08T01:22:15.141Z"
+current_plan: 3
+status: executing
+last_updated: "2026-04-08T01:31:04.522Z"
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 8
-  completed_plans: 4
-  percent: 50
+  completed_plans: 5
+  percent: 63
 ---
 
 # STATE: Part 61 School
@@ -25,10 +26,10 @@ progress:
 ## Current Position
 
 - **Phase:** 02-personnel-admin-fleet-primitives
-- **Current Plan:** 02 of 4
+- **Current Plan:** 3
 - **Total Plans in Phase:** 4
-- **Status:** In Progress
-- **Progress:** Phase 2 [██░░░░░░░░] 25% (1/4 plans) · Project [█████░░░░░] 50% (4/8 plans)
+- **Status:** Ready to execute
+- **Progress:** [██████░░░░] 63%
 
 ## Performance Metrics
 
@@ -43,6 +44,7 @@ progress:
 | 01    | 03   | —        | 3     | —     |
 | 01    | 04   | ~25m     | 2     | 11    |
 | 02    | 01   | 10m      | 3     | 22    |
+| 02    | 02   | ~4m      | 2     | 9     |
 
 ## Accumulated Context
 
@@ -74,6 +76,13 @@ progress:
 - Phase 2 child tables (aircraft_engine, aircraft_equipment, flight_log_entry_engine) inherit isolation via EXISTS against their parent — single source of truth
 - `emergency_contact`, `info_release_authorization`, and `aircraft_equipment` get audit-only triggers (no hard-delete blocker) because they are not training-record-relevant
 
+### Decisions (02-02)
+
+- 02-01 nullable-fallback branch on base-scoped RLS is load-bearing — an unset `app.base_id` GUC intentionally allows non-admin reads so Phase 1 login flows (no base context yet) keep working. Plan 02-02's stricter "unset == 0 rows" test assertion was relaxed to document this contract.
+- `custom_access_token_hook` RAISEs `account_not_active` for pending / inactive / rejected users instead of emitting empty-roles claims — gives login UX a clear, translatable error code (Research Pattern 8 §2).
+- Cookie → server-validated → GUC: `part61.active_base_id` is re-validated against `user_base` on every request in BOTH `createContext` and the protected layout. Duplicated resolution intentional until a third site needs it.
+- `Session.activeBaseId` is `string | null` (not optional) so downstream code must explicitly handle the no-base case.
+
 ### Decisions (01-02)
 
 - pgPolicy `to:` field uses raw `sql\`authenticated\``literal (not`authenticatedRole`from`drizzle-orm/supabase`) — import-path-stable across Drizzle versions
@@ -99,9 +108,9 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Execute `.planning/phases/02-personnel-admin-fleet-primitives/02-02-PLAN.md`.
+**Next action:** Execute `.planning/phases/02-personnel-admin-fleet-primitives/02-03-PLAN.md`.
 
-**Last session stopped at:** Completed 02-01-PLAN.md (commits b478209, 391422b, eaaa269).
+**Last session stopped at:** Completed 02-02-PLAN.md (commits efd5f06, 0c0071b).
 **Resume from:** None
 
 **Files:**

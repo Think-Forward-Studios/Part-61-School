@@ -174,7 +174,7 @@
 ### Multi-Location Support
 
 - [x] **MUL-01**: A school can have multiple **training locations** (bases); aircraft, instructors, and rooms are scoped to a base
-- [ ] **MUL-02**: User can switch active base context if they hold roles at more than one
+- [x] **MUL-02**: User can switch active base context if they hold roles at more than one
 - [ ] **MUL-03**: Reports and dashboards can be filtered by base or rolled up across all bases
 
 ### ADS-B Fleet Visibility (integration with existing ADS-B Tracker)
@@ -293,7 +293,7 @@ Explicitly excluded — documented to prevent scope creep.
 | IPF-01      | Phase 2 | Complete |
 | IPF-02      | Phase 2 | Complete |
 | MUL-01      | Phase 2 | Complete |
-| MUL-02      | Phase 2 | Pending  |
+| MUL-02      | Phase 2 | Complete |
 | SCH-01      | Phase 3 | Pending  |
 | SCH-02      | Phase 3 | Pending  |
 | SCH-03      | Phase 3 | Pending  |
