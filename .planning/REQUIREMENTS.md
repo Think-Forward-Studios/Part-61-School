@@ -53,7 +53,7 @@
 - [x] **SCH-04**: A reservation cannot be confirmed for an aircraft that is grounded or whose `isAirworthyAt(reservation_start)` is false
 - [ ] **SCH-05**: Reservation cannot be confirmed if student is missing a prerequisite (medical expired, no solo endorsement for solo flight, currency lapsed)
 - [x] **SCH-06**: Recurring reservations (e.g. "every Tue/Thu 4pm for 6 weeks") are supported
-- [ ] **SCH-07**: Calendar views: by aircraft, by instructor, by student, by day/week/month
+- [x] **SCH-07**: Calendar views: by aircraft, by instructor, by student, by day/week/month
 - [x] **SCH-08**: Reservation lifecycle: requested → approved → dispatched (briefing complete) → flown (Hobbs in/out captured) → closed → archived
 - [x] **SCH-09**: No-show, weather scrub, and cancellation each have distinct close-out states with required reason
 - [ ] **SCH-10**: Student and instructor receive notification (in-app + email) on reservation request, approval, change, and reminder
@@ -63,7 +63,7 @@
 - [ ] **SCH-14**: **"Next activity" suggestion** — when scheduling a student, system proposes the next lesson the student is due to take based on syllabus progress, prerequisites, and currencies
 - [x] **SCH-15**: Personnel can schedule **unavailability** (vacation, doctor, dental, sick) that blocks reservations against them
 - [x] **SCH-16**: **Block scheduling** — admin can pre-define recurring blocks of (instructor + aircraft + slot) and students request into those blocks
-- [ ] **SCH-17**: Schedule view distinguishes flight, sim, oral, academic, and unavailability with visual cues
+- [x] **SCH-17**: Schedule view distinguishes flight, sim, oral, academic, and unavailability with visual cues
 - [x] **SCH-18**: Resource availability (aircraft maintenance status, instructor unavailability, room booking) is integrated into a single conflict check
 
 ### Maintenance (CAMP-style)
@@ -300,7 +300,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SCH-04      | Phase 3 | Complete |
 | SCH-05      | Phase 6 | Pending  |
 | SCH-06      | Phase 3 | Complete |
-| SCH-07      | Phase 3 | Pending  |
+| SCH-07      | Phase 3 | Complete |
 | SCH-08      | Phase 3 | Complete |
 | SCH-09      | Phase 3 | Complete |
 | SCH-10      | Phase 8 | Pending  |
@@ -310,7 +310,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SCH-14      | Phase 6 | Pending  |
 | SCH-15      | Phase 3 | Complete |
 | SCH-16      | Phase 3 | Complete |
-| SCH-17      | Phase 3 | Pending  |
+| SCH-17      | Phase 3 | Complete |
 | SCH-18      | Phase 3 | Complete |
 | INS-04      | Phase 3 | Complete |
 | FTR-01      | Phase 3 | Pending  |
