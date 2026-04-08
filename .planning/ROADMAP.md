@@ -100,7 +100,13 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 4. A work order flows create → assign mechanic → tasks → parts consumed (decrementing parts inventory with lot/serial where applicable) → sign-off by A&P or IA based on task type → return-to-service, and airframe/engine/prop digital logbook PDF export is produced with timestamped signed entries
 5. Admin dashboard and each aircraft profile display a "next grounding event" countdown and a rule-based downtime forecast using scheduled reservations and historical squawk-repair averages
 6. The Phase 3 `isAirworthyAt()` stub is fully replaced by real rules derived from inspection state, open squawks, AD compliance, and component lifing; ADs are first-class entities with applicability, method, due-at rule, and compliance history — never free text
-   **Plans**: TBD
+
+**Plans:** 5 plans
+- [ ] 04-01-PLAN.md — CAMP enums, tables, RLS, audit/hard-delete/seal triggers, cross-tenant tests
+- [ ] 04-02-PLAN.md — SQL functions, business triggers, is_airworthy_at body replacement + Phase 3 regression guard
+- [ ] 04-03-PLAN.md — tRPC routers (maintenance/ads/components/workOrders/parts/logbook/templates/overruns/squawks), mechanicOrAdminProcedure, signer snapshot helper, API tests
+- [ ] 04-04-PLAN.md — Admin UI pages (dashboard, aircraft panel, squawks, work orders, parts, ADs, templates) + dispatch MEL badge
+- [ ] 04-05-PLAN.md — PDF library spike + logbook PDF export + seed templates + end-of-phase human verify
 
 ### Phase 5: Syllabus Model, Grading & Records
 
