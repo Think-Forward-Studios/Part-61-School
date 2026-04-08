@@ -21,7 +21,7 @@ type Tx = {
   insert: typeof import('@part61/db').db.insert;
   select: typeof import('@part61/db').db.select;
   update: typeof import('@part61/db').db.update;
-  delete: typeof import('@part61/db').db.delete;
+  delete: (typeof import('@part61/db').db)['delete'];
   execute: (q: ReturnType<typeof sql>) => Promise<unknown>;
 };
 
