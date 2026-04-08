@@ -38,11 +38,11 @@
 
 ### Fleet & Aircraft
 
-- [ ] **FLT-01**: Each aircraft has independent time series for Hobbs, tach, airframe time, and engine time(s)
-- [ ] **FLT-02**: Time entries are append-only events (`flight_log_entry`) with prior/current values, recorded by an instructor or student at flight close-out
-- [ ] **FLT-03**: System computes current totals as a derived query over the event log (never stored as a single mutable column)
+- [x] **FLT-01**: Each aircraft has independent time series for Hobbs, tach, airframe time, and engine time(s)
+- [x] **FLT-02**: Time entries are append-only events (`flight_log_entry`) with prior/current values, recorded by an instructor or student at flight close-out
+- [x] **FLT-03**: System computes current totals as a derived query over the event log (never stored as a single mutable column)
 - [ ] **FLT-04**: Aircraft has a current airworthiness status (`isAirworthyAt(date)`) derived from inspection state, open squawks, AD compliance, and component lifing
-- [ ] **FLT-05**: Aircraft can carry equipment (avionics, GPS, autopilot) used by syllabus to filter "this aircraft can be used for this lesson"
+- [x] **FLT-05**: Aircraft can carry equipment (avionics, GPS, autopilot) used by syllabus to filter "this aircraft can be used for this lesson"
 - [ ] **FLT-06**: Aircraft has a profile page showing totals, upcoming maintenance, recent flights, open squawks, current schedule
 
 ### Scheduling
@@ -124,21 +124,21 @@
 
 ### Personnel Management
 
-- [ ] **PER-01**: Personnel record holds full biographic and demographic data (name, DOB, address, phone, email, FAA airman cert number, citizenship status for TSA AFSP)
+- [x] **PER-01**: Personnel record holds full biographic and demographic data (name, DOB, address, phone, email, FAA airman cert number, citizenship status for TSA AFSP)
 - [ ] **PER-02**: **Online student self-registration** with admin approval queue (configurable per school)
-- [ ] **PER-03**: **Emergency contact** information on every personnel record, immediately accessible from their profile and dispatch screen
-- [ ] **PER-04**: **Student information release authorizations** (who is allowed to receive training info — parents, employer, sponsor)
-- [ ] **PER-05**: Student can be placed on **hold or grounded** with reason; held/grounded students cannot be scheduled until cleared by admin
-- [ ] **PER-06**: Instructor can be **grounded** by admin with reason; grounded instructors cannot be scheduled to teach
-- [ ] **PER-07**: **Student no-show records** — every no-show is logged on the student's profile with date, scheduled activity, and instructor; aggregate no-show count visible
-- [ ] **PER-08**: **Rental customer** record type (non-student pilot renting an aircraft) with currency tracking, checkout requirements, and rental history
-- [ ] **PER-09**: **Student training history** view — every course the student has been enrolled in (current and past) with completion status
-- [ ] **PER-10**: **Instructor flight experience history** — career hours by category, recent activity, instructor's own pilot log
+- [x] **PER-03**: **Emergency contact** information on every personnel record, immediately accessible from their profile and dispatch screen
+- [x] **PER-04**: **Student information release authorizations** (who is allowed to receive training info — parents, employer, sponsor)
+- [x] **PER-05**: Student can be placed on **hold or grounded** with reason; held/grounded students cannot be scheduled until cleared by admin
+- [x] **PER-06**: Instructor can be **grounded** by admin with reason; grounded instructors cannot be scheduled to teach
+- [x] **PER-07**: **Student no-show records** — every no-show is logged on the student's profile with date, scheduled activity, and instructor; aggregate no-show count visible
+- [x] **PER-08**: **Rental customer** record type (non-student pilot renting an aircraft) with currency tracking, checkout requirements, and rental history
+- [x] **PER-09**: **Student training history** view — every course the student has been enrolled in (current and past) with completion status
+- [x] **PER-10**: **Instructor flight experience history** — career hours by category, recent activity, instructor's own pilot log
 
 ### Instructor Performance & Workload
 
-- [ ] **IPF-01**: Track instructor **currencies** with expiration dates (CFI, CFII, MEI, medical, BFR, IPC) and auto-warn before expiration
-- [ ] **IPF-02**: Track instructor **qualifications** (aircraft type ratings, sim authorizations, course authorizations to teach)
+- [x] **IPF-01**: Track instructor **currencies** with expiration dates (CFI, CFII, MEI, medical, BFR, IPC) and auto-warn before expiration
+- [x] **IPF-02**: Track instructor **qualifications** (aircraft type ratings, sim authorizations, course authorizations to teach)
 - [ ] **IPF-03**: **Instructor pass rate** — for each instructor, percentage of their students who pass checkrides on first attempt, displayed on the instructor profile
 - [ ] **IPF-04**: **Instructor flight/duty hour violation warnings** — system warns when scheduling would push an instructor past configurable daily/weekly hour limits (FAR 61.195)
 - [ ] **IPF-05**: **Instructor workload monitor** — admin dashboard panel showing each instructor's scheduled hours this week, students assigned, pending grades
@@ -173,7 +173,7 @@
 
 ### Multi-Location Support
 
-- [ ] **MUL-01**: A school can have multiple **training locations** (bases); aircraft, instructors, and rooms are scoped to a base
+- [x] **MUL-01**: A school can have multiple **training locations** (bases); aircraft, instructors, and rooms are scoped to a base
 - [ ] **MUL-02**: User can switch active base context if they hold roles at more than one
 - [ ] **MUL-03**: Reports and dashboards can be filtered by base or rolled up across all bases
 
@@ -274,25 +274,25 @@ Explicitly excluded — documented to prevent scope creep.
 | ADM-05      | Phase 2 | Pending  |
 | ADM-06      | Phase 2 | Pending  |
 | ADM-07      | Phase 2 | Pending  |
-| FLT-01      | Phase 2 | Pending  |
-| FLT-02      | Phase 2 | Pending  |
-| FLT-03      | Phase 2 | Pending  |
+| FLT-01      | Phase 2 | Complete |
+| FLT-02      | Phase 2 | Complete |
+| FLT-03      | Phase 2 | Complete |
 | FLT-04      | Phase 3 | Pending  |
-| FLT-05      | Phase 2 | Pending  |
+| FLT-05      | Phase 2 | Complete |
 | FLT-06      | Phase 2 | Pending  |
-| PER-01      | Phase 2 | Pending  |
+| PER-01      | Phase 2 | Complete |
 | PER-02      | Phase 2 | Pending  |
-| PER-03      | Phase 2 | Pending  |
-| PER-04      | Phase 2 | Pending  |
-| PER-05      | Phase 2 | Pending  |
-| PER-06      | Phase 2 | Pending  |
-| PER-07      | Phase 2 | Pending  |
-| PER-08      | Phase 2 | Pending  |
-| PER-09      | Phase 2 | Pending  |
-| PER-10      | Phase 2 | Pending  |
-| IPF-01      | Phase 2 | Pending  |
-| IPF-02      | Phase 2 | Pending  |
-| MUL-01      | Phase 2 | Pending  |
+| PER-03      | Phase 2 | Complete |
+| PER-04      | Phase 2 | Complete |
+| PER-05      | Phase 2 | Complete |
+| PER-06      | Phase 2 | Complete |
+| PER-07      | Phase 2 | Complete |
+| PER-08      | Phase 2 | Complete |
+| PER-09      | Phase 2 | Complete |
+| PER-10      | Phase 2 | Complete |
+| IPF-01      | Phase 2 | Complete |
+| IPF-02      | Phase 2 | Complete |
+| MUL-01      | Phase 2 | Complete |
 | MUL-02      | Phase 2 | Pending  |
 | SCH-01      | Phase 3 | Pending  |
 | SCH-02      | Phase 3 | Pending  |

@@ -3,31 +3,32 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: '2026-04-07T03:58:12.493Z'
+last_updated: "2026-04-08T01:22:15.141Z"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 0
-  total_plans: 4
-  completed_plans: 3
-  percent: 100
+  total_plans: 8
+  completed_plans: 4
+  percent: 50
 ---
 
 # STATE: Part 61 School
 
-**Last updated:** 2026-04-07 (post 01-02 execution)
+**Last updated:** 2026-04-08 (post 02-01 execution)
 
 ## Project Reference
 
 **Core Value:** Give a Part 61 school a single source of truth for fleet, training, and scheduling so it can operate as professionally as a 141 school.
 
-**Current Focus:** Phase 1 — foundation chassis (RLS, audit, banned-term contract).
+**Current Focus:** Phase 2 — personnel, admin, and fleet primitives.
 
 ## Current Position
 
-- **Phase:** 01-foundation-terminology-contract
-- **Plan:** 01-04 complete (autonomous); consolidated end-of-phase human-verify pending
-- **Status:** Milestone complete
-- **Progress:** Phase 1 [██████████] 100% (4/4 plans autonomous) · Project 0/8 phases
+- **Phase:** 02-personnel-admin-fleet-primitives
+- **Current Plan:** 02 of 4
+- **Total Plans in Phase:** 4
+- **Status:** In Progress
+- **Progress:** Phase 2 [██░░░░░░░░] 25% (1/4 plans) · Project [█████░░░░░] 50% (4/8 plans)
 
 ## Performance Metrics
 
@@ -41,6 +42,7 @@ progress:
 | 01    | 02   | 12m      | 3     | 27    |
 | 01    | 03   | —        | 3     | —     |
 | 01    | 04   | ~25m     | 2     | 11    |
+| 02    | 01   | 10m      | 3     | 22    |
 
 ## Accumulated Context
 
@@ -63,6 +65,14 @@ progress:
 - Custom `part61/no-banned-terms` rule lives in-repo as a CommonJS file consumed via in-config plugin object — no separate plugin package
 - Allow-comment lookup walks parent statements so `// allow-banned-term: <reason>` above a `const x = 'Part 141'` works
 - CI pipeline shape locked: install → typecheck → lint → test → build; Supabase steps stubbed as YAML comment for plan 02 to insert
+
+### Decisions (02-01)
+
+- Base-scoped RLS policies use `current_setting('app.base_id', true)` with a nullable fallback so flows without a base context still work
+- `aircraft_current_totals` uses correlated subqueries (not window functions) so the view is `security_invoker = true` safe and deterministically one row per aircraft
+- `currency_status()` is STABLE (not IMMUTABLE) because `now()` is transaction-scoped
+- Phase 2 child tables (aircraft_engine, aircraft_equipment, flight_log_entry_engine) inherit isolation via EXISTS against their parent — single source of truth
+- `emergency_contact`, `info_release_authorization`, and `aircraft_equipment` get audit-only triggers (no hard-delete blocker) because they are not training-record-relevant
 
 ### Decisions (01-02)
 
@@ -89,9 +99,10 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Run the consolidated end-of-phase human verification for Phase 1. Requires Docker + Supabase CLI. See `.planning/phases/01-foundation-terminology-contract/01-04-SUMMARY.md` §"Task 3 — Consolidated Human Verification" for the exact script.
+**Next action:** Execute `.planning/phases/02-personnel-admin-fleet-primitives/02-02-PLAN.md`.
 
-**Last session stopped at:** Completed 01-04-PLAN.md autonomous tasks (commits 7b95e91, d0d088b). Task 3 (human-verify) consolidated with the 01-03 human-verify gate.
+**Last session stopped at:** Completed 02-01-PLAN.md (commits b478209, 391422b, eaaa269).
+**Resume from:** None
 
 **Files:**
 
