@@ -1,16 +1,21 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { ReactNode } from 'react';
-import { db, users, userRoles, schools } from '@part61/db';
+import { db, users, userRoles, userBase, bases, schools } from '@part61/db';
 import type { Role } from '@part61/api';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
 import { LogoutButton } from '@/components/LogoutButton';
 
 const ROLES: readonly Role[] = ['student', 'instructor', 'mechanic', 'admin'];
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isRole(x: unknown): x is Role {
   return typeof x === 'string' && (ROLES as readonly string[]).includes(x);
+}
+function isUuid(x: unknown): x is string {
+  return typeof x === 'string' && UUID_RE.test(x);
 }
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -46,6 +51,41 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .limit(1);
   const schoolName = schoolRows[0]?.name ?? 'Part 61 School';
 
+  // MUL-02: resolve the active base for this user. Cookie first (when
+  // valid and the user actually has a user_base row for it), then the
+  // user's first user_base row. BaseSwitcher (Plan 04) will write the
+  // cookie; Phase 2 just reads and passes baseId through to tRPC via
+  // the session.
+  const cookieBaseRaw = cookieStore.get('part61.active_base_id')?.value;
+  let activeBaseId: string | null = null;
+  if (isUuid(cookieBaseRaw)) {
+    const match = await db
+      .select({ baseId: userBase.baseId })
+      .from(userBase)
+      .where(
+        and(eq(userBase.userId, user.id), eq(userBase.baseId, cookieBaseRaw)),
+      )
+      .limit(1);
+    if (match[0]) activeBaseId = match[0].baseId;
+  }
+  if (!activeBaseId) {
+    const first = await db
+      .select({ baseId: userBase.baseId })
+      .from(userBase)
+      .where(eq(userBase.userId, user.id))
+      .limit(1);
+    if (first[0]) activeBaseId = first[0].baseId;
+  }
+  let activeBaseName: string | null = null;
+  if (activeBaseId) {
+    const baseRows = await db
+      .select({ name: bases.name })
+      .from(bases)
+      .where(eq(bases.id, activeBaseId))
+      .limit(1);
+    activeBaseName = baseRows[0]?.name ?? null;
+  }
+
   return (
     <div>
       <header
@@ -60,6 +100,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <strong>{schoolName}</strong>
         <span>
           Signed in as {shadow.email} — active role: {activeRole}
+          {activeBaseName ? ` — base: ${activeBaseName}` : ''}
         </span>
         <span style={{ marginLeft: 'auto' }}>
           {rolesList.length > 1 ? <RoleSwitcher roles={rolesList} active={activeRole} /> : null}

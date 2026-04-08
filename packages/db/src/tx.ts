@@ -21,6 +21,15 @@ export interface SchoolContext {
   schoolId: string;
   userId: string;
   activeRole: 'student' | 'instructor' | 'mechanic' | 'admin';
+  /**
+   * Optional active base. When set, `withSchoolContext` also configures
+   * the `app.base_id` GUC so base-scoped RLS policies can read it via
+   * `current_setting('app.base_id', true)`. When unset, the GUC is not
+   * touched and `current_setting(..., true)` returns NULL — base-scoped
+   * policies include an `is null` branch for this case (Phase 1 flows
+   * that don't yet have a base context).
+   */
+  baseId?: string | null;
 }
 
 // Minimal structural type so this module doesn't need to import a
@@ -45,5 +54,10 @@ export async function withSchoolContext<T>(
   await tx.execute(
     sql`select set_config('app.active_role', ${ctx.activeRole}, true)`,
   );
+  if (ctx.baseId) {
+    await tx.execute(
+      sql`select set_config('app.base_id', ${ctx.baseId}, true)`,
+    );
+  }
   return fn();
 }

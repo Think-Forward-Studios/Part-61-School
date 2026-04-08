@@ -15,4 +15,11 @@ export interface Session {
   email: string;
   roles: Role[];
   activeRole: Role;
+  /**
+   * Active base id resolved from the `part61.active_base_id` cookie
+   * (validated server-side against user_base) or null when the caller
+   * has no base context yet. Used by `withTenantTx` to set the
+   * `app.base_id` GUC for base-scoped RLS policies.
+   */
+  activeBaseId: string | null;
 }

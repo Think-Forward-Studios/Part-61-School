@@ -23,6 +23,7 @@ export const withTenantTx = t.middleware(async ({ ctx, next }) => {
         schoolId: session.schoolId,
         userId: session.userId,
         activeRole: session.activeRole,
+        baseId: session.activeBaseId,
       },
       () => next({ ctx: { ...ctx, session, tx } }),
     );

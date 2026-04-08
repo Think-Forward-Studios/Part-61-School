@@ -18,15 +18,22 @@
  * SET LOCAL for defense-in-depth.
  */
 import { cookies } from 'next/headers';
-import { eq } from 'drizzle-orm';
-import { db, users, userRoles } from '@part61/db';
+import { and, eq } from 'drizzle-orm';
+import { db, users, userRoles, userBase } from '@part61/db';
 import type { TRPCContext, Session, Role } from '@part61/api';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 const ROLES: readonly Role[] = ['student', 'instructor', 'mechanic', 'admin'];
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function isRole(x: unknown): x is Role {
   return typeof x === 'string' && (ROLES as readonly string[]).includes(x);
+}
+
+function isUuid(x: unknown): x is string {
+  return typeof x === 'string' && UUID_RE.test(x);
 }
 
 export async function createContext(): Promise<TRPCContext> {
@@ -73,12 +80,41 @@ export async function createContext(): Promise<TRPCContext> {
   }
   if (!activeRole) activeRole = rolesList[0]!;
 
+  // Resolve active base id from cookie; validate it's a well-formed
+  // uuid AND that a user_base row exists for this user + base. Falls
+  // back to the user's first user_base row when the cookie is missing
+  // or invalid. May still be null if the user has no user_base rows
+  // at all (e.g. an admin with no per-base assignment yet) — in that
+  // case `withTenantTx` skips setting app.base_id and base-scoped RLS
+  // policies fall through their `is null` branch.
+  const cookieBaseRaw = cookieStore.get('part61.active_base_id')?.value;
+  let activeBaseId: string | null = null;
+  if (isUuid(cookieBaseRaw)) {
+    const match = await db
+      .select({ baseId: userBase.baseId })
+      .from(userBase)
+      .where(
+        and(eq(userBase.userId, user.id), eq(userBase.baseId, cookieBaseRaw)),
+      )
+      .limit(1);
+    if (match[0]) activeBaseId = match[0].baseId;
+  }
+  if (!activeBaseId) {
+    const first = await db
+      .select({ baseId: userBase.baseId })
+      .from(userBase)
+      .where(eq(userBase.userId, user.id))
+      .limit(1);
+    if (first[0]) activeBaseId = first[0].baseId;
+  }
+
   const session: Session = {
     userId: user.id,
     schoolId: shadow.schoolId,
     email: shadow.email,
     roles: rolesList,
     activeRole,
+    activeBaseId,
   };
 
   const {
