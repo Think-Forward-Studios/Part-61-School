@@ -7,6 +7,8 @@ import { peopleRouter } from './people/_root';
 import { flightLogRouter } from './flightLog';
 import { registerRouter } from './register';
 import { scheduleRouter } from './schedule';
+import { dispatchRouter } from './dispatch';
+import { fifRouter } from './fif';
 
 export const appRouter = router({
   auth: authRouter,
@@ -17,6 +19,8 @@ export const appRouter = router({
   flightLog: flightLogRouter,
   register: registerRouter,
   schedule: scheduleRouter,
+  dispatch: dispatchRouter,
+  fif: fifRouter,
 });
 
 export type AppRouter = typeof appRouter;

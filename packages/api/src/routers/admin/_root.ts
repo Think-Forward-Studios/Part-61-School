@@ -4,6 +4,7 @@ import { adminAircraftRouter } from './aircraft';
 import { adminSchoolRouter } from './school';
 import { adminDashboardRouter } from './dashboard';
 import { adminRoomsRouter } from './rooms';
+import { adminSquawksRouter } from './squawks';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -11,4 +12,5 @@ export const adminRouter = router({
   school: adminSchoolRouter,
   dashboard: adminDashboardRouter,
   rooms: adminRoomsRouter,
+  squawks: adminSquawksRouter,
 });
