@@ -99,6 +99,105 @@ describe('cross-tenant isolation', () => {
     );
     expect(rows).toHaveLength(0);
   });
+
+  // -------------------------------------------------------------------
+  // Phase 3 tables — one isolation assertion per new table.
+  // We seed a row in school B for each table directly via the admin
+  // client (bypassing RLS) and assert school A cannot see it.
+  // -------------------------------------------------------------------
+  it('phase 3 tables: user A cannot SELECT any school B row', async () => {
+    const sql = dbAsAdmin();
+    await sql.unsafe(`set session_replication_role = replica`);
+
+    // aircraft (needed for FK targets)
+    const ac = await sql.unsafe<Array<{ id: string }>>(`
+      insert into public.aircraft (school_id, base_id, tail_number)
+      values ('${seed.schoolB}', '${seed.baseB}', 'N-XT-B')
+      returning id
+    `);
+    const acId = ac[0]!.id;
+
+    const rm = await sql.unsafe<Array<{ id: string }>>(`
+      insert into public.room (school_id, base_id, name)
+      values ('${seed.schoolB}', '${seed.baseB}', 'XT Room')
+      returning id
+    `);
+    const rmId = rm[0]!.id;
+
+    const sq = await sql.unsafe<Array<{ id: string }>>(`
+      insert into public.aircraft_squawk
+        (school_id, base_id, aircraft_id, severity, title)
+      values ('${seed.schoolB}', '${seed.baseB}', '${acId}', 'info', 'xt')
+      returning id
+    `);
+    const sqId = sq[0]!.id;
+
+    const sb = await sql.unsafe<Array<{ id: string }>>(`
+      insert into public.schedule_block (school_id, base_id, kind)
+      values ('${seed.schoolB}', '${seed.baseB}', 'instructor_block')
+      returning id
+    `);
+    const sbId = sb[0]!.id;
+
+    const fn = await sql.unsafe<Array<{ id: string }>>(`
+      insert into public.fif_notice (school_id, title, body, severity)
+      values ('${seed.schoolB}', 'xt', 'xt body', 'info')
+      returning id
+    `);
+    const fnId = fn[0]!.id;
+
+    const rs = await sql.unsafe<Array<{ id: string }>>(`
+      insert into public.reservation
+        (school_id, base_id, activity_type, time_range, status,
+         room_id, requested_by)
+      values
+        ('${seed.schoolB}', '${seed.baseB}', 'oral',
+         tstzrange('2026-12-01 14:00+00','2026-12-01 15:00+00','[)'),
+         'requested', '${rmId}', '${seed.userB}')
+      returning id
+    `);
+    const rsId = rs[0]!.id;
+
+    const pm = await sql.unsafe<Array<{ id: string }>>(`
+      insert into public.passenger_manifest
+        (reservation_id, position, name)
+      values ('${rsId}', 'pic', 'XT PIC')
+      returning id
+    `);
+    const pmId = pm[0]!.id;
+
+    const pu = await sql.unsafe<Array<{ id: string }>>(`
+      insert into public.person_unavailability
+        (school_id, user_id, time_range, kind, created_by)
+      values
+        ('${seed.schoolB}', '${seed.userB}',
+         tstzrange('2026-12-02 09:00+00','2026-12-02 17:00+00','[)'),
+         'vacation', '${seed.userB}')
+      returning id
+    `);
+    const puId = pu[0]!.id;
+
+    await sql.unsafe(`set session_replication_role = origin`);
+
+    const checkInvisible = async (table: string, id: string) => {
+      const rows = await asUserOf(
+        { userId: seed.userA, schoolId: seed.schoolA, activeRole: 'admin' },
+        (s) =>
+          s.unsafe<Array<{ id: string }>>(
+            `select id from public.${table} where id = '${id}'`,
+          ),
+      );
+      expect(rows, `${table} should be invisible to school A`).toHaveLength(0);
+    };
+
+    await checkInvisible('room', rmId);
+    await checkInvisible('aircraft_squawk', sqId);
+    await checkInvisible('schedule_block', sbId);
+    await checkInvisible('fif_notice', fnId);
+    await checkInvisible('reservation', rsId);
+    await checkInvisible('passenger_manifest', pmId);
+    await checkInvisible('person_unavailability', puId);
+  });
 });
 
 // ---------------------------------------------------------------------
