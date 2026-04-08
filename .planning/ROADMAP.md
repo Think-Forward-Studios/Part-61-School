@@ -57,7 +57,13 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 4. Instructor profile shows tracked currencies (CFI, CFII, MEI, medical, BFR, IPC) with expiration auto-warnings, qualifications (aircraft type, sim authorizations, course authorizations), and flight experience history; student profile shows no-show history and enrolled/past courses
 5. Each aircraft carries independent Hobbs, tach, airframe, and per-engine time series; current totals are computed as queries over an append-only `flight_log_entry` event log, never as a mutable column; aircraft profile shows totals, equipment, recent flights
 6. Aircraft, instructors, and rooms are scoped to a training base; a user with roles at multiple bases can switch active base context; admin dashboard shows fleet status at a glance for the active base
-   **Plans**: TBD
+   **Plans:** 4 plans
+   Plans:
+
+- [ ] 02-01-PLAN.md — Drizzle schema, hand-authored migration, RLS policies, audit + append-only triggers, aircraft_current_totals view, cross-tenant tests
+- [ ] 02-02-PLAN.md — Tenant context extension (app.base_id), tRPC context + layout cookie plumbing, access token hook status guard
+- [ ] 02-03-PLAN.md — tRPC routers (admin/people, admin/aircraft, admin/school, admin/dashboard, people sub-routers, flightLog, register, documents.uploadAircraftPhoto)
+- [ ] 02-04-PLAN.md — Admin UI (people, aircraft, dashboard, school), /register public page, BaseSwitcher, end-of-phase live verification
 
 ### Phase 3: Scheduling & Dispatch Execution
 
