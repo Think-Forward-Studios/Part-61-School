@@ -14,7 +14,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 
 - [x] **Phase 1: Foundation & Terminology Contract** - Multi-tenant RLS, auth, audit scaffolding, banned-term lint, document storage (completed 2026-04-07)
 - [x] **Phase 2: Personnel, Admin & Fleet Primitives** - People (bio/emergency/holds/history), instructor currencies+quals, multi-base scoping, multi-clock aircraft, admin CRUD (completed 2026-04-08)
-- [ ] **Phase 3: Scheduling & Dispatch Execution** - Reservations with DB-level conflict prevention, multi-activity-type scheduling, dispatch screen, check-in/out, overdue alerts, XC following, FIF, flight close-out
+- [x] **Phase 3: Scheduling & Dispatch Execution** - Reservations with DB-level conflict prevention, multi-activity-type scheduling, dispatch screen, check-in/out, overdue alerts, XC following, FIF, flight close-out (completed 2026-04-08)
 - [ ] **Phase 4: CAMP Maintenance** - Real `isAirworthyAt`, inspections, ADs, squawks, work orders, parts, logbook export, downtime prediction
 - [ ] **Phase 5: Syllabus Model, Grading & Records** - Course→Stage→Phase→Unit→Lesson→LineItem hierarchy, seeded templates, versioning, grading, stage checks, endorsements, 141.101 + IACRA exports, test grades
 - [ ] **Phase 6: Syllabus Rules, Progression & Audit** - Required/Optional/Must-Pass, auto-rollover, prerequisite+currency enforcement, mgmt override, rules engine, course minimums, ahead/behind, projected completion, nightly audit, ETA next-activity
@@ -78,7 +78,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 4. A dispatch screen shows what is currently flying, about to fly, and overdue — color-coded — and captures electronic student check-in, instructor electronic authorization (release), and aircraft check-out/in with Hobbs/tach snapshots
 5. An overdue aircraft (past expected end + grace) raises an alarm on dispatch and notifies duty instructor/admin; XC flights can record planned route, ETE, and intermediate stops (ready to bind to Phase 7 ADS-B), passenger manifest is captured with weights and emergency contacts, and a Flight Information File requires sign-off acknowledgement before dispatch
 6. A reservation moves through requested → approved → dispatched → flown → closed → archived with distinct reasoned close-out states (no-show, weather scrub, cancellation); flight close-out consolidates Hobbs/tach in, fuel/oil, route, squawks observed, and a handoff to line-item grading in a single screen
-   **Plans:** 5 plans
+   **Plans:** 5/5 plans complete
    Plans:
 
 - [ ] 03-01-PLAN.md — Phase 3 schema, migration, exclusion constraints, is_airworthy_at stub, shadow-row trigger, RLS + concurrency tests
@@ -168,7 +168,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 | ------------------------------------------ | -------------- | ----------- | ---------- |
 | 1. Foundation & Terminology Contract       | 2/4            | Complete    | 2026-04-07 |
 | 2. Personnel, Admin & Fleet Primitives     | 0/0            | Complete    | 2026-04-08 |
-| 3. Scheduling & Dispatch Execution         | 0/0            | Not started | -          |
+| 3. Scheduling & Dispatch Execution         | 0/0            | Complete    | 2026-04-08 |
 | 4. CAMP Maintenance                        | 0/0            | Not started | -          |
 | 5. Syllabus Model, Grading & Records       | 0/0            | Not started | -          |
 | 6. Syllabus Rules, Progression & Audit     | 0/0            | Not started | -          |
