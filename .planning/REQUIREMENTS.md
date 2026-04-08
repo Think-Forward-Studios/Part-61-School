@@ -49,13 +49,13 @@
 
 - [x] **SCH-01**: Student can request a reservation (aircraft + instructor + start/end + lesson reference + remarks)
 - [x] **SCH-02**: Reservation conflicts (same aircraft or same instructor overlapping) are prevented at the database level using a Postgres `EXCLUDE USING gist` constraint on `tstzrange` — application code cannot bypass this
-- [ ] **SCH-03**: Instructor or admin must approve a student's reservation request before it is confirmed
+- [x] **SCH-03**: Instructor or admin must approve a student's reservation request before it is confirmed
 - [x] **SCH-04**: A reservation cannot be confirmed for an aircraft that is grounded or whose `isAirworthyAt(reservation_start)` is false
 - [ ] **SCH-05**: Reservation cannot be confirmed if student is missing a prerequisite (medical expired, no solo endorsement for solo flight, currency lapsed)
-- [ ] **SCH-06**: Recurring reservations (e.g. "every Tue/Thu 4pm for 6 weeks") are supported
+- [x] **SCH-06**: Recurring reservations (e.g. "every Tue/Thu 4pm for 6 weeks") are supported
 - [ ] **SCH-07**: Calendar views: by aircraft, by instructor, by student, by day/week/month
-- [ ] **SCH-08**: Reservation lifecycle: requested → approved → dispatched (briefing complete) → flown (Hobbs in/out captured) → closed → archived
-- [ ] **SCH-09**: No-show, weather scrub, and cancellation each have distinct close-out states with required reason
+- [x] **SCH-08**: Reservation lifecycle: requested → approved → dispatched (briefing complete) → flown (Hobbs in/out captured) → closed → archived
+- [x] **SCH-09**: No-show, weather scrub, and cancellation each have distinct close-out states with required reason
 - [ ] **SCH-10**: Student and instructor receive notification (in-app + email) on reservation request, approval, change, and reminder
 - [ ] **SCH-11**: System verifies **instructor currencies and qualifications** required by the lesson (per SYL-18) before allowing the reservation to be confirmed
 - [ ] **SCH-12**: System verifies **student qualifications and currencies** required by the lesson (per SYL-19 rules + SYL-12) before allowing the reservation
@@ -120,7 +120,7 @@
 - [ ] **INS-01**: Instructor dashboard shows today's schedule, students assigned, pending grade entries, pending stage checks
 - [ ] **INS-02**: Instructor can view any of their students' training records (read+grade, no destructive actions)
 - [ ] **INS-03**: Instructor can grade a lesson, sign endorsements, and approve reservation requests from a single workflow
-- [ ] **INS-04**: Instructor can mark a flight closed and capture Hobbs/tach in/out, fuel, oil, route, and any squawks observed
+- [x] **INS-04**: Instructor can mark a flight closed and capture Hobbs/tach in/out, fuel, oil, route, and any squawks observed
 
 ### Personnel Management
 
@@ -147,13 +147,13 @@
 ### Flight Tracking & Dispatch
 
 - [ ] **FTR-01**: **Real-time schedule execution** — dispatch screen shows what's currently flying, what's about to fly, what's overdue, color-coded
-- [ ] **FTR-02**: **Electronic student check-in** — student arrives, checks in via the app; instructor electronically authorizes (releases the flight)
+- [x] **FTR-02**: **Electronic student check-in** — student arrives, checks in via the app; instructor electronically authorizes (releases the flight)
 - [x] **FTR-03**: **Aircraft check-out / check-in** — captures Hobbs/tach out at dispatch, Hobbs/tach in at return, updates fleet log
-- [ ] **FTR-04**: **Overdue aircraft alert** — if a flight is past its expected end time + grace window, dispatch screen raises an alarm and notifies admin/duty instructor
+- [x] **FTR-04**: **Overdue aircraft alert** — if a flight is past its expected end time + grace window, dispatch screen raises an alarm and notifies admin/duty instructor
 - [x] **FTR-05**: **Cross-country flight following** — for XC flights, dispatcher can record planned route, ETE, intermediate stops; integrates with ADS-B map view (Phase 7) when available
 - [x] **FTR-06**: **Electronic passenger manifest** — for any flight with passengers, captures passenger names, weights, emergency contact; printable
 - [x] **FTR-07**: **Flight Information File (FIF)** — admin posts notices/NOTAMs/policy items; pilots must acknowledge sign-off before dispatch
-- [ ] **FTR-08**: Flight close-out workflow consolidates: Hobbs/tach in, fuel/oil, route flown, line-item grading, squawks observed, next-lesson preview — all in one screen
+- [x] **FTR-08**: Flight close-out workflow consolidates: Hobbs/tach in, fuel/oil, route flown, line-item grading, squawks observed, next-lesson preview — all in one screen
 
 ### Audit & Reporting
 
@@ -296,13 +296,13 @@ Explicitly excluded — documented to prevent scope creep.
 | MUL-02      | Phase 2 | Complete |
 | SCH-01      | Phase 3 | Complete |
 | SCH-02      | Phase 3 | Complete |
-| SCH-03      | Phase 3 | Pending  |
+| SCH-03      | Phase 3 | Complete |
 | SCH-04      | Phase 3 | Complete |
 | SCH-05      | Phase 6 | Pending  |
-| SCH-06      | Phase 3 | Pending  |
+| SCH-06      | Phase 3 | Complete |
 | SCH-07      | Phase 3 | Pending  |
-| SCH-08      | Phase 3 | Pending  |
-| SCH-09      | Phase 3 | Pending  |
+| SCH-08      | Phase 3 | Complete |
+| SCH-09      | Phase 3 | Complete |
 | SCH-10      | Phase 8 | Pending  |
 | SCH-11      | Phase 6 | Pending  |
 | SCH-12      | Phase 5 | Pending  |
@@ -312,15 +312,15 @@ Explicitly excluded — documented to prevent scope creep.
 | SCH-16      | Phase 3 | Complete |
 | SCH-17      | Phase 3 | Pending  |
 | SCH-18      | Phase 3 | Complete |
-| INS-04      | Phase 3 | Pending  |
+| INS-04      | Phase 3 | Complete |
 | FTR-01      | Phase 3 | Pending  |
-| FTR-02      | Phase 3 | Pending  |
+| FTR-02      | Phase 3 | Complete |
 | FTR-03      | Phase 3 | Complete |
-| FTR-04      | Phase 3 | Pending  |
+| FTR-04      | Phase 3 | Complete |
 | FTR-05      | Phase 3 | Complete |
 | FTR-06      | Phase 3 | Complete |
 | FTR-07      | Phase 3 | Complete |
-| FTR-08      | Phase 3 | Pending  |
+| FTR-08      | Phase 3 | Complete |
 | MNT-01      | Phase 4 | Pending  |
 | MNT-02      | Phase 4 | Pending  |
 | MNT-03      | Phase 4 | Pending  |

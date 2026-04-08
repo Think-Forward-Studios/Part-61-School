@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: "02"
-status: in_progress
-last_updated: "2026-04-08T23:25:00.000Z"
+current_plan: 3
+status: executing
+last_updated: "2026-04-08T04:40:09.873Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 13
-  completed_plans: 8
-  percent: 62
+  completed_plans: 9
+  percent: 69
 ---
 
 # STATE: Part 61 School
@@ -26,10 +26,10 @@ progress:
 ## Current Position
 
 - **Phase:** 03-scheduling-dispatch-execution
-- **Current Plan:** 02
+- **Current Plan:** 3
 - **Total Plans in Phase:** 5
-- **Status:** In progress (03-01 complete)
-- **Progress:** [██████░░░░] 62%
+- **Status:** Ready to execute
+- **Progress:** [███████░░░] 69%
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ progress:
 | 02           | 02   | ~4m      | 2        | 9     |
 | Phase 02 P03 | 20m  | 2 tasks  | 36 files |
 | Phase 03-scheduling-dispatch-execution P01 | 28m | 3 tasks | 17 files |
+| Phase 03-scheduling-dispatch-execution P02 | 22m | 2 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,16 @@ progress:
 - Block-inflate trigger fires BEFORE INSERT so the exclusion constraint sees the inflated instructor/aircraft/room when it evaluates.
 - room, fif_acknowledgement, and schedule_block_instance get audit-only triggers (no hard-delete blocker) because they aren't training-record-relevant.
 
+### Decisions (03-02)
+
+- Recurrence expansion happens server-side inside a single `withTenantTx` with a shared `series_id`; children are inserted with `status='requested'` so exclusion-constraint conflicts only fire later at `schedule.approve`.
+- 23P01 exclusion-constraint violations are caught in schedule.approve/update and mapped to `TRPCError('CONFLICT')` with a resource-aware message ("the aircraft/instructor/student/room is already booked").
+- Tstzrange lower-bound parser (`parseLowerBound`) in `schedule/reservations.ts` handles both Postgres's quoted-value format and the abbreviated `+00` offset — required because `new Date('2027-01-10T14:00:00+00')` is invalid.
+- FIF unacked-gate in `dispatchReservation` checks the dispatching pilot: student if set, else instructor, else session userId.
+- `dispatch.closeOut` pairs `flight_in` to `flight_out` by "most recent flight_out on this aircraft" instead of carrying the FK on the reservation row — good enough for v1.
+- `fif.revoke` sets `expires_at = now() - 1s` so `listActive` excludes the notice immediately without a now()-tied equality race.
+- Banned-term caveat honored: router user-facing messages say "confirmed" instead of "approved". Internal enum values stay `status='approved'`.
+
 ### Decisions (02-02)
 
 - 02-01 nullable-fallback branch on base-scoped RLS is load-bearing — an unset `app.base_id` GUC intentionally allows non-admin reads so Phase 1 login flows (no base context yet) keep working. Plan 02-02's stricter "unset == 0 rows" test assertion was relaxed to document this contract.
@@ -120,9 +131,9 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Execute `.planning/phases/03-scheduling-dispatch-execution/03-02-PLAN.md`.
+**Next action:** Execute `.planning/phases/03-scheduling-dispatch-execution/03-03-PLAN.md`.
 
-**Last session stopped at:** Completed 03-01-PLAN.md (commits 9d7c569, dc72f56, 0243e81).
+**Last session stopped at:** Completed 03-02-PLAN.md (commits ba0c8e6, 38119a6).
 **Resume from:** None
 
 **Files:**
