@@ -2,34 +2,34 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Not started
-status: completed
-last_updated: '2026-04-08T02:10:26.130Z'
+current_plan: "02"
+status: in_progress
+last_updated: "2026-04-08T23:25:00.000Z"
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 1
-  total_plans: 8
-  completed_plans: 7
-  percent: 75
+  total_plans: 13
+  completed_plans: 8
+  percent: 62
 ---
 
 # STATE: Part 61 School
 
-**Last updated:** 2026-04-08 (post 02-01 execution)
+**Last updated:** 2026-04-08 (post 03-01 execution)
 
 ## Project Reference
 
 **Core Value:** Give a Part 61 school a single source of truth for fleet, training, and scheduling so it can operate as professionally as a 141 school.
 
-**Current Focus:** Phase 2 — personnel, admin, and fleet primitives.
+**Current Focus:** Phase 3 — scheduling & dispatch execution.
 
 ## Current Position
 
-- **Phase:** 02-personnel-admin-fleet-primitives
-- **Current Plan:** Not started
-- **Total Plans in Phase:** 4
-- **Status:** Milestone complete
-- **Progress:** [████████░░] 75%
+- **Phase:** 03-scheduling-dispatch-execution
+- **Current Plan:** 02
+- **Total Plans in Phase:** 5
+- **Status:** In progress (03-01 complete)
+- **Progress:** [██████░░░░] 62%
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ progress:
 | 02           | 01   | 10m      | 3        | 22    |
 | 02           | 02   | ~4m      | 2        | 9     |
 | Phase 02 P03 | 20m  | 2 tasks  | 36 files |
+| Phase 03-scheduling-dispatch-execution P01 | 28m | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,16 @@ progress:
 - `currency_status()` is STABLE (not IMMUTABLE) because `now()` is transaction-scoped
 - Phase 2 child tables (aircraft_engine, aircraft_equipment, flight_log_entry_engine) inherit isolation via EXISTS against their parent — single source of truth
 - `emergency_contact`, `info_release_authorization`, and `aircraft_equipment` get audit-only triggers (no hard-delete blocker) because they are not training-record-relevant
+
+### Decisions (03-01)
+
+- Two-file migration (0007 + 0008) to dodge `ALTER TYPE flight_log_entry_kind ADD VALUE` same-transaction caveat: 0007 adds enum values + everything else, 0008 replaces aircraft_current_totals to reference flight_out/flight_in.
+- Drizzle has no DSL for partial `EXCLUDE USING gist`; the four reservation no-overlap constraints live ONLY in the hand-authored SQL migration. reservations.ts has a header comment pointing future readers there.
+- Half-open tstzrange bounds enforced via CHECK (`lower_inc + not upper_inc`) so back-to-back reservations don't conflict.
+- Shadow-row trigger on person_unavailability is SECURITY DEFINER + pinned `search_path = public`. Stores `shadow_reservation_id` on the unavailability row so update/delete don't need a fragile lookup.
+- Concurrency test accepts BOTH 23P01 (exclusion_violation) and 40P01 (deadlock_detected) — Postgres can race-resolve overlapping gist inserts either way, both prove exactly-one-winner.
+- Block-inflate trigger fires BEFORE INSERT so the exclusion constraint sees the inflated instructor/aircraft/room when it evaluates.
+- room, fif_acknowledgement, and schedule_block_instance get audit-only triggers (no hard-delete blocker) because they aren't training-record-relevant.
 
 ### Decisions (02-02)
 
@@ -109,9 +120,9 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Execute `.planning/phases/02-personnel-admin-fleet-primitives/02-03-PLAN.md`.
+**Next action:** Execute `.planning/phases/03-scheduling-dispatch-execution/03-02-PLAN.md`.
 
-**Last session stopped at:** Completed 02-02-PLAN.md (commits efd5f06, 0c0071b).
+**Last session stopped at:** Completed 03-01-PLAN.md (commits 9d7c569, dc72f56, 0243e81).
 **Resume from:** None
 
 **Files:**
