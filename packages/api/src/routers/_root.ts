@@ -6,6 +6,7 @@ import { adminRouter } from './admin/_root';
 import { peopleRouter } from './people/_root';
 import { flightLogRouter } from './flightLog';
 import { registerRouter } from './register';
+import { scheduleRouter } from './schedule';
 
 export const appRouter = router({
   auth: authRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   people: peopleRouter,
   flightLog: flightLogRouter,
   register: registerRouter,
+  schedule: scheduleRouter,
 });
 
 export type AppRouter = typeof appRouter;

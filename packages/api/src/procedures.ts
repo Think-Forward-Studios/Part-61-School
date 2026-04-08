@@ -15,3 +15,6 @@ import { requireRole } from './middleware/role';
 export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(withTenantTx);
 export const adminProcedure = protectedProcedure.use(requireRole('admin'));
+export const instructorOrAdminProcedure = protectedProcedure.use(
+  requireRole('instructor', 'admin'),
+);
