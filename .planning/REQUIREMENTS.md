@@ -28,10 +28,10 @@
 
 ### Admin
 
-- [ ] **ADM-01**: Admin can create, edit, soft-delete student users
-- [ ] **ADM-02**: Admin can create, edit, soft-delete instructor users
-- [ ] **ADM-03**: Admin can create, edit, soft-delete mechanic users (with A&P/IA designation)
-- [ ] **ADM-04**: Admin can assign and change roles on any user
+- [x] **ADM-01**: Admin can create, edit, soft-delete student users
+- [x] **ADM-02**: Admin can create, edit, soft-delete instructor users
+- [x] **ADM-03**: Admin can create, edit, soft-delete mechanic users (with A&P/IA designation)
+- [x] **ADM-04**: Admin can assign and change roles on any user
 - [ ] **ADM-05**: Admin can create, edit, soft-delete aircraft (tail number, make/model/year, equipment, home base, photo)
 - [ ] **ADM-06**: Admin can configure school settings (name, timezone, default home base, syllabus templates enabled)
 - [ ] **ADM-07**: Admin dashboard shows fleet status at a glance (each aircraft: airworthy / grounded / next-due item)
@@ -125,7 +125,7 @@
 ### Personnel Management
 
 - [x] **PER-01**: Personnel record holds full biographic and demographic data (name, DOB, address, phone, email, FAA airman cert number, citizenship status for TSA AFSP)
-- [ ] **PER-02**: **Online student self-registration** with admin approval queue (configurable per school)
+- [x] **PER-02**: **Online student self-registration** with admin approval queue (configurable per school)
 - [x] **PER-03**: **Emergency contact** information on every personnel record, immediately accessible from their profile and dispatch screen
 - [x] **PER-04**: **Student information release authorizations** (who is allowed to receive training info — parents, employer, sponsor)
 - [x] **PER-05**: Student can be placed on **hold or grounded** with reason; held/grounded students cannot be scheduled until cleared by admin
@@ -267,10 +267,10 @@ Explicitly excluded — documented to prevent scope creep.
 | AUTH-06     | Phase 1 | Pending  |
 | AUTH-07     | Phase 1 | Pending  |
 | AUTH-08     | Phase 1 | Pending  |
-| ADM-01      | Phase 2 | Pending  |
-| ADM-02      | Phase 2 | Pending  |
-| ADM-03      | Phase 2 | Pending  |
-| ADM-04      | Phase 2 | Pending  |
+| ADM-01      | Phase 2 | Complete |
+| ADM-02      | Phase 2 | Complete |
+| ADM-03      | Phase 2 | Complete |
+| ADM-04      | Phase 2 | Complete |
 | ADM-05      | Phase 2 | Pending  |
 | ADM-06      | Phase 2 | Pending  |
 | ADM-07      | Phase 2 | Pending  |
@@ -281,7 +281,7 @@ Explicitly excluded — documented to prevent scope creep.
 | FLT-05      | Phase 2 | Complete |
 | FLT-06      | Phase 2 | Pending  |
 | PER-01      | Phase 2 | Complete |
-| PER-02      | Phase 2 | Pending  |
+| PER-02      | Phase 2 | Complete |
 | PER-03      | Phase 2 | Complete |
 | PER-04      | Phase 2 | Complete |
 | PER-05      | Phase 2 | Complete |
