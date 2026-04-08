@@ -55,12 +55,16 @@ export const SCHOOL_A = '11111111-1111-1111-1111-111111111111';
 export const SCHOOL_B = '22222222-2222-2222-2222-222222222222';
 export const USER_A = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 export const USER_B = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+export const BASE_A = 'cccccccc-cccc-cccc-cccc-cccccccccc01';
+export const BASE_B = 'cccccccc-cccc-cccc-cccc-cccccccccc02';
 
 export interface SeedResult {
   schoolA: string;
   schoolB: string;
   userA: string;
   userB: string;
+  baseA: string;
+  baseB: string;
   docA: string;
   docB: string;
 }
@@ -80,6 +84,21 @@ export async function seedTwoSchools(): Promise<SeedResult> {
   await sql.unsafe(`
     truncate table
       public.audit_log,
+      public.flight_log_entry_engine,
+      public.flight_log_entry,
+      public.aircraft_equipment,
+      public.aircraft_engine,
+      public.aircraft,
+      public.no_show,
+      public.student_course_enrollment,
+      public.instructor_experience,
+      public.instructor_currency,
+      public.instructor_qualification,
+      public.person_hold,
+      public.emergency_contact,
+      public.info_release_authorization,
+      public.person_profile,
+      public.user_base,
       public.documents,
       public.user_roles,
       public.users,
@@ -92,6 +111,11 @@ export async function seedTwoSchools(): Promise<SeedResult> {
     insert into public.schools (id, name, timezone) values
       ('${SCHOOL_A}', 'Alpha Flight Academy', 'America/Chicago'),
       ('${SCHOOL_B}', 'Bravo Aviation School', 'America/Los_Angeles')
+  `);
+  await sql.unsafe(`
+    insert into public.bases (id, school_id, name, timezone) values
+      ('${BASE_A}', '${SCHOOL_A}', 'Alpha Main', 'America/Chicago'),
+      ('${BASE_B}', '${SCHOOL_B}', 'Bravo Main', 'America/Los_Angeles')
   `);
   await sql.unsafe(`
     insert into public.users (id, school_id, email, full_name, timezone) values
@@ -128,6 +152,8 @@ export async function seedTwoSchools(): Promise<SeedResult> {
     schoolB: SCHOOL_B,
     userA: USER_A,
     userB: USER_B,
+    baseA: BASE_A,
+    baseB: BASE_B,
     docA: docARows[0]!.id,
     docB: docBRows[0]!.id,
   };
