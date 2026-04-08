@@ -146,7 +146,7 @@
 
 ### Flight Tracking & Dispatch
 
-- [ ] **FTR-01**: **Real-time schedule execution** — dispatch screen shows what's currently flying, what's about to fly, what's overdue, color-coded
+- [x] **FTR-01**: **Real-time schedule execution** — dispatch screen shows what's currently flying, what's about to fly, what's overdue, color-coded
 - [x] **FTR-02**: **Electronic student check-in** — student arrives, checks in via the app; instructor electronically authorizes (releases the flight)
 - [x] **FTR-03**: **Aircraft check-out / check-in** — captures Hobbs/tach out at dispatch, Hobbs/tach in at return, updates fleet log
 - [x] **FTR-04**: **Overdue aircraft alert** — if a flight is past its expected end time + grace window, dispatch screen raises an alarm and notifies admin/duty instructor
@@ -313,7 +313,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SCH-17      | Phase 3 | Complete |
 | SCH-18      | Phase 3 | Complete |
 | INS-04      | Phase 3 | Complete |
-| FTR-01      | Phase 3 | Pending  |
+| FTR-01      | Phase 3 | Complete |
 | FTR-02      | Phase 3 | Complete |
 | FTR-03      | Phase 3 | Complete |
 | FTR-04      | Phase 3 | Complete |
