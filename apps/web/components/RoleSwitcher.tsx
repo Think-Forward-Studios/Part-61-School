@@ -1,7 +1,12 @@
 'use client';
 import { switchRole } from '@/app/(app)/switch-role/actions';
 
-type Role = 'student' | 'instructor' | 'mechanic' | 'admin';
+type Role =
+  | 'student'
+  | 'instructor'
+  | 'mechanic'
+  | 'admin'
+  | 'rental_customer';
 
 export function RoleSwitcher({ roles, active }: { roles: Role[]; active: Role }) {
   return (

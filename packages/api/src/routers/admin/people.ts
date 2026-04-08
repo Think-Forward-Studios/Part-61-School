@@ -1,0 +1,449 @@
+/**
+ * admin/people router — ADM-01/02/03/04, PER-02.
+ *
+ * Every procedure gates on adminProcedure (role=admin) and runs inside
+ * withTenantTx so school_id / user_id / active_role GUCs are set
+ * before any query. RLS is defense in depth.
+ *
+ * approveRegistration is the one procedure that must touch
+ * supabase.auth.admin — it creates the auth.users row with a
+ * pre-assigned id equal to the already-existing public.users row so
+ * the two stay in sync (Research Open Question 1 resolved YES:
+ * supabase-js AdminUserAttributes.id is string | undefined).
+ */
+import { TRPCError } from '@trpc/server';
+import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import {
+  personProfile,
+  users,
+  userRoles,
+  personHold,
+} from '@part61/db';
+import {
+  createPersonInput,
+  updatePersonInput,
+  userIdInput,
+  listPeopleInput,
+  assignRoleInput,
+  removeRoleInput,
+  rejectRegistrationInput,
+} from '@part61/domain';
+import { router } from '../../trpc';
+import { adminProcedure } from '../../procedures';
+
+type Tx = {
+  insert: typeof import('@part61/db').db.insert;
+  select: typeof import('@part61/db').db.select;
+  update: typeof import('@part61/db').db.update;
+  delete: typeof import('@part61/db').db.delete;
+  execute: (q: ReturnType<typeof sql>) => Promise<unknown>;
+};
+
+export const adminPeopleRouter = router({
+  /**
+   * List people with aggregated roles + active hold count. Filters by
+   * role (joins user_roles) and status.
+   */
+  list: adminProcedure.input(listPeopleInput).query(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+    const roleFilter = input.role
+      ? sql`and exists (
+            select 1 from public.user_roles ur
+            where ur.user_id = u.id and ur.role = ${input.role}::public.role
+          )`
+      : sql``;
+    const statusFilter = input.status
+      ? sql`and u.status = ${input.status}::public.user_status`
+      : sql``;
+    const rows = (await tx.execute(sql`
+      select
+        u.id,
+        u.email,
+        u.full_name,
+        u.status,
+        u.created_at,
+        u.deleted_at,
+        pp.first_name,
+        pp.last_name,
+        pp.phone,
+        coalesce(
+          (select array_agg(ur.role::text)
+             from public.user_roles ur
+             where ur.user_id = u.id),
+          '{}'::text[]
+        ) as roles,
+        (select count(*)::int
+           from public.person_hold ph
+           where ph.user_id = u.id and ph.cleared_at is null) as active_hold_count
+      from public.users u
+      left join public.person_profile pp on pp.user_id = u.id
+      where u.school_id = ${schoolId}
+        and u.deleted_at is null
+        ${roleFilter}
+        ${statusFilter}
+      order by coalesce(pp.last_name, u.email)
+      limit ${input.limit}
+      offset ${input.offset}
+    `)) as unknown as Array<Record<string, unknown>>;
+
+    const totalRows = (await tx.execute(sql`
+      select count(*)::int as total
+      from public.users u
+      where u.school_id = ${schoolId}
+        and u.deleted_at is null
+        ${roleFilter}
+        ${statusFilter}
+    `)) as unknown as Array<{ total: number }>;
+
+    return { rows, total: totalRows[0]?.total ?? 0 };
+  }),
+
+  getById: adminProcedure.input(userIdInput).query(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const rows = await tx
+      .select()
+      .from(users)
+      .where(
+        and(eq(users.id, input.userId), eq(users.schoolId, ctx.session!.schoolId)),
+      )
+      .limit(1);
+    const user = rows[0];
+    if (!user) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+    }
+    const profileRows = await tx
+      .select()
+      .from(personProfile)
+      .where(eq(personProfile.userId, input.userId))
+      .limit(1);
+    const roleRows = await tx
+      .select()
+      .from(userRoles)
+      .where(eq(userRoles.userId, input.userId));
+    return { user, profile: profileRows[0] ?? null, roles: roleRows };
+  }),
+
+  listPending: adminProcedure.query(async ({ ctx }) => {
+    const tx = ctx.tx as Tx;
+    const rows = (await tx.execute(sql`
+      select u.id, u.email, u.created_at, pp.first_name, pp.last_name, pp.phone
+      from public.users u
+      left join public.person_profile pp on pp.user_id = u.id
+      where u.school_id = ${ctx.session!.schoolId}
+        and u.status = 'pending'
+        and u.deleted_at is null
+      order by u.created_at asc
+    `)) as unknown as Array<Record<string, unknown>>;
+    return rows;
+  }),
+
+  create: adminProcedure
+    .input(createPersonInput)
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const schoolId = ctx.session!.schoolId;
+      // Generate a new uuid for this admin-created user. Because admins
+      // skip the self-registration queue entirely, we create the auth
+      // user right away so the email invite lands immediately.
+      // Delegation: mirror auth.inviteUser — this admin.people.create
+      // path is the explicit "create + invite" flow.
+      const newId = crypto.randomUUID();
+
+      // Use the supabase service role client lazily.
+      const url =
+        process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+      if (!url || !serviceKey) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Supabase admin credentials are not configured',
+        });
+      }
+      const { createClient } = await import('@supabase/supabase-js');
+      const admin = createClient(url, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      const { data, error } = await admin.auth.admin.inviteUserByEmail(
+        input.email,
+        {
+          redirectTo: `${siteUrl}/invite/accept`,
+          data: {
+            invited_role: input.role,
+            invited_school_id: schoolId,
+            user_id: newId,
+          },
+        },
+      );
+      if (error || !data.user) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: error?.message ?? 'Invite failed',
+        });
+      }
+      const authUserId = data.user.id;
+
+      await tx.execute(sql`
+        insert into public.users (id, school_id, email, full_name, status)
+        values (
+          ${authUserId},
+          ${schoolId},
+          ${input.email},
+          ${`${input.firstName} ${input.lastName}`},
+          'active'
+        )
+      `);
+      await tx.execute(sql`
+        insert into public.user_roles (user_id, role, mechanic_authority, is_default)
+        values (
+          ${authUserId},
+          ${input.role}::public.role,
+          ${input.mechanicAuthority ?? 'none'}::public.mechanic_authority,
+          true
+        )
+      `);
+      await tx.execute(sql`
+        insert into public.person_profile (
+          user_id, school_id, first_name, last_name, date_of_birth,
+          address_line1, address_line2, city, state, postal_code, country,
+          phone, email_alt, faa_airman_cert_number, citizenship_status,
+          tsa_afsp_status, notes
+        ) values (
+          ${authUserId},
+          ${schoolId},
+          ${input.firstName},
+          ${input.lastName},
+          ${input.dateOfBirth ?? null},
+          ${input.addressLine1 ?? null},
+          ${input.addressLine2 ?? null},
+          ${input.city ?? null},
+          ${input.state ?? null},
+          ${input.postalCode ?? null},
+          ${input.country ?? null},
+          ${input.phone ?? null},
+          ${input.emailAlt ?? null},
+          ${input.faaAirmanCertNumber ?? null},
+          ${(input.citizenshipStatus ?? null) as string | null},
+          ${(input.tsaAfspStatus ?? null) as string | null},
+          ${input.notes ?? null}
+        )
+      `);
+      return { userId: authUserId };
+    }),
+
+  update: adminProcedure
+    .input(updatePersonInput)
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      // Only update fields that were provided. Using raw SQL with COALESCE
+      // would be cleaner for sparse updates; here we do two narrowly
+      // scoped updates (users.email, person_profile fields).
+      if (input.email !== undefined) {
+        await tx
+          .update(users)
+          .set({ email: input.email })
+          .where(
+            and(
+              eq(users.id, input.userId),
+              eq(users.schoolId, ctx.session!.schoolId),
+            ),
+          );
+      }
+      // Upsert person_profile fields.
+      await tx.execute(sql`
+        update public.person_profile
+           set first_name  = coalesce(${input.firstName ?? null}::text,  first_name),
+               last_name   = coalesce(${input.lastName ?? null}::text,   last_name),
+               phone       = coalesce(${input.phone ?? null}::text,      phone),
+               notes       = coalesce(${input.notes ?? null}::text,      notes),
+               updated_at  = now()
+         where user_id = ${input.userId}
+      `);
+      return { ok: true };
+    }),
+
+  softDelete: adminProcedure
+    .input(userIdInput)
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const rows = await tx
+        .update(users)
+        .set({ deletedAt: new Date(), status: 'inactive' })
+        .where(
+          and(
+            eq(users.id, input.userId),
+            eq(users.schoolId, ctx.session!.schoolId),
+            isNull(users.deletedAt),
+          ),
+        )
+        .returning({ id: users.id });
+      if (rows.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+      }
+      return { ok: true };
+    }),
+
+  assignRole: adminProcedure
+    .input(assignRoleInput)
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      // Verify the target user belongs to this school.
+      const targetRows = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(
+          and(
+            eq(users.id, input.userId),
+            eq(users.schoolId, ctx.session!.schoolId),
+          ),
+        )
+        .limit(1);
+      if (targetRows.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+      }
+      await tx.execute(sql`
+        insert into public.user_roles (user_id, role, mechanic_authority, is_default)
+        values (
+          ${input.userId},
+          ${input.role}::public.role,
+          ${input.mechanicAuthority ?? 'none'}::public.mechanic_authority,
+          false
+        )
+        on conflict (user_id, role) do update
+          set mechanic_authority = excluded.mechanic_authority
+      `);
+      return { ok: true };
+    }),
+
+  removeRole: adminProcedure
+    .input(removeRoleInput)
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      await tx.execute(sql`
+        delete from public.user_roles ur
+         using public.users u
+         where ur.user_id = u.id
+           and ur.user_id = ${input.userId}
+           and ur.role = ${input.role}::public.role
+           and u.school_id = ${ctx.session!.schoolId}
+      `);
+      return { ok: true };
+    }),
+
+  /**
+   * Approve a pending self-registration. The public.users row already
+   * exists (status='pending') and has a pre-assigned uuid. This
+   * procedure calls supabase.auth.admin.createUser with that same id,
+   * then flips status to 'active' and sends an invite link.
+   */
+  approveRegistration: adminProcedure
+    .input(userIdInput)
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const schoolId = ctx.session!.schoolId;
+      // Fetch the pending row.
+      const rows = await tx
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.id, input.userId),
+            eq(users.schoolId, schoolId),
+            eq(users.status, 'pending'),
+          ),
+        )
+        .limit(1);
+      const pending = rows[0];
+      if (!pending) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Pending registration not found',
+        });
+      }
+      const url =
+        process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+      if (!url || !serviceKey) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Supabase admin credentials are not configured',
+        });
+      }
+      const { createClient } = await import('@supabase/supabase-js');
+      const admin = createClient(url, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      // Create the auth user with the pre-assigned id so auth.users.id
+      // matches public.users.id (Research Open Question 1 — resolved
+      // YES: supabase-js AdminUserAttributes.id is string | undefined).
+      const { data: created, error: createErr } =
+        await admin.auth.admin.createUser({
+          id: input.userId,
+          email: pending.email,
+          email_confirm: false,
+          user_metadata: {
+            invited_school_id: schoolId,
+            approved_by: ctx.session!.userId,
+          },
+        });
+      if (createErr || !created.user) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: createErr?.message ?? 'Failed to create auth user',
+        });
+      }
+      // Send the invite / set-password link.
+      const { error: linkErr } = await admin.auth.admin.generateLink({
+        type: 'invite',
+        email: pending.email,
+        options: { redirectTo: `${siteUrl}/invite/accept` },
+      });
+      if (linkErr) {
+        // Non-fatal: the user can still use "forgot password" later.
+        // We intentionally do not throw.
+      }
+      await tx
+        .update(users)
+        .set({ status: 'active' })
+        .where(eq(users.id, input.userId));
+      return { ok: true, userId: input.userId };
+    }),
+
+  rejectRegistration: adminProcedure
+    .input(rejectRegistrationInput)
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const rows = await tx
+        .update(users)
+        .set({ status: 'rejected' })
+        .where(
+          and(
+            eq(users.id, input.userId),
+            eq(users.schoolId, ctx.session!.schoolId),
+            eq(users.status, 'pending'),
+          ),
+        )
+        .returning({ id: users.id });
+      if (rows.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Pending registration not found',
+        });
+      }
+      // Append a note explaining the reason via person_profile.notes.
+      await tx.execute(sql`
+        update public.person_profile
+           set notes = coalesce(notes || E'\n', '') || ${`REJECTED: ${input.reason}`},
+               updated_at = now()
+         where user_id = ${input.userId}
+      `);
+      return { ok: true };
+    }),
+});
+
+// Silence unused import warnings for desc/personHold (kept for future list joins).
+void desc;
+void personHold;

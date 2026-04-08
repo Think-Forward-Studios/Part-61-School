@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-const ALLOWED = ['student', 'instructor', 'mechanic', 'admin'] as const;
+const ALLOWED = ['student', 'instructor', 'mechanic', 'admin', 'rental_customer'] as const;
 type Role = (typeof ALLOWED)[number];
 
 function isRole(x: unknown): x is Role {

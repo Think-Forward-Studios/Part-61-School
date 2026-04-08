@@ -20,7 +20,12 @@ import { sql } from 'drizzle-orm';
 export interface SchoolContext {
   schoolId: string;
   userId: string;
-  activeRole: 'student' | 'instructor' | 'mechanic' | 'admin';
+  activeRole:
+    | 'student'
+    | 'instructor'
+    | 'mechanic'
+    | 'admin'
+    | 'rental_customer';
   /**
    * Optional active base. When set, `withSchoolContext` also configures
    * the `app.base_id` GUC so base-scoped RLS policies can read it via
