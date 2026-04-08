@@ -71,10 +71,15 @@ export const qualificationKindEnum = pgEnum('qualification_kind', [
 ]);
 
 // FLT-02: flight log entry kind (append-only with baseline + correction)
+// Phase 3 extends with `flight_out` / `flight_in` paired rows. The
+// legacy `flight` kind stays as a deprecated alias so Phase 2 fixtures
+// continue to work — see `aircraft_current_totals` view for the math.
 export const flightLogEntryKindEnum = pgEnum('flight_log_entry_kind', [
   'flight',
   'baseline',
   'correction',
+  'flight_out',
+  'flight_in',
 ]);
 
 // FLT-01: engine position labels (N1..N4 for >2-engine aircraft)
@@ -110,6 +115,77 @@ export const experienceSourceEnum = pgEnum('experience_source', [
   'self_reported',
   'imported',
   'derived',
+]);
+
+// ============================================================================
+// Phase 3 new enums (scheduling + dispatch)
+// ============================================================================
+
+// SCH-01: reservation activity types
+export const reservationActivityTypeEnum = pgEnum(
+  'reservation_activity_type',
+  ['flight', 'simulator', 'oral', 'academic', 'misc'],
+);
+
+// SCH-08: reservation lifecycle status
+export const reservationStatusEnum = pgEnum('reservation_status', [
+  'requested',
+  'approved',
+  'dispatched',
+  'flown',
+  'pending_sign_off',
+  'closed',
+  'cancelled',
+  'no_show',
+  'scrubbed',
+]);
+
+// SCH-09: cancellation / scrub close-out reasons
+export const closeOutReasonEnum = pgEnum('close_out_reason', [
+  'cancelled_free',
+  'cancelled_late',
+  'no_show',
+  'scrubbed_weather',
+  'scrubbed_maintenance',
+  'scrubbed_other',
+]);
+
+// FLT-04: aircraft squawk severity
+export const squawkSeverityEnum = pgEnum('squawk_severity', [
+  'info',
+  'watch',
+  'grounding',
+]);
+
+// FTR-07: FIF notice severity
+export const fifSeverityEnum = pgEnum('fif_severity', [
+  'info',
+  'important',
+  'critical',
+]);
+
+// FTR-06: passenger manifest position
+export const manifestPositionEnum = pgEnum('manifest_position', [
+  'pic',
+  'sic',
+  'passenger',
+]);
+
+// SCH-16: schedule block kind
+export const blockKindEnum = pgEnum('block_kind', [
+  'instructor_block',
+  'aircraft_block',
+  'room_block',
+  'combo',
+]);
+
+// SCH-15: personnel unavailability kind
+export const unavailabilityKindEnum = pgEnum('unavailability_kind', [
+  'vacation',
+  'sick',
+  'personal',
+  'training',
+  'other',
 ]);
 
 // FLT-05: aircraft equipment tag enum (locked list in CONTEXT)

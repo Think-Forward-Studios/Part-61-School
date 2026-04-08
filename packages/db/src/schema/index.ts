@@ -22,3 +22,12 @@ export * from './aircraft';
 export * from './flight_log';
 export * from './user_base';
 export * from './views';
+
+// Phase 3 modules
+export * from './reservations';
+export * from './rooms';
+export * from './squawks';
+export * from './schedule_blocks';
+export * from './fif';
+export * from './passenger_manifest';
+export * from './person_unavailability';

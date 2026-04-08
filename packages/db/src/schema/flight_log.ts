@@ -52,6 +52,12 @@ export const flightLogEntry = pgTable(
     correctsId: uuid('corrects_id').references(
       (): AnyPgColumn => flightLogEntry.id,
     ),
+    // Phase 3 (FTR-03): pairs flight_out → flight_in for two-row
+    // dispatch + close-out write paths. Null on baseline / correction /
+    // legacy `flight` rows.
+    pairedEntryId: uuid('paired_entry_id').references(
+      (): AnyPgColumn => flightLogEntry.id,
+    ),
     recordedBy: uuid('recorded_by')
       .notNull()
       .references(() => users.id),

@@ -45,6 +45,9 @@ export const aircraft = pgTable(
       .notNull()
       .defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    // Phase 3 (FLT-04): admin-set ground flag consumed by
+    // is_airworthy_at(). Null = not grounded.
+    groundedAt: timestamp('grounded_at', { withTimezone: true }),
   },
   (t) => [
     uniqueIndex('aircraft_school_tail_unique').on(t.schoolId, t.tailNumber),
