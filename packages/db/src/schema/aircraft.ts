@@ -38,16 +38,17 @@ export const aircraft = pgTable(
     model: text('model'),
     year: integer('year'),
     equipmentNotes: text('equipment_notes'),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     // Phase 3 (FLT-04): admin-set ground flag consumed by
     // is_airworthy_at(). Null = not grounded.
     groundedAt: timestamp('grounded_at', { withTimezone: true }),
+    // Phase 4 (MNT-03): explanation + back-pointer to the maintenance
+    // item that caused the auto-ground. FK is declared in the SQL
+    // migration to avoid a Drizzle import cycle.
+    groundedReason: text('grounded_reason'),
+    groundedByItemId: uuid('grounded_by_item_id'),
   },
   (t) => [
     uniqueIndex('aircraft_school_tail_unique').on(t.schoolId, t.tailNumber),
@@ -99,9 +100,7 @@ export const aircraftEngine = pgTable(
     serialNumber: text('serial_number'),
     installedAt: timestamp('installed_at', { withTimezone: true }),
     removedAt: timestamp('removed_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   () => [
     // Engines inherit isolation via the aircraft join. We enforce with

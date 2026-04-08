@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
-import { pgPolicy, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { date, jsonb, pgPolicy, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { aircraft } from './aircraft';
-import { squawkSeverityEnum } from './enums';
+import { squawkSeverityEnum, squawkStatusEnum } from './enums';
 import { bases, schools } from './tenancy';
 import { users } from './users';
 
@@ -28,14 +28,23 @@ export const aircraftSquawk = pgTable(
     severity: squawkSeverityEnum('severity').notNull(),
     title: text('title').notNull(),
     description: text('description'),
-    openedAt: timestamp('opened_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
     openedBy: uuid('opened_by').references(() => users.id),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
     resolvedBy: uuid('resolved_by').references(() => users.id),
     resolutionNotes: text('resolution_notes'),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    // Phase 4 (MNT-04, MNT-05) lifecycle columns
+    status: squawkStatusEnum('status').notNull().default('open'),
+    triagedAt: timestamp('triaged_at', { withTimezone: true }),
+    triagedBy: uuid('triaged_by').references(() => users.id),
+    deferredUntil: date('deferred_until'),
+    deferralJustification: text('deferral_justification'),
+    workOrderId: uuid('work_order_id'),
+    returnedToServiceAt: timestamp('returned_to_service_at', {
+      withTimezone: true,
+    }),
+    returnedToServiceSignerSnapshot: jsonb('returned_to_service_signer_snapshot'),
   },
   () => [
     pgPolicy('aircraft_squawk_select_own_school_base', {

@@ -31,3 +31,13 @@ export * from './schedule_blocks';
 export * from './fif';
 export * from './passenger_manifest';
 export * from './person_unavailability';
+
+// Phase 4 modules (CAMP)
+export * from './maintenance_item';
+export * from './ads';
+export * from './aircraft_component';
+export * from './work_order';
+export * from './part';
+export * from './logbook_entry';
+export * from './maintenance_overrun';
+export * from './downtime_forecast';

@@ -16,11 +16,7 @@ export const roleEnum = pgEnum('role', [
 ]);
 
 // AUTH-07: mechanic sub-authority
-export const mechanicAuthorityEnum = pgEnum('mechanic_authority', [
-  'none',
-  'a_and_p',
-  'ia',
-]);
+export const mechanicAuthorityEnum = pgEnum('mechanic_authority', ['none', 'a_and_p', 'ia']);
 
 // FND-01 + FLT-06: document kinds (aircraft_photo added in Phase 2)
 export const documentKindEnum = pgEnum('document_kind', [
@@ -32,23 +28,14 @@ export const documentKindEnum = pgEnum('document_kind', [
 ]);
 
 // FND-03: audit action enum
-export const auditActionEnum = pgEnum('audit_action', [
-  'insert',
-  'update',
-  'soft_delete',
-]);
+export const auditActionEnum = pgEnum('audit_action', ['insert', 'update', 'soft_delete']);
 
 // ============================================================================
 // Phase 2 new enums
 // ============================================================================
 
 // PER-02: self-registration + account lifecycle status
-export const userStatusEnum = pgEnum('user_status', [
-  'pending',
-  'active',
-  'inactive',
-  'rejected',
-]);
+export const userStatusEnum = pgEnum('user_status', ['pending', 'active', 'inactive', 'rejected']);
 
 // PER-05/06: holds vs groundings share one table
 export const holdKindEnum = pgEnum('hold_kind', ['hold', 'grounding']);
@@ -122,10 +109,13 @@ export const experienceSourceEnum = pgEnum('experience_source', [
 // ============================================================================
 
 // SCH-01: reservation activity types
-export const reservationActivityTypeEnum = pgEnum(
-  'reservation_activity_type',
-  ['flight', 'simulator', 'oral', 'academic', 'misc'],
-);
+export const reservationActivityTypeEnum = pgEnum('reservation_activity_type', [
+  'flight',
+  'simulator',
+  'oral',
+  'academic',
+  'misc',
+]);
 
 // SCH-08: reservation lifecycle status
 export const reservationStatusEnum = pgEnum('reservation_status', [
@@ -151,25 +141,13 @@ export const closeOutReasonEnum = pgEnum('close_out_reason', [
 ]);
 
 // FLT-04: aircraft squawk severity
-export const squawkSeverityEnum = pgEnum('squawk_severity', [
-  'info',
-  'watch',
-  'grounding',
-]);
+export const squawkSeverityEnum = pgEnum('squawk_severity', ['info', 'watch', 'grounding']);
 
 // FTR-07: FIF notice severity
-export const fifSeverityEnum = pgEnum('fif_severity', [
-  'info',
-  'important',
-  'critical',
-]);
+export const fifSeverityEnum = pgEnum('fif_severity', ['info', 'important', 'critical']);
 
 // FTR-06: passenger manifest position
-export const manifestPositionEnum = pgEnum('manifest_position', [
-  'pic',
-  'sic',
-  'passenger',
-]);
+export const manifestPositionEnum = pgEnum('manifest_position', ['pic', 'sic', 'passenger']);
 
 // SCH-16: schedule block kind
 export const blockKindEnum = pgEnum('block_kind', [
@@ -186,6 +164,109 @@ export const unavailabilityKindEnum = pgEnum('unavailability_kind', [
   'personal',
   'training',
   'other',
+]);
+
+// ============================================================================
+// Phase 4 new enums (CAMP)
+// ============================================================================
+
+export const maintenanceItemKindEnum = pgEnum('maintenance_item_kind', [
+  'annual_inspection',
+  'hundred_hour_inspection',
+  'airworthiness_directive',
+  'oil_change',
+  'transponder_91_413',
+  'pitot_static_91_411',
+  'elt_battery',
+  'elt_91_207',
+  'vor_check',
+  'component_life',
+  'manufacturer_service_bulletin',
+  'custom',
+]);
+
+export const maintenanceItemStatusEnum = pgEnum('maintenance_item_status', [
+  'current',
+  'due_soon',
+  'overdue',
+  'grounding',
+]);
+
+export const maintenanceItemClockEnum = pgEnum('maintenance_item_clock', [
+  'hobbs',
+  'tach',
+  'airframe',
+  'engine',
+  'calendar',
+  'combined',
+]);
+
+export const aircraftComponentKindEnum = pgEnum('aircraft_component_kind', [
+  'magneto',
+  'prop',
+  'vacuum_pump',
+  'alternator',
+  'elt',
+  'elt_battery',
+  'starter',
+  'mag_points',
+  'spark_plug',
+  'custom',
+]);
+
+export const componentStatusEnum = pgEnum('component_status', [
+  'current',
+  'due_soon',
+  'overdue',
+  'grounding',
+]);
+
+export const workOrderStatusEnum = pgEnum('work_order_status', [
+  'draft',
+  'open',
+  'in_progress',
+  'pending_signoff',
+  'closed',
+  'cancelled',
+]);
+
+export const workOrderKindEnum = pgEnum('work_order_kind', [
+  'annual',
+  '100_hour',
+  'ad_compliance',
+  'squawk_repair',
+  'component_replacement',
+  'oil_change',
+  'custom',
+]);
+
+export const adComplianceStatusEnum = pgEnum('ad_compliance_status', [
+  'not_applicable',
+  'current',
+  'due_soon',
+  'overdue',
+  'grounding',
+]);
+
+export const logbookBookKindEnum = pgEnum('logbook_book_kind', ['airframe', 'engine', 'prop']);
+
+export const partKindEnum = pgEnum('part_kind', [
+  'consumable',
+  'overhaul_item',
+  'life_limited',
+  'hardware',
+]);
+
+export const partUnitEnum = pgEnum('part_unit', ['each', 'qt', 'gal', 'ft', 'oz', 'lb']);
+
+export const squawkStatusEnum = pgEnum('squawk_status', [
+  'open',
+  'triaged',
+  'deferred',
+  'in_work',
+  'fixed',
+  'returned_to_service',
+  'cancelled',
 ]);
 
 // FLT-05: aircraft equipment tag enum (locked list in CONTEXT)
