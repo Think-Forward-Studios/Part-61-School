@@ -78,7 +78,14 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 4. A dispatch screen shows what is currently flying, about to fly, and overdue — color-coded — and captures electronic student check-in, instructor electronic authorization (release), and aircraft check-out/in with Hobbs/tach snapshots
 5. An overdue aircraft (past expected end + grace) raises an alarm on dispatch and notifies duty instructor/admin; XC flights can record planned route, ETE, and intermediate stops (ready to bind to Phase 7 ADS-B), passenger manifest is captured with weights and emergency contacts, and a Flight Information File requires sign-off acknowledgement before dispatch
 6. A reservation moves through requested → approved → dispatched → flown → closed → archived with distinct reasoned close-out states (no-show, weather scrub, cancellation); flight close-out consolidates Hobbs/tach in, fuel/oil, route, squawks observed, and a handoff to line-item grading in a single screen
-   **Plans**: TBD
+   **Plans:** 5 plans
+   Plans:
+
+- [ ] 03-01-PLAN.md — Phase 3 schema, migration, exclusion constraints, is_airworthy_at stub, shadow-row trigger, RLS + concurrency tests
+- [ ] 03-02-PLAN.md — tRPC routers: schedule, dispatch, fif, admin rooms + squawks + integration tests
+- [ ] 03-03-PLAN.md — Calendar UI + reservation form + approvals + admin schedule/rooms/blocks
+- [ ] 03-04-PLAN.md — Dispatch screen + modal + overdue alarm + close-out form + passenger manifest
+- [ ] 03-05-PLAN.md — FIF admin UI + dashboard FIF inbox + end-of-phase human verification
 
 ### Phase 4: CAMP Maintenance
 
