@@ -31,10 +31,21 @@ declare
 begin
   v_user_id := (event ->> 'user_id')::uuid;
 
+  -- PER-02: reject login for users whose shadow row is not active.
+  -- The join filters on status = 'active'; if zero rows come back
+  -- (pending / inactive / rejected / missing shadow), raise so the
+  -- login UX can surface a friendly message. Active users are
+  -- unaffected — the return shape is identical to Phase 1.
   select u.school_id
     into v_school_id
     from public.users u
-   where u.id = v_user_id;
+   where u.id = v_user_id
+     and u.status = 'active';
+
+  if v_school_id is null then
+    raise exception 'account_not_active'
+      using hint = 'Your account is not active. Contact a school administrator.';
+  end if;
 
   select coalesce(array_agg(ur.role::text), array[]::text[])
     into v_roles
