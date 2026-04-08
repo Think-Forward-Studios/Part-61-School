@@ -6,6 +6,7 @@ import { db, users, userRoles, userBase, bases, schools } from '@part61/db';
 import type { Role } from '@part61/api';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
+import { BaseSwitcher } from '@/components/BaseSwitcher';
 import { LogoutButton } from '@/components/LogoutButton';
 
 const ROLES: readonly Role[] = ['student', 'instructor', 'mechanic', 'admin'];
@@ -86,6 +87,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     activeBaseName = baseRows[0]?.name ?? null;
   }
 
+  // List all bases this user has access to, for BaseSwitcher.
+  const availableBases = await db
+    .select({ id: bases.id, name: bases.name })
+    .from(userBase)
+    .innerJoin(bases, eq(bases.id, userBase.baseId))
+    .where(eq(userBase.userId, user.id));
+
   return (
     <div>
       <header
@@ -102,7 +110,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           Signed in as {shadow.email} — active role: {activeRole}
           {activeBaseName ? ` — base: ${activeBaseName}` : ''}
         </span>
-        <span style={{ marginLeft: 'auto' }}>
+        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: '1rem' }}>
+          <BaseSwitcher availableBases={availableBases} activeBaseId={activeBaseId} />
           {rolesList.length > 1 ? <RoleSwitcher roles={rolesList} active={activeRole} /> : null}
         </span>
         <LogoutButton />
