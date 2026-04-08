@@ -13,7 +13,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 ## Phases
 
 - [x] **Phase 1: Foundation & Terminology Contract** - Multi-tenant RLS, auth, audit scaffolding, banned-term lint, document storage (completed 2026-04-07)
-- [ ] **Phase 2: Personnel, Admin & Fleet Primitives** - People (bio/emergency/holds/history), instructor currencies+quals, multi-base scoping, multi-clock aircraft, admin CRUD
+- [x] **Phase 2: Personnel, Admin & Fleet Primitives** - People (bio/emergency/holds/history), instructor currencies+quals, multi-base scoping, multi-clock aircraft, admin CRUD (completed 2026-04-08)
 - [ ] **Phase 3: Scheduling & Dispatch Execution** - Reservations with DB-level conflict prevention, multi-activity-type scheduling, dispatch screen, check-in/out, overdue alerts, XC following, FIF, flight close-out
 - [ ] **Phase 4: CAMP Maintenance** - Real `isAirworthyAt`, inspections, ADs, squawks, work orders, parts, logbook export, downtime prediction
 - [ ] **Phase 5: Syllabus Model, Grading & Records** - Course→Stage→Phase→Unit→Lesson→LineItem hierarchy, seeded templates, versioning, grading, stage checks, endorsements, 141.101 + IACRA exports, test grades
@@ -57,7 +57,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 4. Instructor profile shows tracked currencies (CFI, CFII, MEI, medical, BFR, IPC) with expiration auto-warnings, qualifications (aircraft type, sim authorizations, course authorizations), and flight experience history; student profile shows no-show history and enrolled/past courses
 5. Each aircraft carries independent Hobbs, tach, airframe, and per-engine time series; current totals are computed as queries over an append-only `flight_log_entry` event log, never as a mutable column; aircraft profile shows totals, equipment, recent flights
 6. Aircraft, instructors, and rooms are scoped to a training base; a user with roles at multiple bases can switch active base context; admin dashboard shows fleet status at a glance for the active base
-   **Plans:** 4 plans
+   **Plans:** 4/4 plans complete
    Plans:
 
 - [ ] 02-01-PLAN.md — Drizzle schema, hand-authored migration, RLS policies, audit + append-only triggers, aircraft_current_totals view, cross-tenant tests
@@ -160,7 +160,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 | Phase                                      | Plans Complete | Status      | Completed  |
 | ------------------------------------------ | -------------- | ----------- | ---------- |
 | 1. Foundation & Terminology Contract       | 2/4            | Complete    | 2026-04-07 |
-| 2. Personnel, Admin & Fleet Primitives     | 0/0            | Not started | -          |
+| 2. Personnel, Admin & Fleet Primitives     | 0/0            | Complete    | 2026-04-08 |
 | 3. Scheduling & Dispatch Execution         | 0/0            | Not started | -          |
 | 4. CAMP Maintenance                        | 0/0            | Not started | -          |
 | 5. Syllabus Model, Grading & Records       | 0/0            | Not started | -          |
