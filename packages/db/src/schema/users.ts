@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  index,
   pgPolicy,
   pgTable,
   text,
@@ -8,7 +9,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { mechanicAuthorityEnum, roleEnum } from './enums';
+import { mechanicAuthorityEnum, roleEnum, userStatusEnum } from './enums';
 import { schools } from './tenancy';
 
 /**
@@ -32,6 +33,10 @@ export const users = pgTable(
     email: text('email').notNull().unique(),
     fullName: text('full_name'),
     timezone: text('timezone'), // nullable; falls back to schools.timezone
+    // PER-02: lifecycle status. 'pending' rows exist BEFORE auth.users
+    // is created (self-registration approval queue). Default 'active'
+    // matches existing Phase 1 invite-flow behavior.
+    status: userStatusEnum('status').notNull().default('active'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -40,7 +45,8 @@ export const users = pgTable(
       .defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
-  () => [
+  (t) => [
+    index('users_status_idx').on(t.status),
     pgPolicy('users_select_own_school', {
       as: 'permissive',
       for: 'select',

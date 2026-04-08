@@ -15,7 +15,7 @@
  */
 import { z } from 'zod';
 
-export const DocumentKind = z.enum(['medical', 'pilot_license', 'government_id', 'insurance']);
+export const DocumentKind = z.enum(['medical', 'pilot_license', 'government_id', 'insurance', 'aircraft_photo']);
 export type DocumentKind = z.infer<typeof DocumentKind>;
 
 export const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'application/pdf'] as const;

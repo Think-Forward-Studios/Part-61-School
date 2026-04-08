@@ -26,6 +26,7 @@ const KIND_LABEL: Record<DocumentKind, string> = {
   pilot_license: 'Pilot License',
   government_id: 'Government ID',
   insurance: 'Insurance',
+  aircraft_photo: 'Aircraft Photo',
 };
 
 function formatDate(iso: string): string {

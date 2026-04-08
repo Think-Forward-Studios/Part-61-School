@@ -34,6 +34,11 @@ export const documents = pgTable(
       .notNull()
       .references(() => users.id),
     kind: documentKindEnum('kind').notNull(),
+    // FLT-06: aircraft photos reuse the documents flow. Nullable because
+    // medicals/licenses/IDs have no aircraft. No FK declared in Drizzle
+    // — the migration adds it after aircraft is created to keep
+    // drizzle-kit diffs manageable.
+    aircraftId: uuid('aircraft_id'),
     storagePath: text('storage_path').notNull(),
     mimeType: text('mime_type').notNull(),
     byteSize: integer('byte_size').notNull(),
