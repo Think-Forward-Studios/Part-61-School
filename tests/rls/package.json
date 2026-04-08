@@ -8,7 +8,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@part61/db": "workspace:*"
+    "@part61/api": "workspace:*",
+    "@part61/db": "workspace:*",
+    "@part61/domain": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

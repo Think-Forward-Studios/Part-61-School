@@ -30,7 +30,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
-import { documents } from '@part61/db';
+import { documents, aircraft } from '@part61/db';
 import {
   ALLOWED_MIME_TYPES,
   DocumentKind,
@@ -86,8 +86,14 @@ const createSignedUploadUrlInput = z.object({
   expiresAt: z.date().optional(),
 });
 
+const uploadAircraftPhotoInput = z.object({
+  aircraftId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+  mimeType: MimeType,
+  byteSize: z.number().int().positive().max(MAX_BYTE_SIZE),
+});
+
 const finalizeUploadInput = z.object({
-  documentId: z.string().uuid(),
+  documentId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
   kind: DocumentKind,
   path: z.string().min(1),
   mimeType: MimeType,
@@ -96,7 +102,7 @@ const finalizeUploadInput = z.object({
 });
 
 const documentIdInput = z.object({
-  documentId: z.string().uuid(),
+  documentId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
 });
 
 // Minimal Drizzle-transaction shape we actually use. Keeping this
@@ -257,6 +263,64 @@ export const documentsRouter = router({
    * action='soft_delete'. Hard delete is blocked by
    * fn_block_hard_delete at the trigger level.
    */
+  /**
+   * Aircraft photo upload (FLT-06).
+   *
+   * Validates the aircraftId belongs to the caller's school, then
+   * issues a signed upload URL. finalizeUpload handles the insert as
+   * usual; the client also calls a follow-up setter (not implemented
+   * here — Plan 04 wires the aircraft detail page to stamp
+   * documents.aircraft_id after finalize). For now we return the
+   * signed URL plus the documentId so the UI can stitch it together.
+   */
+  uploadAircraftPhoto: protectedProcedure
+    .input(uploadAircraftPhotoInput)
+    .mutation(async ({ ctx, input }) => {
+      const session = ctx.session!;
+      if (!isAllowedMime(input.mimeType)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `mimeType must be one of ${ALLOWED_MIME_TYPES.join(', ')}`,
+        });
+      }
+      const tx = ctx.tx as Tx;
+      // Scope check: aircraft must live in caller's school.
+      const rows = await tx
+        .select({ id: aircraft.id })
+        .from(aircraft)
+        .where(
+          and(
+            eq(aircraft.id, input.aircraftId),
+            eq(aircraft.schoolId, session.schoolId),
+          ),
+        )
+        .limit(1);
+      if (rows.length === 0) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Aircraft not found' });
+      }
+      const documentId = crypto.randomUUID();
+      const ext = extForMime(input.mimeType);
+      const path = storagePath(session.schoolId, session.userId, documentId, ext);
+      const storage = await getServiceRoleStorage();
+      const { data, error } = await storage
+        .from('documents')
+        .createSignedUploadUrl(path);
+      if (error || !data) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error?.message ?? 'Failed to create signed upload URL',
+        });
+      }
+      return {
+        documentId,
+        path,
+        signedUrl: data.signedUrl,
+        token: data.token,
+        kind: 'aircraft_photo' as const,
+        aircraftId: input.aircraftId,
+      };
+    }),
+
   softDelete: protectedProcedure.input(documentIdInput).mutation(async ({ ctx, input }) => {
     const session = ctx.session!;
     const tx = ctx.tx as Tx;

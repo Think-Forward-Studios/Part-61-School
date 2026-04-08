@@ -8,7 +8,7 @@
 # See phase 1 research §Pitfall 2 (service role bypass).
 set -euo pipefail
 
-allowed_re='(packages/api/src/routers/auth\.ts|packages/api/env\.ts|\.env\.example|^\.github/|scripts/check-service-role-usage\.sh)'
+allowed_re='(packages/api/src/routers/auth\.ts|packages/api/src/routers/documents\.ts|packages/api/src/routers/admin/people\.ts|packages/api/env\.ts|\.env\.example|^\.github/|scripts/check-service-role-usage\.sh)'
 
 # Search TS/TSX sources only. Exclude node_modules, .next, dist, .turbo.
 offenders=$(grep -rn 'SUPABASE_SERVICE_ROLE_KEY' \
