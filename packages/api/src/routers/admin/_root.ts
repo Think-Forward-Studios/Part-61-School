@@ -15,6 +15,7 @@ import { adminMaintenanceTemplatesRouter } from './maintenanceTemplates';
 import { adminOverrunsRouter } from './overruns';
 import { adminCoursesRouter } from './courses';
 import { adminEnrollmentsRouter } from './enrollments';
+import { adminStageChecksRouter } from './stageChecks';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -33,4 +34,5 @@ export const adminRouter = router({
   overruns: adminOverrunsRouter,
   courses: adminCoursesRouter,
   enrollments: adminEnrollmentsRouter,
+  stageChecks: adminStageChecksRouter,
 });
