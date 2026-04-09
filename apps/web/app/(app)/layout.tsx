@@ -110,6 +110,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           Signed in as {shadow.email} — active role: {activeRole}
           {activeBaseName ? ` — base: ${activeBaseName}` : ''}
         </span>
+        <a href="/record" style={{ fontSize: '0.85rem' }}>
+          My Record
+        </a>
+        <a href="/flight-log" style={{ fontSize: '0.85rem' }}>
+          Flight Log
+        </a>
         <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: '1rem' }}>
           <BaseSwitcher availableBases={availableBases} activeBaseId={activeBaseId} />
           {rolesList.length > 1 ? <RoleSwitcher roles={rolesList} active={activeRole} /> : null}
