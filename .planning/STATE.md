@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_plan: Not started
 status: completed
-last_updated: '2026-04-08T05:15:16.129Z'
+last_updated: '2026-04-09T00:01:00.907Z'
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 2
-  total_plans: 13
-  completed_plans: 12
-  percent: 85
+  total_plans: 18
+  completed_plans: 13
+  percent: 72
 ---
 
 # STATE: Part 61 School
@@ -25,11 +25,11 @@ progress:
 
 ## Current Position
 
-- **Phase:** 03-scheduling-dispatch-execution
-- **Current Plan:** Not started
+- **Phase:** 04-camp-maintenance
+- **Current Plan:** 04-02 (next)
 - **Total Plans in Phase:** 5
-- **Status:** Milestone complete
-- **Progress:** [█████████░] 85%
+- **Status:** In progress (1/5)
+- **Progress:** [███████░░░] 72%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ progress:
 | Phase 03-scheduling-dispatch-execution P03 | 24m    | 2 tasks  | 24 files |
 | Phase 03-scheduling-dispatch-execution P04 | 18 min | 2 tasks  | 12 files |
 | Phase 03-scheduling-dispatch-execution P05 | 7m     | 2 tasks  | 8 files  |
+| Phase 04 P01                               | 35m    | 2 tasks  | 17 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,15 @@ progress:
 - Concurrency test accepts BOTH 23P01 (exclusion_violation) and 40P01 (deadlock_detected) — Postgres can race-resolve overlapping gist inserts either way, both prove exactly-one-winner.
 - Block-inflate trigger fires BEFORE INSERT so the exclusion constraint sees the inflated instructor/aircraft/room when it evaluates.
 - room, fif_acknowledgement, and schedule_block_instance get audit-only triggers (no hard-delete blocker) because they aren't training-record-relevant.
+
+### Decisions (04-01)
+
+- `squawk_status` was created as a NEW enum in Phase 4 — Phase 3 had no such enum and tracked open/resolved via the nullable `resolved_at` column. Plan/CONTEXT mistakenly said "extend"; the executor created it from scratch and documented as a Rule 1 deviation.
+- `logbook_entry` has NO `deleted_at` column — retention contract forbids soft-delete. Immutability is enforced via a BEFORE UPDATE seal trigger that raises P0001 on any UPDATE to a sealed row, and validates that the false→true sealing transition supplies both `signer_snapshot` and `signed_at`.
+- Forward-FK cycles (`maintenance_item.component_id`, `.ad_compliance_id`, `.last_work_order_id`, `aircraft_squawk.work_order_id`) handled via post-creation `ALTER TABLE ADD CONSTRAINT`. Drizzle schemas mirror this with bare `uuid('foo_id')` columns (no `.references()`) to dodge TypeScript import cycles.
+- `maintenance_overrun` once-only-per-cycle invariant enforced via partial unique index on `(item_id) WHERE revoked_at IS NULL AND deleted_at IS NULL`.
+- Append-only event tables (`ad_compliance_history`, `aircraft_component_overhaul`) use four-policy RLS (SELECT scoped, INSERT with check, UPDATE/DELETE returning false) plus audit-only triggers.
+- New base-scoped RLS predicate widens with `or base_id is null` because several CAMP tables (school-wide ADs, cross-base inventory) intentionally have nullable `base_id`.
 
 ### Decisions (03-02)
 
@@ -134,9 +144,9 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Execute `.planning/phases/03-scheduling-dispatch-execution/03-03-PLAN.md`.
+**Next action:** Execute `.planning/phases/04-camp-maintenance/04-02-PLAN.md`.
 
-**Last session stopped at:** Completed 03-02-PLAN.md (commits ba0c8e6, 38119a6).
+**Last session stopped at:** Completed 04-01-PLAN.md (commits 36f64da, dfc769d).
 **Resume from:** None
 
 **Files:**
