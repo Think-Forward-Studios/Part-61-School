@@ -150,9 +150,9 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Execute `.planning/phases/05-syllabus-model-grading-records/05-02-PLAN.md` (seeds: AC 61-65 endorsements + PPL/IR/Comm SEL templates).
+**Next action:** Continuation agent to finish `.planning/phases/05-syllabus-model-grading-records/05-03-PLAN.md` Slice B — admin.stageChecks / admin.endorsements / admin.studentCurrencies / gradeSheet / flightLog / record / schedule.checkStudentCurrency + phase5-routers integration tests.
 
-**Last session stopped at:** Completed 05-01-PLAN.md (commits 0ee585b, 2536329).
+**Last session stopped at:** Completed 05-03 Slice A (commits de5052f, 6b554f8, 91deb6d, 5822647) — migrations 0021+0022, adminOrChiefInstructorProcedure, buildInstructorSignerSnapshot, domain labels, admin.courses router, admin.enrollments router. 175/175 tests. Monorepo typecheck + lint green. SYL-01/03/04 closed by this slice.
 **Resume from:** None
 
 **Files:**
