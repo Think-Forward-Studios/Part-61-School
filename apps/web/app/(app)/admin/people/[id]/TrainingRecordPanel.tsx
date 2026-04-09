@@ -80,6 +80,31 @@ export async function TrainingRecordPanel({
       style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: 6 }}
     >
       <h2>Training Record</h2>
+      <div style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+        <a
+          href={`/admin/students/${studentUserId}/iacra.pdf`}
+          target="_blank"
+          rel="noreferrer"
+          style={{ marginRight: '0.75rem' }}
+        >
+          Download IACRA PDF
+        </a>
+        <a
+          href={`/admin/students/${studentUserId}/iacra.csv`}
+          style={{ marginRight: '0.75rem' }}
+        >
+          Download IACRA CSV
+        </a>
+        {active ? (
+          <a
+            href={`/admin/students/${studentUserId}/courses/${active.id}/record.pdf`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Download 141.101 Training Record PDF
+          </a>
+        ) : null}
+      </div>
       {enrollments.length === 0 ? (
         <p style={{ color: '#888' }}>Not enrolled in any course.</p>
       ) : (
