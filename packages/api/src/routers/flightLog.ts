@@ -19,14 +19,20 @@
  */
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, sql } from 'drizzle-orm';
-import { aircraft, flightLogEntry, flightLogEntryEngine } from '@part61/db';
+import { z } from 'zod';
+import {
+  aircraft,
+  flightLogEntry,
+  flightLogEntryEngine,
+  flightLogTime,
+} from '@part61/db';
 import {
   flightLogEntryCreateInput,
   flightLogCorrectionCreateInput,
   flightLogListInput,
 } from '@part61/domain';
 import { router } from '../trpc';
-import { protectedProcedure } from '../procedures';
+import { instructorOrAdminProcedure, protectedProcedure } from '../procedures';
 
 type Tx = {
   insert: typeof import('@part61/db').db.insert;
@@ -103,6 +109,95 @@ export const flightLogRouter = router({
         );
       }
       return entry;
+    }),
+
+  /**
+   * categorize — Phase 5 SYL-12/14.
+   *
+   * Writes per-person 14 CFR 61.51(e) flight time buckets against a
+   * closed-out reservation. Validates that day+night minutes sum to the
+   * hobbs delta within ±6 min. DB trigger is the backstop.
+   */
+  categorize: instructorOrAdminProcedure
+    .input(
+      z.object({
+        reservationId: z.string().uuid(),
+        flightLogEntryId: z.string().uuid().optional(),
+        splits: z
+          .array(
+            z.object({
+              userId: z.string().uuid(),
+              kind: z.enum(['dual_received', 'dual_given', 'pic', 'sic', 'solo']),
+              dayMinutes: z.number().int().min(0).default(0),
+              nightMinutes: z.number().int().min(0).default(0),
+              crossCountryMinutes: z.number().int().min(0).default(0),
+              instrumentActualMinutes: z.number().int().min(0).default(0),
+              instrumentSimulatedMinutes: z.number().int().min(0).default(0),
+              isSimulator: z.boolean().default(false),
+              timeInMakeModel: z.string().optional(),
+              dayLandings: z.number().int().min(0).default(0),
+              nightLandings: z.number().int().min(0).default(0),
+              instrumentApproaches: z.number().int().min(0).default(0),
+              notes: z.string().optional(),
+            }),
+          )
+          .min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      // Determine hobbs delta from the paired flight_log_entry for a ±6 min check
+      let hobbsDeltaMinutes: number | null = null;
+      if (input.flightLogEntryId) {
+        const entryRows = await tx
+          .select()
+          .from(flightLogEntry)
+          .where(eq(flightLogEntry.id, input.flightLogEntryId))
+          .limit(1);
+        const entry = entryRows[0];
+        if (entry?.airframeDelta) {
+          hobbsDeltaMinutes = Math.round(Number(entry.airframeDelta) * 60);
+        }
+      }
+      // Validate + insert
+      const schoolId = ctx.session!.schoolId;
+      const inserted: Array<Record<string, unknown>> = [];
+      for (const s of input.splits) {
+        const totalMinutes = s.dayMinutes + s.nightMinutes;
+        if (hobbsDeltaMinutes != null && !s.isSimulator) {
+          if (Math.abs(totalMinutes - hobbsDeltaMinutes) > 6) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: `Day+night minutes (${totalMinutes}) must be within ±6 min of hobbs delta (${hobbsDeltaMinutes})`,
+            });
+          }
+        }
+        const [row] = await tx
+          .insert(flightLogTime)
+          .values({
+            schoolId,
+            reservationId: input.reservationId,
+            flightLogEntryId: input.flightLogEntryId,
+            userId: s.userId,
+            kind: s.kind,
+            dayMinutes: s.dayMinutes,
+            nightMinutes: s.nightMinutes,
+            crossCountryMinutes: s.crossCountryMinutes,
+            instrumentActualMinutes: s.instrumentActualMinutes,
+            instrumentSimulatedMinutes: s.instrumentSimulatedMinutes,
+            isSimulator: s.isSimulator,
+            timeInMakeModel: s.timeInMakeModel,
+            dayLandings: s.dayLandings,
+            nightLandings: s.nightLandings,
+            instrumentApproaches: s.instrumentApproaches,
+            notes: s.notes,
+            createdBy: ctx.session!.userId,
+            updatedBy: ctx.session!.userId,
+          })
+          .returning();
+        inserted.push(row as Record<string, unknown>);
+      }
+      return { inserted };
     }),
 
   createCorrection: protectedProcedure
