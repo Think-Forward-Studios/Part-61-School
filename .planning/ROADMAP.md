@@ -15,7 +15,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 - [x] **Phase 1: Foundation & Terminology Contract** - Multi-tenant RLS, auth, audit scaffolding, banned-term lint, document storage (completed 2026-04-07)
 - [x] **Phase 2: Personnel, Admin & Fleet Primitives** - People (bio/emergency/holds/history), instructor currencies+quals, multi-base scoping, multi-clock aircraft, admin CRUD (completed 2026-04-08)
 - [x] **Phase 3: Scheduling & Dispatch Execution** - Reservations with DB-level conflict prevention, multi-activity-type scheduling, dispatch screen, check-in/out, overdue alerts, XC following, FIF, flight close-out (completed 2026-04-08)
-- [ ] **Phase 4: CAMP Maintenance** - Real `isAirworthyAt`, inspections, ADs, squawks, work orders, parts, logbook export, downtime prediction
+- [x] **Phase 4: CAMP Maintenance** - Real `isAirworthyAt`, inspections, ADs, squawks, work orders, parts, logbook export, downtime prediction (completed 2026-04-09)
 - [ ] **Phase 5: Syllabus Model, Grading & Records** - Course→Stage→Phase→Unit→Lesson→LineItem hierarchy, seeded templates, versioning, grading, stage checks, endorsements, 141.101 + IACRA exports, test grades
 - [ ] **Phase 6: Syllabus Rules, Progression & Audit** - Required/Optional/Must-Pass, auto-rollover, prerequisite+currency enforcement, mgmt override, rules engine, course minimums, ahead/behind, projected completion, nightly audit, ETA next-activity
 - [ ] **Phase 7: ADS-B Fleet Integration** - Integrate existing ADS-B Tracker service: live fleet map, deep-links, geofence, flight replay
@@ -101,7 +101,8 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 5. Admin dashboard and each aircraft profile display a "next grounding event" countdown and a rule-based downtime forecast using scheduled reservations and historical squawk-repair averages
 6. The Phase 3 `isAirworthyAt()` stub is fully replaced by real rules derived from inspection state, open squawks, AD compliance, and component lifing; ADs are first-class entities with applicability, method, due-at rule, and compliance history — never free text
 
-**Plans:** 5 plans
+**Plans:** 5/5 plans complete
+
 - [ ] 04-01-PLAN.md — CAMP enums, tables, RLS, audit/hard-delete/seal triggers, cross-tenant tests
 - [ ] 04-02-PLAN.md — SQL functions, business triggers, is_airworthy_at body replacement + Phase 3 regression guard
 - [ ] 04-03-PLAN.md — tRPC routers (maintenance/ads/components/workOrders/parts/logbook/templates/overruns/squawks), mechanicOrAdminProcedure, signer snapshot helper, API tests
@@ -175,7 +176,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 | 1. Foundation & Terminology Contract       | 2/4            | Complete    | 2026-04-07 |
 | 2. Personnel, Admin & Fleet Primitives     | 0/0            | Complete    | 2026-04-08 |
 | 3. Scheduling & Dispatch Execution         | 0/0            | Complete    | 2026-04-08 |
-| 4. CAMP Maintenance                        | 0/0            | Not started | -          |
+| 4. CAMP Maintenance                        | 0/0            | Complete    | 2026-04-09 |
 | 5. Syllabus Model, Grading & Records       | 0/0            | Not started | -          |
 | 6. Syllabus Rules, Progression & Audit     | 0/0            | Not started | -          |
 | 7. ADS-B Fleet Integration                 | 0/0            | Not started | -          |
