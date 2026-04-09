@@ -82,20 +82,20 @@
 
 ### Syllabus & Training Records
 
-- [ ] **SYL-01**: Syllabus data model: Course → Stage → Phase → Unit → Lesson → Line Item (training objective), mirroring the 141 TCO structure (used internally; not labeled "141" in UI)
+- [x] **SYL-01**: Syllabus data model: Course → Stage → Phase → Unit → Lesson → Line Item (training objective), mirroring the 141 TCO structure (used internally; not labeled "141" in UI)
 - [ ] **SYL-02**: System ships with seed templates for Private Pilot, Instrument Rating, and Commercial Single-Engine, derived from publicly available 141 TCOs, that the school can fork and customize
 - [ ] **SYL-03**: School can create a custom syllabus from scratch or by forking a template
-- [ ] **SYL-04**: Syllabuses are versioned; an enrolled student is locked to the version they started on, and a chief instructor can publish revisions without disrupting in-flight students
+- [x] **SYL-04**: Syllabuses are versioned; an enrolled student is locked to the version they started on, and a chief instructor can publish revisions without disrupting in-flight students
 - [ ] **SYL-05**: Student can be enrolled in one or more syllabuses; current progress is visible (lessons complete, current stage, next lesson)
-- [ ] **SYL-06**: Each line item has a grading scale; school can choose absolute grading (Introduce/Practice/Perform/Mastered) or relative grading (1-5 against standard) per syllabus
+- [x] **SYL-06**: Each line item has a grading scale; school can choose absolute grading (Introduce/Practice/Perform/Mastered) or relative grading (1-5 against standard) per syllabus
 - [ ] **SYL-07**: Instructor grades line items after a lesson; grades are append-only and require an electronic signature with timestamp
 - [ ] **SYL-08**: Stage check workflow: stage check assigned, conducted by a different instructor, recorded with pass/fail and remarks
 - [ ] **SYL-09**: Endorsement library (AC 61-65 templates) — instructor can issue an endorsement to a student; endorsement is captured in training record with date and instructor signature
 - [ ] **SYL-10**: Training record per student: chronological list of lessons, grades, endorsements, stage checks, instructor sign-offs — exportable as PDF in the format required by 14 CFR 141.101 (used internally as a record-keeping standard)
 - [ ] **SYL-11**: IACRA-friendly export: student progress summary in a format that helps an instructor fill out IACRA when the student is ready for a checkride
-- [ ] **SYL-12**: Currency tracking: BFR, IPC, medical class+expiration, solo endorsement scope+expiration, day/night/PIC currency — surfaced on student profile and used by SCH-05
-- [ ] **SYL-13**: Every course component (Stage, Phase, Unit, Lesson, Line Item) can carry **Objectives** and **Completion Standards** as structured text fields shown to instructor on the grade sheet
-- [ ] **SYL-14**: Line items can be flagged **Required**, **Optional**, or **Must Pass**; course completion logic respects these flags
+- [x] **SYL-12**: Currency tracking: BFR, IPC, medical class+expiration, solo endorsement scope+expiration, day/night/PIC currency — surfaced on student profile and used by SCH-05
+- [x] **SYL-13**: Every course component (Stage, Phase, Unit, Lesson, Line Item) can carry **Objectives** and **Completion Standards** as structured text fields shown to instructor on the grade sheet
+- [x] **SYL-14**: Line items can be flagged **Required**, **Optional**, or **Must Pass**; course completion logic respects these flags
 - [ ] **SYL-15**: **Incomplete line items auto-roll forward** — any Required or Must Pass line item not satisfactorily completed in a lesson is automatically inserted into the next lesson's grade sheet until satisfied
 - [ ] **SYL-16**: **Prerequisite enforcement** — a lesson cannot be scheduled or graded until all prerequisite lessons/line items are complete
 - [ ] **SYL-17**: **Management override** — admin/chief instructor can authorize a student to perform a lesson out of syllabus order; override is logged with reason, authorizer, and timestamp, and surfaces in the audit trail
@@ -332,20 +332,20 @@ Explicitly excluded — documented to prevent scope creep.
 | MNT-09      | Phase 4 | Complete |
 | MNT-10      | Phase 4 | Complete |
 | MNT-11      | Phase 4 | Complete |
-| SYL-01      | Phase 5 | Pending  |
+| SYL-01      | Phase 5 | Complete |
 | SYL-02      | Phase 5 | Pending  |
 | SYL-03      | Phase 5 | Pending  |
-| SYL-04      | Phase 5 | Pending  |
+| SYL-04      | Phase 5 | Complete |
 | SYL-05      | Phase 5 | Pending  |
-| SYL-06      | Phase 5 | Pending  |
+| SYL-06      | Phase 5 | Complete |
 | SYL-07      | Phase 5 | Pending  |
 | SYL-08      | Phase 5 | Pending  |
 | SYL-09      | Phase 5 | Pending  |
 | SYL-10      | Phase 5 | Pending  |
 | SYL-11      | Phase 5 | Pending  |
-| SYL-12      | Phase 5 | Pending  |
-| SYL-13      | Phase 5 | Pending  |
-| SYL-14      | Phase 5 | Pending  |
+| SYL-12      | Phase 5 | Complete |
+| SYL-13      | Phase 5 | Complete |
+| SYL-14      | Phase 5 | Complete |
 | SYL-15      | Phase 6 | Pending  |
 | SYL-16      | Phase 6 | Pending  |
 | SYL-17      | Phase 6 | Pending  |
