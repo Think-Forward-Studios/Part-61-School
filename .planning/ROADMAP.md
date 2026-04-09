@@ -185,7 +185,7 @@ Plans:
 | 2. Personnel, Admin & Fleet Primitives     | 0/0            | Complete    | 2026-04-08 |
 | 3. Scheduling & Dispatch Execution         | 0/0            | Complete    | 2026-04-08 |
 | 4. CAMP Maintenance                        | 0/0            | Complete    | 2026-04-09 |
-| 5. Syllabus Model, Grading & Records       | 5/5 | Complete   | 2026-04-09 |
+| 5. Syllabus Model, Grading & Records       | 5/5            | Complete    | 2026-04-09 |
 | 6. Syllabus Rules, Progression & Audit     | 0/0            | Not started | -          |
 | 7. ADS-B Fleet Integration                 | 0/0            | Not started | -          |
 | 8. Experience, Reporting, Messaging & Beta | 0/0            | Not started | -          |
