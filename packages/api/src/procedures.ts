@@ -18,3 +18,6 @@ export const adminProcedure = protectedProcedure.use(requireRole('admin'));
 export const instructorOrAdminProcedure = protectedProcedure.use(
   requireRole('instructor', 'admin'),
 );
+export const mechanicOrAdminProcedure = protectedProcedure.use(
+  requireRole('mechanic', 'admin'),
+);

@@ -4,3 +4,8 @@ export * from './schemas/aircraft';
 export * from './schemas/flightLog';
 export * from './schemas/schedule';
 export * from './schemas/scheduleLabels';
+export * from './schemas/intervalRule';
+export * from './schemas/adApplicability';
+export * from './schemas/signerSnapshot';
+export * from './schemas/maintenance';
+export * from './schemas/maintenanceKindLabels';
