@@ -122,7 +122,15 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 4. After a lesson, an instructor grades each line item on the syllabus's chosen scale (absolute Introduce/Practice/Perform/Mastered, or relative 1–5); grades are append-only with electronic signature and timestamp; stage checks assigned to a different instructor record pass/fail with remarks; written/oral test scores can be entered against any course component
 5. Endorsements drawn from an AC 61-65 library are captured in the training record with date and instructor signature; currency tracking (BFR, IPC, medical class+expiration, solo scope+expiration, day/night/PIC) is surfaced on the student profile and blocks SCH-12 (student qualification/currency check for the lesson)
 6. A complete chronological training record per student (lessons, grades, endorsements, stage checks, sign-offs) is exportable as a 141.101-shaped PDF; an IACRA-friendly hours summary broken out by 61.51(e) category/class is exportable; a student can view their own record read-only and their flight log with totals by PIC/dual/solo/XC/night/IFR
-   **Plans**: TBD
+
+**Plans:** 5 plans
+Plans:
+
+- [ ] 05-01-PLAN.md — Schema: course tree + versioning + grading + stage check + endorsement + flight_log_time + personnel_currency rename + RLS tests
+- [ ] 05-02-PLAN.md — Seed AC 61-65K endorsement catalog + 3 system courses (PPL/IR/CSEL) with seed.sql re-insert
+- [ ] 05-03-PLAN.md — tRPC routers (admin.courses/enrollments/stageChecks/endorsements/studentCurrencies, gradeSheet, flightLog, record, schedule.checkStudentCurrency) + adminOrChiefInstructorProcedure + signer helper
+- [ ] 05-04-PLAN.md — Admin UI (courses/versions/lessons/enrollments/stage-checks/endorsements/student currencies/student record) + dispatch close-out lesson picker + grade sheet editor + flight time categorization
+- [ ] 05-05-PLAN.md — 141.101 PDF + IACRA PDF+CSV routes + student-facing /record and /flight-log + end-of-phase human-verify
 
 ### Phase 6: Syllabus Rules, Progression & Audit
 
