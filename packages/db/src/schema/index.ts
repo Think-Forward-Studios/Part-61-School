@@ -35,6 +35,8 @@ export * from './person_unavailability';
 // Phase 5 modules (syllabus + grading + records)
 export * from './syllabus';
 export * from './personnelCurrency';
+export * from './grading';
+export * from './endorsements';
 
 // Phase 4 modules (CAMP)
 export * from './maintenance_item';
