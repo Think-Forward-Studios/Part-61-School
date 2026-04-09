@@ -83,14 +83,14 @@
 ### Syllabus & Training Records
 
 - [x] **SYL-01**: Syllabus data model: Course → Stage → Phase → Unit → Lesson → Line Item (training objective), mirroring the 141 TCO structure (used internally; not labeled "141" in UI)
-- [ ] **SYL-02**: System ships with seed templates for Private Pilot, Instrument Rating, and Commercial Single-Engine, derived from publicly available 141 TCOs, that the school can fork and customize
-- [ ] **SYL-03**: School can create a custom syllabus from scratch or by forking a template
+- [x] **SYL-02**: System ships with seed templates for Private Pilot, Instrument Rating, and Commercial Single-Engine, derived from publicly available 141 TCOs, that the school can fork and customize
+- [x] **SYL-03**: School can create a custom syllabus from scratch or by forking a template
 - [x] **SYL-04**: Syllabuses are versioned; an enrolled student is locked to the version they started on, and a chief instructor can publish revisions without disrupting in-flight students
 - [ ] **SYL-05**: Student can be enrolled in one or more syllabuses; current progress is visible (lessons complete, current stage, next lesson)
 - [x] **SYL-06**: Each line item has a grading scale; school can choose absolute grading (Introduce/Practice/Perform/Mastered) or relative grading (1-5 against standard) per syllabus
 - [ ] **SYL-07**: Instructor grades line items after a lesson; grades are append-only and require an electronic signature with timestamp
 - [ ] **SYL-08**: Stage check workflow: stage check assigned, conducted by a different instructor, recorded with pass/fail and remarks
-- [ ] **SYL-09**: Endorsement library (AC 61-65 templates) — instructor can issue an endorsement to a student; endorsement is captured in training record with date and instructor signature
+- [x] **SYL-09**: Endorsement library (AC 61-65 templates) — instructor can issue an endorsement to a student; endorsement is captured in training record with date and instructor signature
 - [ ] **SYL-10**: Training record per student: chronological list of lessons, grades, endorsements, stage checks, instructor sign-offs — exportable as PDF in the format required by 14 CFR 141.101 (used internally as a record-keeping standard)
 - [ ] **SYL-11**: IACRA-friendly export: student progress summary in a format that helps an instructor fill out IACRA when the student is ready for a checkride
 - [x] **SYL-12**: Currency tracking: BFR, IPC, medical class+expiration, solo endorsement scope+expiration, day/night/PIC currency — surfaced on student profile and used by SCH-05
@@ -333,14 +333,14 @@ Explicitly excluded — documented to prevent scope creep.
 | MNT-10      | Phase 4 | Complete |
 | MNT-11      | Phase 4 | Complete |
 | SYL-01      | Phase 5 | Complete |
-| SYL-02      | Phase 5 | Pending  |
-| SYL-03      | Phase 5 | Pending  |
+| SYL-02      | Phase 5 | Complete |
+| SYL-03      | Phase 5 | Complete |
 | SYL-04      | Phase 5 | Complete |
 | SYL-05      | Phase 5 | Pending  |
 | SYL-06      | Phase 5 | Complete |
 | SYL-07      | Phase 5 | Pending  |
 | SYL-08      | Phase 5 | Pending  |
-| SYL-09      | Phase 5 | Pending  |
+| SYL-09      | Phase 5 | Complete |
 | SYL-10      | Phase 5 | Pending  |
 | SYL-11      | Phase 5 | Pending  |
 | SYL-12      | Phase 5 | Complete |
