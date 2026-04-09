@@ -244,14 +244,7 @@ export function CloseOutForm({
           alignItems: 'center',
         }}
       >
-        <button
-          type="button"
-          disabled
-          title="Available in Phase 5"
-          style={{ background: '#e5e7eb', color: '#888', cursor: 'not-allowed' }}
-        >
-          Grade lesson
-        </button>
+        <div />
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             type="button"
