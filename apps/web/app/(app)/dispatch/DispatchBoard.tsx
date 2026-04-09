@@ -22,6 +22,7 @@ import { trpc } from '@/lib/trpc/client';
 import { reservationStatusLabel } from '@part61/domain';
 import { DispatchModal } from './DispatchModal';
 import { OverdueAlarm } from './OverdueAlarm';
+import { MelBadge } from './_components/MelBadge';
 
 type Row = Record<string, unknown> & { id: string; status: string };
 
@@ -83,6 +84,7 @@ function RowCard({
   const range = getStr(r, 'time_range', 'timeRange');
   const bounds = parseRangeBounds(range);
   const activity = getStr(r, 'activity_type', 'activityType') ?? 'misc';
+  const aircraftId = getStr(r, 'aircraft_id', 'aircraftId');
   const { overdue, minutes } = isRowOverdue(r);
 
   return (
@@ -97,7 +99,10 @@ function RowCard({
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-        <strong>{activity}</strong>
+        <strong>
+          {activity}
+          <MelBadge aircraftId={aircraftId} />
+        </strong>
         <span>{reservationStatusLabel(r.status)}</span>
       </div>
       {bounds ? (
