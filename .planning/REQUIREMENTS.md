@@ -91,8 +91,8 @@
 - [x] **SYL-07**: Instructor grades line items after a lesson; grades are append-only and require an electronic signature with timestamp
 - [x] **SYL-08**: Stage check workflow: stage check assigned, conducted by a different instructor, recorded with pass/fail and remarks
 - [x] **SYL-09**: Endorsement library (AC 61-65 templates) — instructor can issue an endorsement to a student; endorsement is captured in training record with date and instructor signature
-- [ ] **SYL-10**: Training record per student: chronological list of lessons, grades, endorsements, stage checks, instructor sign-offs — exportable as PDF in the format required by 14 CFR 141.101 (used internally as a record-keeping standard)
-- [ ] **SYL-11**: IACRA-friendly export: student progress summary in a format that helps an instructor fill out IACRA when the student is ready for a checkride
+- [x] **SYL-10**: Training record per student: chronological list of lessons, grades, endorsements, stage checks, instructor sign-offs — exportable as PDF in the format required by 14 CFR 141.101 (used internally as a record-keeping standard)
+- [x] **SYL-11**: IACRA-friendly export: student progress summary in a format that helps an instructor fill out IACRA when the student is ready for a checkride
 - [x] **SYL-12**: Currency tracking: BFR, IPC, medical class+expiration, solo endorsement scope+expiration, day/night/PIC currency — surfaced on student profile and used by SCH-05
 - [x] **SYL-13**: Every course component (Stage, Phase, Unit, Lesson, Line Item) can carry **Objectives** and **Completion Standards** as structured text fields shown to instructor on the grade sheet
 - [x] **SYL-14**: Line items can be flagged **Required**, **Optional**, or **Must Pass**; course completion logic respects these flags
@@ -111,7 +111,7 @@
 ### Student Experience
 
 - [ ] **STU-01**: Student dashboard shows next reservation, current syllabus progress, currency status, outstanding squawks affecting their next aircraft, and any expiring documents
-- [ ] **STU-02**: Student can view their own training record (read-only) and download it as PDF
+- [x] **STU-02**: Student can view their own training record (read-only) and download it as PDF
 - [x] **STU-03**: Student can view their flight log and total hours by category (PIC, dual, solo, XC, night, IFR, etc.)
 - [ ] **STU-04**: Student can upload medical, license, and ID documents to their profile
 
@@ -341,8 +341,8 @@ Explicitly excluded — documented to prevent scope creep.
 | SYL-07      | Phase 5 | Complete |
 | SYL-08      | Phase 5 | Complete |
 | SYL-09      | Phase 5 | Complete |
-| SYL-10      | Phase 5 | Pending  |
-| SYL-11      | Phase 5 | Pending  |
+| SYL-10      | Phase 5 | Complete |
+| SYL-11      | Phase 5 | Complete |
 | SYL-12      | Phase 5 | Complete |
 | SYL-13      | Phase 5 | Complete |
 | SYL-14      | Phase 5 | Complete |
@@ -358,7 +358,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SYL-24      | Phase 6 | Pending  |
 | SYL-25      | Phase 5 | Complete |
 | STU-01      | Phase 8 | Pending  |
-| STU-02      | Phase 5 | Pending  |
+| STU-02      | Phase 5 | Complete |
 | STU-03      | Phase 5 | Complete |
 | STU-04      | Phase 8 | Pending  |
 | INS-01      | Phase 8 | Pending  |
