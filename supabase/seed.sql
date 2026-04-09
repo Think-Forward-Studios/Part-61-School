@@ -120,6 +120,16 @@ begin
 end
 $seed_templates$;
 
+-- Phase 5 Plan 02: re-seed system courses.
+--
+-- public.course.school_id is a nullable FK to public.schools, so the
+-- TRUNCATE schools CASCADE above wipes course + course_version + the
+-- entire tree (stage, lesson, line_item) — same pattern as the Phase 4
+-- maintenance_item_template case. We re-run the same idempotent seed
+-- function defined in migration 0020. Inside a DO block so the function
+-- call is not a top-level command requiring a separate transaction.
+do $phase5_courses$ begin perform public.fn_phase5_seed_courses(); end $phase5_courses$;
+
 -- Phase 5 Plan 02: endorsement_template catalog.
 --
 -- endorsement_template has NO FK to public.schools, so the TRUNCATE
