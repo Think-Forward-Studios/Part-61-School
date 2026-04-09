@@ -58,7 +58,7 @@
 - [x] **SCH-09**: No-show, weather scrub, and cancellation each have distinct close-out states with required reason
 - [ ] **SCH-10**: Student and instructor receive notification (in-app + email) on reservation request, approval, change, and reminder
 - [ ] **SCH-11**: System verifies **instructor currencies and qualifications** required by the lesson (per SYL-18) before allowing the reservation to be confirmed
-- [ ] **SCH-12**: System verifies **student qualifications and currencies** required by the lesson (per SYL-19 rules + SYL-12) before allowing the reservation
+- [x] **SCH-12**: System verifies **student qualifications and currencies** required by the lesson (per SYL-19 rules + SYL-12) before allowing the reservation
 - [x] **SCH-13**: Schedulable resource types include **flight, simulator, oral, academic/ground**, and miscellaneous (safety meeting, briefing) — not only flight reservations
 - [ ] **SCH-14**: **"Next activity" suggestion** — when scheduling a student, system proposes the next lesson the student is due to take based on syllabus progress, prerequisites, and currencies
 - [x] **SCH-15**: Personnel can schedule **unavailability** (vacation, doctor, dental, sick) that blocks reservations against them
@@ -86,10 +86,10 @@
 - [x] **SYL-02**: System ships with seed templates for Private Pilot, Instrument Rating, and Commercial Single-Engine, derived from publicly available 141 TCOs, that the school can fork and customize
 - [x] **SYL-03**: School can create a custom syllabus from scratch or by forking a template
 - [x] **SYL-04**: Syllabuses are versioned; an enrolled student is locked to the version they started on, and a chief instructor can publish revisions without disrupting in-flight students
-- [ ] **SYL-05**: Student can be enrolled in one or more syllabuses; current progress is visible (lessons complete, current stage, next lesson)
+- [x] **SYL-05**: Student can be enrolled in one or more syllabuses; current progress is visible (lessons complete, current stage, next lesson)
 - [x] **SYL-06**: Each line item has a grading scale; school can choose absolute grading (Introduce/Practice/Perform/Mastered) or relative grading (1-5 against standard) per syllabus
-- [ ] **SYL-07**: Instructor grades line items after a lesson; grades are append-only and require an electronic signature with timestamp
-- [ ] **SYL-08**: Stage check workflow: stage check assigned, conducted by a different instructor, recorded with pass/fail and remarks
+- [x] **SYL-07**: Instructor grades line items after a lesson; grades are append-only and require an electronic signature with timestamp
+- [x] **SYL-08**: Stage check workflow: stage check assigned, conducted by a different instructor, recorded with pass/fail and remarks
 - [x] **SYL-09**: Endorsement library (AC 61-65 templates) — instructor can issue an endorsement to a student; endorsement is captured in training record with date and instructor signature
 - [ ] **SYL-10**: Training record per student: chronological list of lessons, grades, endorsements, stage checks, instructor sign-offs — exportable as PDF in the format required by 14 CFR 141.101 (used internally as a record-keeping standard)
 - [ ] **SYL-11**: IACRA-friendly export: student progress summary in a format that helps an instructor fill out IACRA when the student is ready for a checkride
@@ -106,7 +106,7 @@
 - [ ] **SYL-22**: **Ahead/behind training plan indicator** — projects expected progress at current pace and shows whether the student is on, ahead of, or behind plan
 - [ ] **SYL-23**: **Projected checkride and course completion date** — derived from remaining required hours/lessons and the student's recent training cadence
 - [ ] **SYL-24**: **Automated training record audit** — nightly job verifies every student's record for missing lessons, missing endorsements, missing hours, missing stage checks; surfaces exceptions on the admin audit dashboard
-- [ ] **SYL-25**: **Test grade entry** — instructor can record written/oral test scores against any course component (knowledge test, end-of-stage test, end-of-course oral)
+- [x] **SYL-25**: **Test grade entry** — instructor can record written/oral test scores against any course component (knowledge test, end-of-stage test, end-of-course oral)
 
 ### Student Experience
 
@@ -305,7 +305,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SCH-09      | Phase 3 | Complete |
 | SCH-10      | Phase 8 | Pending  |
 | SCH-11      | Phase 6 | Pending  |
-| SCH-12      | Phase 5 | Pending  |
+| SCH-12      | Phase 5 | Complete |
 | SCH-13      | Phase 3 | Complete |
 | SCH-14      | Phase 6 | Pending  |
 | SCH-15      | Phase 3 | Complete |
@@ -336,10 +336,10 @@ Explicitly excluded — documented to prevent scope creep.
 | SYL-02      | Phase 5 | Complete |
 | SYL-03      | Phase 5 | Complete |
 | SYL-04      | Phase 5 | Complete |
-| SYL-05      | Phase 5 | Pending  |
+| SYL-05      | Phase 5 | Complete |
 | SYL-06      | Phase 5 | Complete |
-| SYL-07      | Phase 5 | Pending  |
-| SYL-08      | Phase 5 | Pending  |
+| SYL-07      | Phase 5 | Complete |
+| SYL-08      | Phase 5 | Complete |
 | SYL-09      | Phase 5 | Complete |
 | SYL-10      | Phase 5 | Pending  |
 | SYL-11      | Phase 5 | Pending  |
@@ -356,7 +356,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SYL-22      | Phase 6 | Pending  |
 | SYL-23      | Phase 6 | Pending  |
 | SYL-24      | Phase 6 | Pending  |
-| SYL-25      | Phase 5 | Pending  |
+| SYL-25      | Phase 5 | Complete |
 | STU-01      | Phase 8 | Pending  |
 | STU-02      | Phase 5 | Pending  |
 | STU-03      | Phase 5 | Pending  |

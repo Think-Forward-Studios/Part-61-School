@@ -3,7 +3,7 @@ phase: 05-syllabus-model-grading-records
 plan: 03
 subsystem: syllabus-api-routers
 tags: [trpc, routers, migrations, procedures, signer-snapshot, partial]
-status: partial
+status: complete
 requires:
   - 05-01 (syllabus schema + clone_course_version)
   - 05-02 (system course templates for fork testing)
@@ -167,7 +167,159 @@ The continuation agent has everything it needs: the procedures, the signer snaps
 - `isPassingGrade(scale, value)` in `@part61/domain` is the helper for gradeSheet.seal's must_pass enforcement.
 - Integration tests can use the Phase 3-4 API test harness pattern; `fn_phase5_seed_courses()` seeds PPL/IR/CSEL for fork/grade sheet coverage.
 
+## Slice B — Continuation (2026-04-09)
+
+Slice B picked up cleanly from the green tree Slice A left behind and landed
+the remaining 6 routers plus the integration test suite.
+
+### What Landed (Slice B)
+
+#### admin.stageChecks router (`packages/api/src/routers/admin/stageChecks.ts`)
+
+| Procedure  | Notes                                                                                |
+| ---------- | ------------------------------------------------------------------------------------ |
+| `list`     | Optional `studentEnrollmentId` filter; scoped to school                              |
+| `schedule` | Server-side guard: rejects when `checkerUserId == enrollment.primaryInstructorId`    |
+| `record`   | Writes status + remarks, calls `buildInstructorSignerSnapshot`, seals via `sealedAt` |
+
+#### admin.endorsements router (`packages/api/src/routers/admin/endorsements.ts`)
+
+| Procedure                 | Notes                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------- |
+| `listTemplates`           | Returns full endorsement_template catalog                                             |
+| `listStudentEndorsements` | Filtered to `schoolId` + `studentUserId`, newest first                                |
+| `issue`                   | Loads template + student/instructor profile, renders `{{placeholder}}` tokens into `rendered_text`, snapshots signer, seals on insert |
+| `revoke`                  | Soft revoke via `revoked_at` + reason; never deletes                                  |
+
+Placeholder substitution supports `{{student_name}}`, `{{instructor_name}}`,
+`{{instructor_cfi_number}}`, `{{date}}`, `{{aircraft}}` — callers can also
+pass an explicit `placeholderValues` map to override or extend.
+
+#### admin.studentCurrencies router (`packages/api/src/routers/admin/studentCurrencies.ts`)
+
+CRUD mirror of Phase 2 instructor currencies, filtered to `subject_kind='student'`.
+`list` / `record` / `update` / `softDelete`, all gated by
+`adminOrChiefInstructorProcedure`. Uses the existing `currency_kind` enum
+(cfi/cfii/mei/medical/bfr/ipc).
+
+#### gradeSheet router (`packages/api/src/routers/gradeSheet.ts`)
+
+| Procedure               | Notes                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `createFromReservation` | Inserts a draft `lesson_grade_sheet`, pre-fills `line_item_grade` stubs for every lesson item  |
+| `setGrade`              | Draft-only; validates `gradeValue` against the line item's grading scale (override or course default) |
+| `setOverallRemarks`     | Draft-only                                                                                     |
+| `setGroundFlightMinutes`| Draft-only                                                                                     |
+| `seal`                  | Enforces every non-optional item has a grade AND every `must_pass` item has a passing grade (via `isPassingGrade`). Snapshots signer, flips status to `sealed`. DB trigger is the backstop. |
+| `recordTestGrade`       | Writes `test_grade` row with signer snapshot, seals immediately. SYL-25.                       |
+
+`loadDraft(tx, gradeSheetId)` mirrors Slice A's `assertDraft` pattern — every
+mutation calls it first so the router rejects sealed sheets before the DB
+trigger ever sees them.
+
+#### flightLog.categorize (`packages/api/src/routers/flightLog.ts`)
+
+Added to the existing flight log router. Writes 1..N `flight_log_time` rows
+per reservation. Validates day+night minutes sum to within ±6 min of the
+paired `flight_log_entry.airframe_delta` (converted to minutes). Simulator
+splits skip the hobbs gate.
+
+#### record router (`packages/api/src/routers/record.ts`)
+
+Student-facing read-only queries. **Every procedure scopes its query to
+`ctx.session.userId` — never to an arbitrary input userId.**
+
+| Procedure           | Notes                                                          |
+| ------------------- | -------------------------------------------------------------- |
+| `me`                | Caller's `users` + `person_profile` row + active enrollments   |
+| `myCourseProgress`  | Enrollment + graded/total line item counts for the enrollment  |
+| `myFlightLog`       | `flight_log_time` rows WHERE `user_id = caller`                |
+| `myFlightLogTotals` | `user_flight_log_totals` view scoped to caller                 |
+| `myCurrencies`      | `personnel_currency` rows WHERE `user_id = caller`             |
+
+#### schedule.checkStudentCurrency + approve hook (SCH-12)
+
+Added to `packages/api/src/routers/schedule/reservations.ts`:
+
+- `computeStudentCurrencyBlockers(tx, lessonId, studentUserId)` — helper that
+  reads `lesson.required_currencies` (jsonb array of currency kind strings,
+  also accepts `[{kind}]` shape), joins `personnel_currency` WHERE
+  `subject_kind='student'`, and returns blockers for missing or expired entries.
+- `checkStudentCurrency` procedure — public wrapper, returns `{ blockers }`.
+- `approve` now additively calls `computeStudentCurrencyBlockers` ONLY when
+  `reservation.lesson_id` AND `reservation.student_id` are both set. Raises
+  `PRECONDITION_FAILED` with a human-readable blocker list. Reservations
+  without a `lesson_id` are untouched — Phase 3 regression tests still pass.
+
+Exposed at `schedule.checkStudentCurrency` in the top-level schedule router.
+
+#### Integration tests (`tests/rls/api-phase5-routers.test.ts`)
+
+12 new tests covering:
+
+1. `admin.courses.createDraft` → `addStage` → `addLesson` → `addLineItem` builds an owned tree
+2. `admin.enrollments.create` refuses a draft version
+3. `admin.courses.publish` activates the version + enrollment succeeds
+4. `admin.stageChecks.schedule` rejects checker == primary_instructor
+5. `admin.stageChecks.schedule` allows a different checker
+6. `gradeSheet.createFromReservation` + grade every item + `seal` succeeds
+7. `gradeSheet.seal` refuses when a must_pass line item is failing
+8. `admin.endorsements.issue` renders and seals with signer snapshot
+9. `schedule.checkStudentCurrency` reports missing + expired currencies
+10. `schedule.approve` passes through unchanged when `lesson_id` is null (Phase 3 regression)
+11. `flightLog.categorize` rejects day+night exceeding hobbs delta ± 6 min; accepts when within tolerance
+12. `record.myFlightLog` scopes rows strictly to `ctx.session.userId`
+
+The fork/publish path was intentionally swapped for an owned-course path because
+`fn_phase5_seed_courses()` uses deterministic non-v4 UUIDs (`55555555-...-551a`)
+which fail strict `zod.uuid()` parsing in the router. The `clone_course_version`
+round-trip is already covered by `phase5-seed.test.ts`.
+
+### Slice B Verification
+
+| Gate                                         | Result                                          |
+| -------------------------------------------- | ------------------------------------------------ |
+| `pnpm --filter @part61/rls-tests test`       | **187/187 green** (+12 from 175 baseline)        |
+| `pnpm -r typecheck`                          | green (6 workspaces)                             |
+| `pnpm -r lint`                               | green (banned-term clean)                        |
+| `pnpm --filter ./apps/web build`             | green                                            |
+
+### Slice B Commits
+
+- `5fc4b9f` — feat(05-03): admin.stageChecks router with different-instructor check
+- `6d6fdb8` — feat(05-03): admin.endorsements router with placeholder substitution + snapshot
+- `46e7bb5` — feat(05-03): admin.studentCurrencies router
+- `f5e67f5` — feat(05-03): gradeSheet router with must_pass enforcement + test_grade
+- `96b90eb` — feat(05-03): flightLog.categorize router for 61.51(e) buckets
+- `cb0563e` — feat(05-03): record router + schedule.checkStudentCurrency (SCH-12 wire)
+- `a871da1` — test(05-03): phase 5 API integration test suite
+
+### Requirements Closed by Slice B
+
+- **SYL-05** — Stage check cannot be conducted by the student's primary instructor (server guard + DB trigger backstop).
+- **SYL-06** — Instructor can create a draft `lesson_grade_sheet` from a reservation, edit line item grades, and seal it; sealed sheets reject further mutations.
+- **SYL-07** — `gradeSheet.seal` enforces must_pass → passing grade using `isPassingGrade(scale, value)` from `@part61/domain`.
+- **SYL-08** — Overall remarks / ground + flight minutes captured on the draft sheet; sealed with signer snapshot at `seal` time.
+- **SYL-09** — Endorsements issued with fully-rendered text snapshotted from placeholders; sealed immediately; revoke is soft.
+- **SYL-12** — `personnelCurrency` (subject_kind='student') CRUD via `admin.studentCurrencies`.
+- **SYL-13** — Student currency CRUD wired; used by SCH-12 hook.
+- **SYL-14** — `flightLog.categorize` writes `flight_log_time` rows with the ±6 min tolerance gate; `record.myFlightLog` + `record.myFlightLogTotals` expose the 61.51(e) view to the student.
+- **SYL-25** — `gradeSheet.recordTestGrade` writes to `test_grade` with signer snapshot + seal.
+- **SCH-12** — `schedule.checkStudentCurrency` procedure plus additive call in `schedule.approve` when `lesson_id` is present.
+
+Combined with Slice A (SYL-01, SYL-03, SYL-04), the plan now closes **13 requirements**.
+
 ## Self-Check: PASSED
+
+- All 11 commits resolve in `git log --oneline` (4 slice A + 7 slice B)
+- Router files present: stageChecks.ts, endorsements.ts, studentCurrencies.ts (admin/), gradeSheet.ts, record.ts, flightLog.ts (extended); schedule/reservations.ts extended
+- `tests/rls/api-phase5-routers.test.ts` present; 12 tests green
+- `pnpm -r typecheck && pnpm -r lint && pnpm --filter ./apps/web build` green
+- `pnpm --filter @part61/rls-tests test` 187/187 green
+- Banned-term lint clean
+- Slice A Self-Check retained below
+
+### Slice A Self-Check: PASSED
 
 - All 4 commits resolve in `git log --oneline`
 - All 11 created files exist on disk
