@@ -16,6 +16,8 @@ import { EquipmentPanel } from './EquipmentPanel';
 import { PhotoPanel } from './PhotoPanel';
 import { RecentFlightsPanel } from './RecentFlightsPanel';
 import { FlightLogEntryForm } from './FlightLogEntryForm';
+import { MaintenancePanel } from './MaintenancePanel';
+import { sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +67,14 @@ export default async function AircraftDetailPage({ params }: { params: Params })
     .from(aircraftEquipment)
     .where(eq(aircraftEquipment.aircraftId, id));
 
+  // IA authority check: does this user have any user_roles row with mechanic_authority='ia'?
+  const iaRows = (await db.execute(sql`
+    select 1 from public.user_roles
+     where user_id = ${user.id}::uuid and mechanic_authority = 'ia'
+     limit 1
+  `)) as unknown as Array<Record<string, unknown>>;
+  const canRequestOverrun = iaRows.length > 0;
+
   const recentFlights = await db
     .select()
     .from(flightLogEntry)
@@ -113,6 +123,15 @@ export default async function AircraftDetailPage({ params }: { params: Params })
           year: row.year ?? null,
           equipmentNotes: row.equipmentNotes ?? '',
         }}
+      />
+
+      <MaintenancePanel
+        aircraftId={id}
+        tailNumber={row.tailNumber}
+        groundedAt={row.groundedAt ? row.groundedAt.toISOString() : null}
+        groundedReason={row.groundedReason ?? null}
+        groundedByItemId={row.groundedByItemId ?? null}
+        canRequestOverrun={canRequestOverrun}
       />
 
       <EnginesPanel
