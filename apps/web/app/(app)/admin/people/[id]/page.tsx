@@ -21,6 +21,8 @@ import { EmergencyContactsPanel } from './EmergencyContactsPanel';
 import { InfoReleasePanel } from './InfoReleasePanel';
 import { ExperiencePanel } from './ExperiencePanel';
 import { RolesPanel } from './RolesPanel';
+import { StudentCurrenciesPanel } from './StudentCurrenciesPanel';
+import { TrainingRecordPanel } from './TrainingRecordPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -135,6 +137,8 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
       <EmergencyContactsPanel userId={id} contacts={contacts.map(serialize)} />
       <InfoReleasePanel userId={id} releases={releases.map(serialize)} />
       <ExperiencePanel userId={id} experience={experience.map(serialize)} />
+      <StudentCurrenciesPanel studentUserId={id} />
+      <TrainingRecordPanel studentUserId={id} schoolId={schoolId} />
     </main>
   );
 }
