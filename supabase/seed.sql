@@ -120,4 +120,12 @@ begin
 end
 $seed_templates$;
 
+-- Phase 5 Plan 02: endorsement_template catalog.
+--
+-- endorsement_template has NO FK to public.schools, so the TRUNCATE
+-- schools CASCADE above does not touch it. The rows seeded by
+-- migrations/0019_phase5_seed_endorsements.sql survive `supabase db reset`
+-- without any re-insert block here. Do not add one — duplicate inserts
+-- would violate the endorsement_template_code_unique index.
+
 set session_replication_role = origin;
