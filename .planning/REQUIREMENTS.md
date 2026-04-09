@@ -69,8 +69,8 @@
 ### Maintenance (CAMP-style)
 
 - [x] **MNT-01**: Maintenance items are typed (100hr inspection, annual, AD, oil change, transponder cert, ELT, pitot-static, etc.) with interval rules referencing the correct clock (Hobbs / tach / airframe / calendar)
-- [ ] **MNT-02**: Each maintenance item has a "due at" derivation (next due hours OR next due date, whichever is sooner)
-- [ ] **MNT-03**: System auto-grounds an aircraft when an item passes its compliance limit (does not allow over-fly except via FAR 91.409 10-hour overrun, which requires explicit recorded justification by IA)
+- [x] **MNT-02**: Each maintenance item has a "due at" derivation (next due hours OR next due date, whichever is sooner)
+- [x] **MNT-03**: System auto-grounds an aircraft when an item passes its compliance limit (does not allow over-fly except via FAR 91.409 10-hour overrun, which requires explicit recorded justification by IA)
 - [x] **MNT-04**: Squawk lifecycle: opened by anyone with role → triaged by mechanic → grounding decision → repaired → return-to-service signed by A&P or IA
 - [ ] **MNT-05**: Open squawks visible on aircraft profile and on scheduling UI; certain squawk severities ground the aircraft automatically
 - [x] **MNT-06**: Component lifing for life-limited parts (e.g. mag overhaul, prop overhaul) tracked with current time and life limit
@@ -78,7 +78,7 @@
 - [x] **MNT-08**: Parts inventory: track on-hand quantity, part number, lot/serial where applicable, used-on-aircraft history (no labor billing)
 - [x] **MNT-09**: Work order: create → assign mechanic → tasks → parts consumed → sign-off (A&P or IA based on task type) → return-to-service
 - [x] **MNT-10**: Digital logbook PDF export (airframe, engine, prop) acceptable to FAA inspection of a Part 61 school's voluntary records — append-only, signed entries with timestamp and user binding
-- [ ] **MNT-11**: Downtime prediction: rule-based forecast of next 100hr/annual due date using upcoming reservations + historical squawk-repair-time average per aircraft, surfaced on the admin dashboard and aircraft profile
+- [x] **MNT-11**: Downtime prediction: rule-based forecast of next 100hr/annual due date using upcoming reservations + historical squawk-repair-time average per aircraft, surfaced on the admin dashboard and aircraft profile
 
 ### Syllabus & Training Records
 
@@ -322,8 +322,8 @@ Explicitly excluded — documented to prevent scope creep.
 | FTR-07      | Phase 3 | Complete |
 | FTR-08      | Phase 3 | Complete |
 | MNT-01      | Phase 4 | Complete |
-| MNT-02      | Phase 4 | Pending  |
-| MNT-03      | Phase 4 | Pending  |
+| MNT-02      | Phase 4 | Complete |
+| MNT-03      | Phase 4 | Complete |
 | MNT-04      | Phase 4 | Complete |
 | MNT-05      | Phase 4 | Pending  |
 | MNT-06      | Phase 4 | Complete |
@@ -331,7 +331,7 @@ Explicitly excluded — documented to prevent scope creep.
 | MNT-08      | Phase 4 | Complete |
 | MNT-09      | Phase 4 | Complete |
 | MNT-10      | Phase 4 | Complete |
-| MNT-11      | Phase 4 | Pending  |
+| MNT-11      | Phase 4 | Complete |
 | SYL-01      | Phase 5 | Pending  |
 | SYL-02      | Phase 5 | Pending  |
 | SYL-03      | Phase 5 | Pending  |
