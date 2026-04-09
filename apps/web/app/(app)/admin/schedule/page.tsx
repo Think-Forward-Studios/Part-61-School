@@ -12,33 +12,24 @@ export default async function AdminSchedulePage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
-  const me = (
-    await db.select().from(users).where(eq(users.id, user.id)).limit(1)
-  )[0];
+  const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
   if (!me) redirect('/login');
 
   const rows = await db
     .select()
     .from(reservation)
-    .where(
-      and(
-        eq(reservation.schoolId, me.schoolId),
-        isNull(reservation.deletedAt),
-      ),
-    )
+    .where(and(eq(reservation.schoolId, me.schoolId), isNull(reservation.deletedAt)))
     .limit(1000);
 
   const [ac, inst, rms] = await Promise.all([
     db
       .select({ id: aircraft.id, tail: aircraft.tailNumber })
       .from(aircraft)
-      .where(
-        and(eq(aircraft.schoolId, me.schoolId), isNull(aircraft.deletedAt)),
-      ),
+      .where(and(eq(aircraft.schoolId, me.schoolId), isNull(aircraft.deletedAt))),
     db.execute(sql`
       select u.id, coalesce(p.first_name || ' ' || p.last_name, u.email) as label
         from public.users u
-        left join public.person p on p.user_id = u.id
+        left join public.person_profile p on p.user_id = u.id
         inner join public.user_roles r on r.user_id = u.id
        where u.school_id = ${me.schoolId}::uuid
          and r.role = 'instructor'
