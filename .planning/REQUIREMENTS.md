@@ -72,7 +72,7 @@
 - [x] **MNT-02**: Each maintenance item has a "due at" derivation (next due hours OR next due date, whichever is sooner)
 - [x] **MNT-03**: System auto-grounds an aircraft when an item passes its compliance limit (does not allow over-fly except via FAR 91.409 10-hour overrun, which requires explicit recorded justification by IA)
 - [x] **MNT-04**: Squawk lifecycle: opened by anyone with role → triaged by mechanic → grounding decision → repaired → return-to-service signed by A&P or IA
-- [ ] **MNT-05**: Open squawks visible on aircraft profile and on scheduling UI; certain squawk severities ground the aircraft automatically
+- [x] **MNT-05**: Open squawks visible on aircraft profile and on scheduling UI; certain squawk severities ground the aircraft automatically
 - [x] **MNT-06**: Component lifing for life-limited parts (e.g. mag overhaul, prop overhaul) tracked with current time and life limit
 - [x] **MNT-07**: AD (Airworthiness Directive) tracking: each AD has applicability, compliance method, due-at rule, and compliance history
 - [x] **MNT-08**: Parts inventory: track on-hand quantity, part number, lot/serial where applicable, used-on-aircraft history (no labor billing)
@@ -325,7 +325,7 @@ Explicitly excluded — documented to prevent scope creep.
 | MNT-02      | Phase 4 | Complete |
 | MNT-03      | Phase 4 | Complete |
 | MNT-04      | Phase 4 | Complete |
-| MNT-05      | Phase 4 | Pending  |
+| MNT-05      | Phase 4 | Complete |
 | MNT-06      | Phase 4 | Complete |
 | MNT-07      | Phase 4 | Complete |
 | MNT-08      | Phase 4 | Complete |
