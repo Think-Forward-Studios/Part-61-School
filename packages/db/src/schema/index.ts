@@ -37,6 +37,7 @@ export * from './syllabus';
 export * from './personnelCurrency';
 export * from './grading';
 export * from './endorsements';
+export * from './test_grade';
 
 // Phase 4 modules (CAMP)
 export * from './maintenance_item';
