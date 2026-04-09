@@ -55,5 +55,48 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Seed the part61.active_role cookie on first authenticated request of a
+  // session. The custom access token hook stamps the user's default role
+  // into the JWT as `active_role`; we copy it into a cookie so the (app)
+  // and /admin server layouts can read it synchronously without an extra
+  // JWT decode. Only set it if missing — user may have explicitly switched
+  // roles via /switch-role, which owns the cookie after that.
+  if (user && !isAuthRoute && !request.cookies.get('part61.active_role')) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const jwtActiveRole = (session?.user?.app_metadata as { active_role?: string } | undefined)
+      ?.active_role;
+    // Fallback: decode the access_token ourselves if app_metadata doesn't
+    // carry the claim (our hook sets it at the top level of the JWT, not
+    // inside app_metadata).
+    let resolvedRole = jwtActiveRole;
+    if (!resolvedRole && session?.access_token) {
+      try {
+        const payload = session.access_token.split('.')[1];
+        if (payload) {
+          const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+          const decoded = JSON.parse(Buffer.from(padded, 'base64url').toString('utf-8')) as {
+            active_role?: string;
+          };
+          resolvedRole = decoded.active_role;
+        }
+      } catch {
+        // ignore — fall through to layout fallback
+      }
+    }
+    if (resolvedRole) {
+      const cookieOpts = {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+      };
+      request.cookies.set('part61.active_role', resolvedRole);
+      supabaseResponse.cookies.set('part61.active_role', resolvedRole, cookieOpts);
+    }
+  }
+
   return supabaseResponse;
 }
