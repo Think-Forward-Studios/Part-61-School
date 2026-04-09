@@ -84,6 +84,9 @@ export async function seedTwoSchools(): Promise<SeedResult> {
   await sql.unsafe(`
     truncate table
       public.audit_log,
+      public.student_progress_forecast_cache,
+      public.training_record_audit_exception,
+      public.lesson_override,
       public.line_item_grade,
       public.lesson_grade_sheet,
       public.stage_check,

@@ -269,6 +269,34 @@ export const squawkStatusEnum = pgEnum('squawk_status', [
   'cancelled',
 ]);
 
+// ============================================================================
+// Phase 6 new enums (syllabus rules + progression + audit)
+// ============================================================================
+
+// SYL-17: management override kinds
+export const lessonOverrideKindEnum = pgEnum('lesson_override_kind', [
+  'prerequisite_skip',
+  'repeat_limit_exceeded',
+  'currency_waiver',
+]);
+
+// SYL-24: training record audit exception kinds
+export const auditExceptionKindEnum = pgEnum('audit_exception_kind', [
+  'missing_lessons',
+  'hours_deficit',
+  'missing_endorsements',
+  'missing_stage_checks',
+  'stale_rollovers',
+  'expired_overrides',
+]);
+
+// SYL-24: training record audit exception severity
+export const auditExceptionSeverityEnum = pgEnum('audit_exception_severity', [
+  'info',
+  'warn',
+  'critical',
+]);
+
 // FLT-05: aircraft equipment tag enum (locked list in CONTEXT)
 export const aircraftEquipmentTagEnum = pgEnum('aircraft_equipment_tag', [
   'ifr_equipped',

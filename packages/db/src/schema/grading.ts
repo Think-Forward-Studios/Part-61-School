@@ -114,6 +114,8 @@ export const lineItemGrade = pgTable(
     gradeValue: text('grade_value').notNull(),
     gradeRemarks: text('grade_remarks'),
     position: integer('position').notNull().default(0),
+    // Phase 6 addition (SYL-15): rollover FK to source grade sheet
+    rolloverFromGradeSheetId: uuid('rollover_from_grade_sheet_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   () => [

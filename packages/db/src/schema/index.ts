@@ -48,3 +48,8 @@ export * from './part';
 export * from './logbook_entry';
 export * from './maintenance_overrun';
 export * from './downtime_forecast';
+
+// Phase 6 modules (syllabus rules + progression + audit)
+export * from './lessonOverride';
+export * from './trainingRecordAuditException';
+export * from './studentProgressForecastCache';
