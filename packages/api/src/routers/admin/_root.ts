@@ -13,6 +13,7 @@ import { adminPartsRouter } from './parts';
 import { adminLogbookRouter } from './logbook';
 import { adminMaintenanceTemplatesRouter } from './maintenanceTemplates';
 import { adminOverrunsRouter } from './overruns';
+import { adminCoursesRouter } from './courses';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -29,4 +30,5 @@ export const adminRouter = router({
   logbook: adminLogbookRouter,
   maintenanceTemplates: adminMaintenanceTemplatesRouter,
   overruns: adminOverrunsRouter,
+  courses: adminCoursesRouter,
 });
