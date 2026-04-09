@@ -123,7 +123,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 5. Endorsements drawn from an AC 61-65 library are captured in the training record with date and instructor signature; currency tracking (BFR, IPC, medical class+expiration, solo scope+expiration, day/night/PIC) is surfaced on the student profile and blocks SCH-12 (student qualification/currency check for the lesson)
 6. A complete chronological training record per student (lessons, grades, endorsements, stage checks, sign-offs) is exportable as a 141.101-shaped PDF; an IACRA-friendly hours summary broken out by 61.51(e) category/class is exportable; a student can view their own record read-only and their flight log with totals by PIC/dual/solo/XC/night/IFR
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 Plans:
 
 - [ ] 05-01-PLAN.md — Schema: course tree + versioning + grading + stage check + endorsement + flight_log_time + personnel_currency rename + RLS tests
@@ -185,7 +185,7 @@ Plans:
 | 2. Personnel, Admin & Fleet Primitives     | 0/0            | Complete    | 2026-04-08 |
 | 3. Scheduling & Dispatch Execution         | 0/0            | Complete    | 2026-04-08 |
 | 4. CAMP Maintenance                        | 0/0            | Complete    | 2026-04-09 |
-| 5. Syllabus Model, Grading & Records       | 3/5 | In Progress|  |
+| 5. Syllabus Model, Grading & Records       | 4/5 | In Progress|  |
 | 6. Syllabus Rules, Progression & Audit     | 0/0            | Not started | -          |
 | 7. ADS-B Fleet Integration                 | 0/0            | Not started | -          |
 | 8. Experience, Reporting, Messaging & Beta | 0/0            | Not started | -          |

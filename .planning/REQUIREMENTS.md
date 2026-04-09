@@ -112,7 +112,7 @@
 
 - [ ] **STU-01**: Student dashboard shows next reservation, current syllabus progress, currency status, outstanding squawks affecting their next aircraft, and any expiring documents
 - [ ] **STU-02**: Student can view their own training record (read-only) and download it as PDF
-- [ ] **STU-03**: Student can view their flight log and total hours by category (PIC, dual, solo, XC, night, IFR, etc.)
+- [x] **STU-03**: Student can view their flight log and total hours by category (PIC, dual, solo, XC, night, IFR, etc.)
 - [ ] **STU-04**: Student can upload medical, license, and ID documents to their profile
 
 ### Instructor Experience
@@ -359,7 +359,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SYL-25      | Phase 5 | Complete |
 | STU-01      | Phase 8 | Pending  |
 | STU-02      | Phase 5 | Pending  |
-| STU-03      | Phase 5 | Pending  |
+| STU-03      | Phase 5 | Complete |
 | STU-04      | Phase 8 | Pending  |
 | INS-01      | Phase 8 | Pending  |
 | INS-02      | Phase 8 | Pending  |
