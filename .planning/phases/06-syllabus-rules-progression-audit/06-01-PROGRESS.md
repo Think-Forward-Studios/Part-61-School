@@ -1,6 +1,6 @@
 # Plan 06-01 Progress Note
 
-**Status:** Task 1 of 4 complete. Plan NOT complete. Do not create SUMMARY.md yet.
+**Status:** Task 1 + Task 2a of 4 complete. Plan NOT complete. Do not create SUMMARY.md yet.
 **Last updated:** 2026-04-09
 
 ## Commits Landed (Task 1)
@@ -40,16 +40,30 @@ are pushed into later tasks (to be renumbered accordingly):
 - PLAN.md migration numbering 0025/0026/0027 is now unused — the collapsed
   0024 covers course_version + enrollment + line_item columns in one file.
 
+## Commits Landed (Task 2a)
+
+3. `8da490d` — `feat(06-01): task 2a - lesson_override + training_record_audit_exception + forecast cache tables`
+   - `packages/db/migrations/0025_phase6_new_tables.sql`
+   - `supabase/migrations/20260409000012_phase6_new_tables.sql`
+   - `packages/db/src/schema/lessonOverride.ts`
+   - `packages/db/src/schema/trainingRecordAuditException.ts`
+   - `packages/db/src/schema/studentProgressForecastCache.ts`
+   - `packages/db/src/schema/enums.ts` (Phase 6 enum Drizzle definitions)
+   - `packages/db/src/schema/grading.ts` (rollover_from_grade_sheet_id column)
+   - `packages/db/src/schema/index.ts` (3 new barrel exports)
+   - `tests/rls/harness.ts` (truncate list updated with new tables)
+   - `tests/rls/phase6-tables.test.ts` (13 new tests)
+
+## Verification After Task 2a
+
+- `pnpm dlx supabase db reset` -> clean (all 25 migrations apply: 0000-0025)
+- `pnpm -r typecheck` -> green (6 workspaces)
+- `pnpm -r lint` -> green (banned-term clean)
+- `pnpm --filter @part61/rls-tests test` -> **200/200 green** (187 baseline + 13 new)
+
 ## What's Left in Plan 06-01
 
-### Task 2a — New tables + cross-tenant RLS tests
-- `lesson_override` table (mirror Phase 4 `maintenance_overrun` pattern)
-- `training_record_audit_exception` table
-- `student_progress_forecast_cache` table (mirror Phase 4 `aircraft_downtime_forecast`)
-- `line_item_grade.rollover_from_grade_sheet_id` column + partial index (rolled here from Task 1)
-- Drizzle schemas: `lessonOverride.ts`, `trainingRecordAuditException.ts`, `studentProgressForecastCache.ts`
-- Register new exports in `packages/db/src/schema/index.ts`
-- `tests/rls/phase6-rls.test.ts` — cross-tenant deny + hard-delete blocker tests
+### ~~Task 2a — New tables + cross-tenant RLS tests~~ DONE (commit `8da490d`)
 
 ### Task 2b — SQL functions + views + rollover/race tests
 - `packages/db/migrations/0029_phase6_views.sql` — `student_course_minimums_status`, `management_override_activity`
@@ -66,29 +80,24 @@ are pushed into later tasks (to be renumbered accordingly):
 
 ## Reserved Numbering for Continuation
 
-**`packages/db/migrations/` — reserved 0025-0029 (5 slots).** The collapsed
-Task 1 only consumed 0023 + 0024. Continuation agents should start new
-migrations at **0025**. Suggested mapping:
+**`packages/db/migrations/` — consumed 0023-0025.** Task 2a consumed 0025.
+Continuation agents should start new migrations at **0026**. Suggested mapping:
 
-| Task | Original PLAN # | Reserved # | Content                             |
+| Task | Original PLAN # | Actual #   | Content                             |
 | ---- | --------------- | ---------- | ----------------------------------- |
+| 1    | 0023-0027       | 0023-0024  | enums + column additions            |
 | 2a   | 0028            | **0025**   | new tables + `line_item_grade` col  |
 | 2b   | 0029            | **0026**   | views                               |
 | 2b   | 0030            | **0027**   | SQL functions                       |
 | 2c   | 0031            | **0028**   | triggers                            |
 | 2c   | 0032            | **0029**   | pg_cron + seed minimums (combinable)|
 
-If more separation is desired the continuation agent can fan out further, but
-the originally-planned 11-migration count is no longer required (Task 1
-collapsed from 5 files to 2).
-
-**`supabase/migrations/` — reserved 20260409000012 through 20260409000020.**
-Task 1 consumed 000010 (enums) and 000011 (column additions). The next
-supabase mirror timestamp is **20260409000012**.
+**`supabase/migrations/` — consumed through 20260409000012.**
+Task 2a consumed 000012. The next supabase mirror timestamp is **20260409000013**.
 
 ## Test Baseline
 
-- **187/187** RLS tests passing
+- **200/200** RLS tests passing (187 baseline + 13 new Phase 6 table tests)
 - Runner: `pnpm --filter @part61/rls-tests test`
 - Test directory: `tests/rls/` (NOT `packages/db/tests/` as some PLAN.md
   entries imply — those paths in the plan are stale and should be updated to
