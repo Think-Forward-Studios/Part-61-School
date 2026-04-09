@@ -5,6 +5,14 @@ import { adminSchoolRouter } from './school';
 import { adminDashboardRouter } from './dashboard';
 import { adminRoomsRouter } from './rooms';
 import { adminSquawksRouter } from './squawks';
+import { adminMaintenanceRouter } from './maintenance';
+import { adminAdsRouter } from './ads';
+import { adminComponentsRouter } from './components';
+import { adminWorkOrdersRouter } from './workOrders';
+import { adminPartsRouter } from './parts';
+import { adminLogbookRouter } from './logbook';
+import { adminMaintenanceTemplatesRouter } from './maintenanceTemplates';
+import { adminOverrunsRouter } from './overruns';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -13,4 +21,12 @@ export const adminRouter = router({
   dashboard: adminDashboardRouter,
   rooms: adminRoomsRouter,
   squawks: adminSquawksRouter,
+  maintenance: adminMaintenanceRouter,
+  ads: adminAdsRouter,
+  components: adminComponentsRouter,
+  workOrders: adminWorkOrdersRouter,
+  parts: adminPartsRouter,
+  logbook: adminLogbookRouter,
+  maintenanceTemplates: adminMaintenanceTemplatesRouter,
+  overruns: adminOverrunsRouter,
 });
