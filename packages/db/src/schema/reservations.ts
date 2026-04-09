@@ -85,6 +85,13 @@ export const reservation = pgTable(
     stops: text('stops').array(),
     fuelStops: text('fuel_stops').array(),
     alternate: text('alternate'),
+    // Phase 5 additions — nullable FKs wiring reservations to the
+    // syllabus tree + enrollment so grade sheets at close-out know
+    // which lesson/enrollment to write against. FK constraints live in
+    // migration 0016; Drizzle holds bare uuid columns to avoid import
+    // cycles with syllabus.ts / enrollment.ts.
+    lessonId: uuid('lesson_id'),
+    studentEnrollmentId: uuid('student_enrollment_id'),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   () => [

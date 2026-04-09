@@ -32,6 +32,10 @@ export * from './fif';
 export * from './passenger_manifest';
 export * from './person_unavailability';
 
+// Phase 5 modules (syllabus + grading + records)
+export * from './syllabus';
+export * from './personnelCurrency';
+
 // Phase 4 modules (CAMP)
 export * from './maintenance_item';
 export * from './ads';

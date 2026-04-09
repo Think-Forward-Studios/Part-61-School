@@ -92,7 +92,7 @@ export async function seedTwoSchools(): Promise<SeedResult> {
       public.no_show,
       public.student_course_enrollment,
       public.instructor_experience,
-      public.instructor_currency,
+      public.personnel_currency,
       public.instructor_qualification,
       public.person_hold,
       public.emergency_contact,

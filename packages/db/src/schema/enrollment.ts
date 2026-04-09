@@ -25,7 +25,11 @@ export const studentCourseEnrollment = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id),
-    courseDescriptor: text('course_descriptor').notNull(),
+    // Phase 2 legacy column, made nullable in Phase 5 (migration 0016).
+    // Phase 5+ writes `courseVersionId` instead.
+    courseDescriptor: text('course_descriptor'),
+    courseVersionId: uuid('course_version_id'),
+    primaryInstructorId: uuid('primary_instructor_id'),
     enrolledAt: timestamp('enrolled_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
