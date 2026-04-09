@@ -17,6 +17,7 @@ import { adminCoursesRouter } from './courses';
 import { adminEnrollmentsRouter } from './enrollments';
 import { adminStageChecksRouter } from './stageChecks';
 import { adminEndorsementsRouter } from './endorsements';
+import { adminStudentCurrenciesRouter } from './studentCurrencies';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -37,4 +38,5 @@ export const adminRouter = router({
   enrollments: adminEnrollmentsRouter,
   stageChecks: adminStageChecksRouter,
   endorsements: adminEndorsementsRouter,
+  studentCurrencies: adminStudentCurrenciesRouter,
 });
