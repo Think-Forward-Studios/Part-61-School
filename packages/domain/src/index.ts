@@ -9,3 +9,6 @@ export * from './schemas/adApplicability';
 export * from './schemas/signerSnapshot';
 export * from './schemas/maintenance';
 export * from './schemas/maintenanceKindLabels';
+export * from './schemas/gradingLabels';
+export * from './schemas/lessonKindLabels';
+export * from './schemas/endorsementCategoryLabels';
