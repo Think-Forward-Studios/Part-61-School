@@ -9,6 +9,7 @@ import { registerRouter } from './register';
 import { scheduleRouter } from './schedule';
 import { dispatchRouter } from './dispatch';
 import { fifRouter } from './fif';
+import { gradeSheetRouter } from './gradeSheet';
 
 export const appRouter = router({
   auth: authRouter,
@@ -21,6 +22,7 @@ export const appRouter = router({
   schedule: scheduleRouter,
   dispatch: dispatchRouter,
   fif: fifRouter,
+  gradeSheet: gradeSheetRouter,
 });
 
 export type AppRouter = typeof appRouter;
