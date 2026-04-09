@@ -119,6 +119,14 @@ export const courseVersion = pgTable(
     publishedAt: timestamp('published_at', { withTimezone: true }),
     publishedBy: uuid('published_by').references(() => users.id),
     supersededAt: timestamp('superseded_at', { withTimezone: true }),
+    // Phase 6 additions (SYL-21, SYL-22)
+    minimumHours: jsonb('minimum_hours'),
+    defaultPlanCadenceHoursPerWeek: numeric('default_plan_cadence_hours_per_week', {
+      precision: 5,
+      scale: 2,
+    })
+      .notNull()
+      .default('4'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
@@ -227,6 +235,26 @@ export const lesson = pgTable(
     minHours: numeric('min_hours', { precision: 4, scale: 1 }),
     requiredResources: jsonb('required_resources').notNull().default(sql`'[]'::jsonb`),
     requiredCurrencies: jsonb('required_currencies').notNull().default(sql`'[]'::jsonb`),
+    // Phase 6 additions (SYL-16, SYL-18, SYL-20, SCH-11)
+    prerequisiteLessonIds: uuid('prerequisite_lesson_ids')
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    requiredInstructorQualifications: jsonb('required_instructor_qualifications')
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    requiredInstructorCurrencies: jsonb('required_instructor_currencies')
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    requiredStudentQualifications: jsonb('required_student_qualifications')
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    requiredAircraftEquipment: jsonb('required_aircraft_equipment')
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    requiredAircraftType: text('required_aircraft_type'),
+    requiredSimKind: text('required_sim_kind'),
+    maxRepeats: integer('max_repeats'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
@@ -254,6 +282,8 @@ export const lineItem = pgTable(
     completionStandards: text('completion_standards'),
     classification: lineItemClassificationEnum('classification').notNull().default('required'),
     gradingScaleOverride: gradingScaleEnum('grading_scale_override'),
+    // Phase 6 addition (SYL-20)
+    maxRepeats: integer('max_repeats'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),

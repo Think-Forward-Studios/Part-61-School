@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  numeric,
   pgPolicy,
   pgTable,
   text,
@@ -36,6 +37,12 @@ export const studentCourseEnrollment = pgTable(
     completedAt: timestamp('completed_at', { withTimezone: true }),
     withdrawnAt: timestamp('withdrawn_at', { withTimezone: true }),
     notes: text('notes'),
+    // Phase 6 addition (SYL-22): per-enrollment cadence override.
+    // Null falls back to course_version.default_plan_cadence_hours_per_week.
+    planCadenceHoursPerWeek: numeric('plan_cadence_hours_per_week', {
+      precision: 5,
+      scale: 2,
+    }),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   () => [
