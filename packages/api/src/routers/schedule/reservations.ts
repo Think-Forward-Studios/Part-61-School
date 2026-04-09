@@ -16,11 +16,14 @@
  * "Confirmed" as the display label. Internal enum values like
  * `status='approved'` are fine.
  */
+import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { and, eq, sql } from 'drizzle-orm';
 import {
+  lesson,
   noShow,
   personHold,
+  personnelCurrency,
   reservation,
   scheduleBlockInstance,
 } from '@part61/db';
@@ -104,6 +107,62 @@ function expandRecurrence(
     cursor.setUTCDate(cursor.getUTCDate() + stepDays);
   }
   return out;
+}
+
+/**
+ * SCH-12 — check student currency against a lesson's required_currencies.
+ * Returns { blockers: [...] } where blockers is empty when the student
+ * is fit to fly. Extracted so both the public procedure and the
+ * additive hook inside `approve` can reuse it.
+ */
+async function computeStudentCurrencyBlockers(
+  tx: Tx,
+  lessonId: string,
+  studentUserId: string,
+): Promise<Array<{ kind: string; reason: 'missing' | 'expired'; expiresAt?: string }>> {
+  const lessonRows = await tx
+    .select({ requiredCurrencies: lesson.requiredCurrencies })
+    .from(lesson)
+    .where(eq(lesson.id, lessonId))
+    .limit(1);
+  const l = lessonRows[0];
+  if (!l) return [];
+  const required = Array.isArray(l.requiredCurrencies)
+    ? (l.requiredCurrencies as unknown[])
+    : [];
+  if (required.length === 0) return [];
+  // Accept both ['medical','bfr'] and [{kind:'medical'}] shapes
+  const kinds = required
+    .map((x) => (typeof x === 'string' ? x : (x as { kind?: string })?.kind))
+    .filter((k): k is string => typeof k === 'string');
+  if (kinds.length === 0) return [];
+  const rows = await tx
+    .select()
+    .from(personnelCurrency)
+    .where(
+      and(
+        eq(personnelCurrency.userId, studentUserId),
+        eq(personnelCurrency.subjectKind, 'student'),
+        sql`${personnelCurrency.deletedAt} is null`,
+      ),
+    );
+  const now = Date.now();
+  const blockers: Array<{ kind: string; reason: 'missing' | 'expired'; expiresAt?: string }> = [];
+  for (const kind of kinds) {
+    const match = rows.find((r) => r.kind === kind);
+    if (!match) {
+      blockers.push({ kind, reason: 'missing' });
+      continue;
+    }
+    if (match.expiresAt && match.expiresAt.getTime() <= now) {
+      blockers.push({
+        kind,
+        reason: 'expired',
+        expiresAt: match.expiresAt.toISOString(),
+      });
+    }
+  }
+  return blockers;
 }
 
 async function assertAirworthyAt(
@@ -271,6 +330,22 @@ export const scheduleReservationsRouter = router({
       // Person hold gate.
       await assertNoActiveHold(tx, r.studentId);
       await assertNoActiveHold(tx, r.instructorId);
+      // SCH-12 — student currency gate (only when lesson_id is set)
+      if (r.lessonId && r.studentId) {
+        const blockers = await computeStudentCurrencyBlockers(
+          tx,
+          r.lessonId,
+          r.studentId,
+        );
+        if (blockers.length > 0) {
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message:
+              'Student currency not satisfied: ' +
+              blockers.map((b) => `${b.kind} ${b.reason}`).join(', '),
+          });
+        }
+      }
 
       try {
         const updated = await tx
@@ -478,6 +553,23 @@ export const scheduleReservationsRouter = router({
         });
       }
       return { ok: true };
+    }),
+
+  checkStudentCurrency: protectedProcedure
+    .input(
+      z.object({
+        lessonId: z.string().uuid(),
+        studentUserId: z.string().uuid(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const blockers = await computeStudentCurrencyBlockers(
+        tx,
+        input.lessonId,
+        input.studentUserId,
+      );
+      return { blockers };
     }),
 
   getById: protectedProcedure

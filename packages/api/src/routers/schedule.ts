@@ -17,6 +17,7 @@ export const scheduleRouter = router({
   cancel: scheduleReservationsRouter.cancel,
   markNoShow: scheduleReservationsRouter.markNoShow,
   getById: scheduleReservationsRouter.getById,
+  checkStudentCurrency: scheduleReservationsRouter.checkStudentCurrency,
   recurring: scheduleRecurringRouter,
   blocks: scheduleBlocksRouter,
   freebusy: scheduleFreeBusyRouter,
