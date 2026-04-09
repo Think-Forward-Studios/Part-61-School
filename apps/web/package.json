@@ -20,6 +20,7 @@
     "@part61/api": "workspace:^",
     "@part61/db": "workspace:^",
     "@part61/domain": "workspace:^",
+    "@react-pdf/renderer": "4.4.0",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
     "@tanstack/react-query": "^5.96.2",
