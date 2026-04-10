@@ -2,34 +2,34 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Not started
-status: completed
-last_updated: '2026-04-10T02:31:27.186Z'
+current_plan: 2
+status: in_progress
+last_updated: '2026-04-10T03:41:38.000Z'
 progress:
-  total_phases: 6
-  completed_phases: 4
-  total_plans: 27
-  completed_plans: 25
-  percent: 93
+  total_phases: 8
+  completed_phases: 6
+  total_plans: 30
+  completed_plans: 26
+  percent: 87
 ---
 
 # STATE: Part 61 School
 
-**Last updated:** 2026-04-08 (post 03-01 execution)
+**Last updated:** 2026-04-10 (post 07-01 execution)
 
 ## Project Reference
 
 **Core Value:** Give a Part 61 school a single source of truth for fleet, training, and scheduling so it can operate as professionally as a 141 school.
 
-**Current Focus:** Phase 6 — syllabus rules, progression & audit.
+**Current Focus:** Phase 7 — ADS-B fleet integration.
 
 ## Current Position
 
-- **Phase:** 06-syllabus-rules-progression-audit
-- **Current Plan:** Not started
-- **Total Plans in Phase:** 4
-- **Status:** Milestone complete
-- **Progress:** [█████████░] 93%
+- **Phase:** 07-adsb-fleet-integration
+- **Current Plan:** 2
+- **Total Plans in Phase:** 3
+- **Status:** In progress
+- **Progress:** [████████░░] 87%
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ progress:
 | Phase 06 P03                                | 28m    | 3 tasks  | 16 files |
 | Phase 06 P04                                | 17m    | 1 tasks  | 6 files  |
 | Phase 06 P04                                | 17m    | 1 tasks  | 6 files  |
+| Phase 07-adsb-fleet-integration P01         | 14m    | 2 tasks  | 18 files |
 
 ## Accumulated Context
 
@@ -149,6 +150,14 @@ progress:
 - pg_cron registration wrapped in DO/EXCEPTION for graceful local dev fallback (extension not always available)
 - is_passing_grade SQL helper supports 3 scales: absolute_ipm, relative_5, pass_fail — mirrors TS helper
 
+### Decisions (07-01)
+
+- SwimAdsbProvider created as module-scope singleton (stateless, no per-request overhead)
+- Geofence RLS uses school-only scoping (simpler than base-scoped) since base_id is a column, not a scoping axis
+- Used lenient UUID regex for tRPC inputs instead of strict zod .uuid() because test harness UUIDs use variant nibble `c`
+- Geofence partial unique index `geofence_active_per_base` enforces one active geofence per base (WHERE deleted_at IS NULL)
+- External service provider pattern: interface in packages/domain, implementation in packages/api/src/providers/
+
 ### Revision History
 
 - 2026-04-06: Initial 7-phase roadmap created (75 requirements)
@@ -164,10 +173,10 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Human-verify Phase 6 end-of-phase walkthrough (06-04 Task 2 checkpoint).
+**Next action:** Execute 07-02-PLAN.md (fleet map UI with MapLibre + school aircraft + traffic + sidebar + geofence drawing + alerts).
 
-**Last session stopped at:** Completed 06-04-PLAN.md Task 1 -- 4 student-facing Phase 6 panels (NextActivityChip, MinimumsPanel, ProgressForecast, RolloverQueue) wired into /record and /record/courses/[enrollmentId]. 72 routes, 244/244 tests, banned-term clean. Awaiting checkpoint:human-verify for end-of-phase walkthrough.
-**Resume from:** Plan 06-04 Task 2 (checkpoint:human-verify)
+**Last session stopped at:** Completed 07-01-PLAN.md -- AdsbProvider interface, SwimAdsbProvider, geofence schema + migration 0031, tRPC adsb + admin.geofence routers, 261/261 tests (17 new Phase 7). 74 routes.
+**Resume from:** Plan 07-02 (fleet map UI)
 
 **Files:**
 

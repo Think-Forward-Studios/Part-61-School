@@ -179,13 +179,13 @@
 
 ### ADS-B Fleet Visibility (integration with existing ADS-B Tracker)
 
-- [ ] **ADS-01**: Part 61 School app integrates with the existing ADS-B Tracker service via its REST API (port 3002 by default, configurable) — does not duplicate the ADS-B stack
+- [x] **ADS-01**: Part 61 School app integrates with the existing ADS-B Tracker service via its REST API (port 3002 by default, configurable) — does not duplicate the ADS-B stack
 - [ ] **ADS-02**: Live fleet map view shows all of the school's aircraft (matched by tail number) with current position, altitude, speed, heading, and last-update age, sourced from FAA SWIM SCDS via the ADS-B Tracker
 - [ ] **ADS-03**: Map can also show surrounding traffic in a configurable bbox (default: school home airport area), using the existing ADS-B Tracker bbox endpoints
 - [ ] **ADS-04**: Clicking a school aircraft on the map deep-links to its aircraft profile (current reservation, fleet status, recent flights)
-- [ ] **ADS-05**: Geofence alerts: admin can define a training area; system raises an alert when a school aircraft is observed outside it
+- [x] **ADS-05**: Geofence alerts: admin can define a training area; system raises an alert when a school aircraft is observed outside it
 - [ ] **ADS-06**: Flight track replay for the most recent flight of each school aircraft (sourced from the ADS-B Tracker `/api/swim/tracks` endpoint)
-- [ ] **ADS-07**: Provider abstraction: ADS-B integration is wrapped in an `AdsbProvider` interface so the SWIM source can be swapped without touching school app code
+- [x] **ADS-07**: Provider abstraction: ADS-B integration is wrapped in an `AdsbProvider` interface so the SWIM source can be swapped without touching school app code
 
 ### Notifications
 
@@ -379,13 +379,13 @@ Explicitly excluded — documented to prevent scope creep.
 | MSG-03      | Phase 8 | Pending  |
 | MSG-04      | Phase 8 | Pending  |
 | MUL-03      | Phase 8 | Pending  |
-| ADS-01      | Phase 7 | Pending  |
+| ADS-01      | Phase 7 | Complete |
 | ADS-02      | Phase 7 | Pending  |
 | ADS-03      | Phase 7 | Pending  |
 | ADS-04      | Phase 7 | Pending  |
-| ADS-05      | Phase 7 | Pending  |
+| ADS-05      | Phase 7 | Complete |
 | ADS-06      | Phase 7 | Pending  |
-| ADS-07      | Phase 7 | Pending  |
+| ADS-07      | Phase 7 | Complete |
 | NOT-01      | Phase 8 | Pending  |
 | NOT-02      | Phase 8 | Pending  |
 
