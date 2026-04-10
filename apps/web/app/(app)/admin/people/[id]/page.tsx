@@ -1,5 +1,6 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { redirect, notFound } from 'next/navigation';
+import Link from 'next/link';
 import {
   db,
   users,
@@ -23,6 +24,10 @@ import { ExperiencePanel } from './ExperiencePanel';
 import { RolesPanel } from './RolesPanel';
 import { StudentCurrenciesPanel } from './StudentCurrenciesPanel';
 import { TrainingRecordPanel } from './TrainingRecordPanel';
+import { MinimumsStatusPanel } from './_panels/MinimumsStatusPanel';
+import { ProgressForecastPanel } from './_panels/ProgressForecastPanel';
+import { RolloverQueuePanel } from './_panels/RolloverQueuePanel';
+import { NextActivityChip } from './_panels/NextActivityChip';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,6 +93,35 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
 
   const roles = await db.select().from(userRoles).where(eq(userRoles.userId, id));
 
+  // Phase 6: resolve the student's active enrollments (most recent first).
+  const activeEnrollments = (await db.execute(sql`
+    select
+      sce.id,
+      sce.course_version_id,
+      sce.enrolled_at,
+      cv.version_label,
+      c.code as course_code,
+      c.title as course_title
+    from public.student_course_enrollment sce
+    left join public.course_version cv on cv.id = sce.course_version_id
+    left join public.course c on c.id = cv.course_id
+    where sce.user_id = ${id}::uuid
+      and sce.school_id = ${schoolId}::uuid
+      and sce.deleted_at is null
+      and sce.completed_at is null
+      and sce.withdrawn_at is null
+    order by sce.enrolled_at desc
+  `)) as unknown as Array<{
+    id: string;
+    course_version_id: string | null;
+    enrolled_at: string;
+    version_label: string | null;
+    course_code: string | null;
+    course_title: string | null;
+  }>;
+
+  const primaryEnrollment = activeEnrollments[0] ?? null;
+
   const displayName =
     [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || targetUser.email;
 
@@ -139,6 +173,27 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
       <ExperiencePanel userId={id} experience={experience.map(serialize)} />
       <StudentCurrenciesPanel studentUserId={id} />
       <TrainingRecordPanel studentUserId={id} schoolId={schoolId} />
+
+      {primaryEnrollment ? (
+        <section style={{ marginTop: '2rem', borderTop: '2px solid #e5e7eb', paddingTop: '1rem' }}>
+          <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.5rem' }}>
+            Course progress
+          </h2>
+          {activeEnrollments.length > 1 ? (
+            <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '0 0 0.75rem' }}>
+              Student has {activeEnrollments.length} active enrollments. Showing:{' '}
+              {primaryEnrollment.course_title ?? primaryEnrollment.course_code ?? 'Untitled course'}.{' '}
+              <Link href={`/admin/enrollments?studentId=${id}`}>
+                Open enrollments to view others
+              </Link>.
+            </p>
+          ) : null}
+          <MinimumsStatusPanel enrollmentId={primaryEnrollment.id} />
+          <ProgressForecastPanel enrollmentId={primaryEnrollment.id} />
+          <RolloverQueuePanel enrollmentId={primaryEnrollment.id} />
+          <NextActivityChip enrollmentId={primaryEnrollment.id} studentId={id} />
+        </section>
+      ) : null}
     </main>
   );
 }

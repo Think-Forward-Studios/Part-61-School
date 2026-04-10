@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { db, users, aircraft, aircraftCurrentTotals } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { ManagementOverridesPanel } from '../_components/ManagementOverridesPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -177,6 +178,7 @@ export default async function AdminDashboardPage() {
           ))}
         </div>
       )}
+      <ManagementOverridesPanel schoolId={schoolId} />
     </main>
   );
 }

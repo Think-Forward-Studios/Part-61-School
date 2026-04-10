@@ -10,6 +10,10 @@ import {
 } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { EnrollmentActions } from './EnrollmentActions';
+import { MinimumsStatusPanel } from '../../people/[id]/_panels/MinimumsStatusPanel';
+import { ProgressForecastPanel } from '../../people/[id]/_panels/ProgressForecastPanel';
+import { RolloverQueuePanel } from '../../people/[id]/_panels/RolloverQueuePanel';
+import { NextActivityChip } from '../../people/[id]/_panels/NextActivityChip';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,6 +102,16 @@ export default async function EnrollmentDetailPage({ params }: { params: Params 
       </p>
 
       {isActive ? <EnrollmentActions enrollmentId={id} /> : null}
+
+      {isActive ? (
+        <section style={{ marginTop: '2rem', borderTop: '2px solid #e5e7eb', paddingTop: '1rem' }}>
+          <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.5rem' }}>Course progress</h2>
+          <MinimumsStatusPanel enrollmentId={id} />
+          <ProgressForecastPanel enrollmentId={id} />
+          <RolloverQueuePanel enrollmentId={id} />
+          <NextActivityChip enrollmentId={id} studentId={e.userId} />
+        </section>
+      ) : null}
 
       <section style={{ marginTop: '1.5rem' }}>
         <h2>Recent grade sheets</h2>
