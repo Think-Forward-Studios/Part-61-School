@@ -159,7 +159,11 @@ Plans:
 3. The same map can render surrounding traffic in a configurable bbox (default: school home airport area), visually distinguished from school aircraft
 4. Clicking a school aircraft deep-links to its aircraft profile (current reservation, fleet status, recent flights); a flight track replay view renders the most recent flight from the Tracker's `/api/swim/tracks` endpoint
 5. An admin can define a training-area geofence; the system raises an alert when a school aircraft is observed outside it
-   **Plans**: TBD
+   **Plans:** 3 plans
+   Plans:
+   - [ ] 07-01-PLAN.md — AdsbProvider interface + SwimAdsbProvider + geofence schema + migration + tRPC routers + RLS tests
+   - [ ] 07-02-PLAN.md — Fleet map UI (MapLibre + school aircraft + traffic + sidebar + geofence drawing + alerts)
+   - [ ] 07-03-PLAN.md — Track replay + dispatch deep-links + end-of-phase human verification
 
 ### Phase 8: Experience, Reporting, Messaging & Beta
 
@@ -187,7 +191,7 @@ Plans:
 | 4. CAMP Maintenance                        | 0/0            | Complete    | 2026-04-09 |
 | 5. Syllabus Model, Grading & Records       | 5/5            | Complete    | 2026-04-09 |
 | 6. Syllabus Rules, Progression & Audit     | 1/4            | Complete    | 2026-04-10 |
-| 7. ADS-B Fleet Integration                 | 0/0            | Not started | -          |
+| 7. ADS-B Fleet Integration                 | 0/3            | Planned     | -          |
 | 8. Experience, Reporting, Messaging & Beta | 0/0            | Not started | -          |
 
 ---
