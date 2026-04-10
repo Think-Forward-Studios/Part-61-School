@@ -14,7 +14,7 @@
  */
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import {
   courseVersion,
   lesson,
@@ -91,7 +91,67 @@ export const gradeSheetRouter = router({
       if (!res) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Reservation not found' });
       }
-      // Create draft grade sheet
+
+      // Phase 6 — Step 1: Lock candidate override (SELECT FOR UPDATE)
+      const overrideRows = (await tx.execute(sql`
+        select id from public.lesson_override
+        where student_enrollment_id = ${input.studentEnrollmentId}::uuid
+          and lesson_id = ${input.lessonId}::uuid
+          and consumed_at is null
+          and revoked_at is null
+          and expires_at > now()
+        for update
+        limit 1
+      `)) as unknown as Array<{ id: string }>;
+      const overrideId: string | null = overrideRows[0]?.id ?? null;
+
+      // Phase 6 — Step 2: If no override, evaluate eligibility
+      if (!overrideId) {
+        const eligRows = (await tx.execute(sql`
+          select public.evaluate_lesson_eligibility(
+            ${input.studentEnrollmentId}::uuid,
+            ${input.lessonId}::uuid,
+            ${res.aircraftId ?? null}::uuid,
+            ${ctx.session!.userId}::uuid
+          ) as result
+        `)) as unknown as Array<{ result: unknown }>;
+        const raw = eligRows[0]?.result;
+        if (raw) {
+          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          const result = parsed as {
+            ok: boolean;
+            blockers?: Array<{ kind: string; detail: unknown }>;
+          };
+          if (!result.ok) {
+            throw new TRPCError({
+              code: 'PRECONDITION_FAILED',
+              message: 'Lesson eligibility blockers present',
+              cause: { blockers: result.blockers ?? [] },
+            });
+          }
+        }
+      }
+
+      // Phase 6 — Step 3: If override exists, consume it atomically
+      if (overrideId) {
+        await tx.execute(
+          sql`update public.lesson_override set consumed_at = now() where id = ${overrideId}::uuid`,
+        );
+      }
+
+      // Phase 6 — Step 4: Compute rollover line items
+      const rolloverRows = (await tx.execute(sql`
+        select source_grade_sheet_id, line_item_id
+        from public.compute_rollover_line_items(
+          ${input.studentEnrollmentId}::uuid,
+          ${input.lessonId}::uuid
+        )
+      `)) as unknown as Array<{
+        source_grade_sheet_id: string;
+        line_item_id: string;
+      }>;
+
+      // Step 5: Create draft grade sheet (existing Phase 5 logic)
       const [sheet] = await tx
         .insert(lessonGradeSheet)
         .values({
@@ -106,22 +166,48 @@ export const gradeSheetRouter = router({
           updatedBy: ctx.session!.userId,
         })
         .returning();
-      // Pre-fill line_item_grade rows for every line item on this lesson
+
+      // Step 6: Pre-fill line_item_grade rows + rollover stubs
       const items = await tx
         .select()
         .from(lineItem)
         .where(eq(lineItem.lessonId, input.lessonId))
         .orderBy(asc(lineItem.position));
-      if (items.length > 0) {
-        await tx.insert(lineItemGrade).values(
-          items.map((li) => ({
-            gradeSheetId: sheet!.id,
-            lineItemId: li.id,
-            gradeValue: '',
-            position: li.position,
-          })),
-        );
+
+      // Build base stubs for the lesson's own line items
+      const stubs: Array<{
+        gradeSheetId: string;
+        lineItemId: string;
+        gradeValue: string;
+        position: number;
+        rolloverFromGradeSheetId?: string | null;
+      }> = items.map((li) => ({
+        gradeSheetId: sheet!.id,
+        lineItemId: li.id,
+        gradeValue: '',
+        position: li.position,
+      }));
+
+      // Add rollover stubs (de-duplicated against existing line items)
+      const existingLineItemIds = new Set(items.map((li) => li.id));
+      let rolloverPosition = items.length;
+      for (const rr of rolloverRows) {
+        // Rollover rows are in ADDITION to the lesson's own items.
+        // If the same line_item_id is already in the lesson, insert
+        // an additional stub tagged with rollover_from_grade_sheet_id.
+        stubs.push({
+          gradeSheetId: sheet!.id,
+          lineItemId: rr.line_item_id,
+          gradeValue: '',
+          position: rolloverPosition++,
+          rolloverFromGradeSheetId: rr.source_grade_sheet_id,
+        });
       }
+
+      if (stubs.length > 0) {
+        await tx.insert(lineItemGrade).values(stubs);
+      }
+
       return sheet;
     }),
 
