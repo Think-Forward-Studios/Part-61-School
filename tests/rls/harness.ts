@@ -84,6 +84,7 @@ export async function seedTwoSchools(): Promise<SeedResult> {
   await sql.unsafe(`
     truncate table
       public.audit_log,
+      public.geofence,
       public.student_progress_forecast_cache,
       public.training_record_audit_exception,
       public.lesson_override,
@@ -190,10 +191,7 @@ export interface JwtIdentity {
  * sets the JWT claims GUC, switches to the `authenticated` role, runs
  * the user's callback, and tears the connection down.
  */
-export async function asUserOf<T>(
-  identity: JwtIdentity,
-  fn: (sql: Sql) => Promise<T>,
-): Promise<T> {
+export async function asUserOf<T>(identity: JwtIdentity, fn: (sql: Sql) => Promise<T>): Promise<T> {
   const conn = postgres(DIRECT_URL, {
     prepare: false,
     max: 1,
@@ -207,10 +205,7 @@ export async function asUserOf<T>(
       active_role: identity.activeRole,
     });
     // Use set_config so the value is parameterized safely.
-    await conn.unsafe(
-      `select set_config('request.jwt.claims', $1, false)`,
-      [claims],
-    );
+    await conn.unsafe(`select set_config('request.jwt.claims', $1, false)`, [claims]);
     await conn.unsafe(`set role authenticated`);
     return await fn(conn);
   } finally {

@@ -20,6 +20,7 @@ import { adminEndorsementsRouter } from './endorsements';
 import { adminStudentCurrenciesRouter } from './studentCurrencies';
 import { adminOverridesRouter } from './overrides';
 import { adminAuditRouter } from './audit';
+import { adminGeofenceRouter } from './geofence';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -43,4 +44,5 @@ export const adminRouter = router({
   studentCurrencies: adminStudentCurrenciesRouter,
   overrides: adminOverridesRouter,
   audit: adminAuditRouter,
+  geofence: adminGeofenceRouter,
 });

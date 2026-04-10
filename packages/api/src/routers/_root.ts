@@ -11,6 +11,7 @@ import { dispatchRouter } from './dispatch';
 import { fifRouter } from './fif';
 import { gradeSheetRouter } from './gradeSheet';
 import { recordRouter } from './record';
+import { adsbRouter } from './adsb';
 
 export const appRouter = router({
   auth: authRouter,
@@ -25,6 +26,7 @@ export const appRouter = router({
   fif: fifRouter,
   gradeSheet: gradeSheetRouter,
   record: recordRouter,
+  adsb: adsbRouter,
 });
 
 export type AppRouter = typeof appRouter;
