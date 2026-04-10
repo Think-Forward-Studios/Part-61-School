@@ -9,6 +9,7 @@ import {
   flightLogEntry,
   aircraftCurrentTotals,
 } from '@part61/db';
+import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { EditAircraftForm } from './EditAircraftForm';
 import { EnginesPanel } from './EnginesPanel';
@@ -57,10 +58,7 @@ export default async function AircraftDetailPage({ params }: { params: Params })
       .limit(1)
   )[0];
 
-  const engines = await db
-    .select()
-    .from(aircraftEngine)
-    .where(eq(aircraftEngine.aircraftId, id));
+  const engines = await db.select().from(aircraftEngine).where(eq(aircraftEngine.aircraftId, id));
 
   const equipment = await db
     .select()
@@ -84,12 +82,26 @@ export default async function AircraftDetailPage({ params }: { params: Params })
 
   return (
     <main style={{ padding: '1rem', maxWidth: 1100 }}>
-      <h1>
-        {row.tailNumber}{' '}
-        <span style={{ fontSize: '1rem', color: '#555' }}>
-          {row.make} {row.model} {row.year ? `(${row.year})` : ''}
-        </span>
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', flexWrap: 'wrap' }}>
+        <h1 style={{ margin: 0 }}>
+          {row.tailNumber}{' '}
+          <span style={{ fontSize: '1rem', color: '#555' }}>
+            {row.make} {row.model} {row.year ? `(${row.year})` : ''}
+          </span>
+        </h1>
+        <Link
+          href={`/fleet-map/replay/${encodeURIComponent(row.tailNumber)}`}
+          style={{
+            fontSize: '0.85rem',
+            color: '#3b82f6',
+            textDecoration: 'none',
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          View last flight &rarr;
+        </Link>
+      </div>
       <section
         style={{
           display: 'flex',
@@ -110,7 +122,9 @@ export default async function AircraftDetailPage({ params }: { params: Params })
         </div>
         <div>
           <div style={{ fontSize: '0.8rem', color: '#555' }}>Airframe</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 'bold' }}>{fmt(totals?.currentAirframe)}</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 'bold' }}>
+            {fmt(totals?.currentAirframe)}
+          </div>
         </div>
       </section>
 
@@ -144,14 +158,14 @@ export default async function AircraftDetailPage({ params }: { params: Params })
         }))}
       />
 
-      <EquipmentPanel
-        aircraftId={id}
-        initialTags={equipment.map((e) => e.tag)}
-      />
+      <EquipmentPanel aircraftId={id} initialTags={equipment.map((e) => e.tag)} />
 
       <PhotoPanel aircraftId={id} />
 
-      <FlightLogEntryForm aircraftId={id} engines={engines.map((e) => ({ id: e.id, position: e.position }))} />
+      <FlightLogEntryForm
+        aircraftId={id}
+        engines={engines.map((e) => ({ id: e.id, position: e.position }))}
+      />
 
       <RecentFlightsPanel
         flights={recentFlights.map((f) => ({

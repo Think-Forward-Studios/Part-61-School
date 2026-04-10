@@ -18,6 +18,7 @@
  */
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { trpc } from '@/lib/trpc/client';
 import { reservationStatusLabel } from '@part61/domain';
 import { DispatchModal } from './DispatchModal';
@@ -39,7 +40,10 @@ function parseRangeBounds(range: string | null): { start: Date; end: Date } | nu
   const m = range.match(/^[\[(]\s*"?([^",]+)"?\s*,\s*"?([^"\)]+)"?\s*[\])]$/);
   if (!m) return null;
   const norm = (s: string) =>
-    s.trim().replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00');
+    s
+      .trim()
+      .replace(' ', 'T')
+      .replace(/([+-]\d{2})$/, '$1:00');
   const start = new Date(norm(m[1]!));
   const end = new Date(norm(m[2]!));
   if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
@@ -76,10 +80,12 @@ function RowCard({
   r,
   onDispatchClick,
   onCloseClick,
+  showMapLink,
 }: {
   r: Row;
   onDispatchClick?: () => void;
   onCloseClick?: () => void;
+  showMapLink?: boolean;
 }) {
   const range = getStr(r, 'time_range', 'timeRange');
   const bounds = parseRangeBounds(range);
@@ -99,9 +105,31 @@ function RowCard({
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-        <strong>
+        <strong style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           {activity}
           <MelBadge aircraftId={aircraftId} />
+          {showMapLink && (
+            <Link
+              href="/fleet-map"
+              title="Track on Fleet Map"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                background: '#3b82f6',
+                color: '#fff',
+                fontSize: 12,
+                textDecoration: 'none',
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              {'\u2708'}
+            </Link>
+          )}
         </strong>
         <span>{reservationStatusLabel(r.status)}</span>
       </div>
@@ -210,6 +238,7 @@ export function DispatchBoard() {
               <RowCard
                 key={r.id}
                 r={r}
+                showMapLink
                 onCloseClick={() => router.push(`/dispatch/close/${r.id}`)}
               />
             ))
@@ -220,11 +249,7 @@ export function DispatchBoard() {
             <p style={{ color: '#888' }}>Nothing in the next 60 minutes.</p>
           ) : (
             upcoming.map((r) => (
-              <RowCard
-                key={r.id}
-                r={r}
-                onDispatchClick={() => setDispatchTarget(r)}
-              />
+              <RowCard key={r.id} r={r} showMapLink onDispatchClick={() => setDispatchTarget(r)} />
             ))
           )}
         </Panel>

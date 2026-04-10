@@ -1,6 +1,7 @@
 'use client';
 
 import { Popup } from 'react-map-gl/maplibre';
+import Link from 'next/link';
 import type { FleetPosition } from './AircraftLayer';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -90,23 +91,42 @@ export function AircraftPopup({ aircraft, onClose, onNavigate }: AircraftPopupPr
           </div>
         </div>
         {aircraft.aircraftId && (
-          <button
-            onClick={() => onNavigate(aircraft.aircraftId!)}
-            style={{
-              marginTop: 8,
-              width: '100%',
-              padding: '4px 8px',
-              fontSize: 12,
-              fontWeight: 600,
-              border: '1px solid #3b82f6',
-              borderRadius: 4,
-              background: '#3b82f6',
-              color: '#fff',
-              cursor: 'pointer',
-            }}
-          >
-            View Aircraft
-          </button>
+          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            <button
+              onClick={() => onNavigate(aircraft.aircraftId!)}
+              style={{
+                flex: 1,
+                padding: '4px 8px',
+                fontSize: 12,
+                fontWeight: 600,
+                border: '1px solid #3b82f6',
+                borderRadius: 4,
+                background: '#3b82f6',
+                color: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              View Aircraft
+            </button>
+            <Link
+              href={`/fleet-map/replay/${encodeURIComponent(aircraft.tailNumber ?? aircraft.callsign ?? '')}`}
+              style={{
+                flex: 1,
+                padding: '4px 8px',
+                fontSize: 12,
+                fontWeight: 600,
+                border: '1px solid #a78bfa',
+                borderRadius: 4,
+                background: '#a78bfa',
+                color: '#fff',
+                cursor: 'pointer',
+                textDecoration: 'none',
+                textAlign: 'center',
+              }}
+            >
+              View Track
+            </Link>
+          </div>
         )}
       </div>
     </Popup>
