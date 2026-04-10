@@ -18,6 +18,8 @@ import { adminEnrollmentsRouter } from './enrollments';
 import { adminStageChecksRouter } from './stageChecks';
 import { adminEndorsementsRouter } from './endorsements';
 import { adminStudentCurrenciesRouter } from './studentCurrencies';
+import { adminOverridesRouter } from './overrides';
+import { adminAuditRouter } from './audit';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -39,4 +41,6 @@ export const adminRouter = router({
   stageChecks: adminStageChecksRouter,
   endorsements: adminEndorsementsRouter,
   studentCurrencies: adminStudentCurrenciesRouter,
+  overrides: adminOverridesRouter,
+  audit: adminAuditRouter,
 });
