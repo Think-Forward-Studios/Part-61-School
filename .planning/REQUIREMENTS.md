@@ -57,7 +57,7 @@
 - [x] **SCH-08**: Reservation lifecycle: requested → approved → dispatched (briefing complete) → flown (Hobbs in/out captured) → closed → archived
 - [x] **SCH-09**: No-show, weather scrub, and cancellation each have distinct close-out states with required reason
 - [ ] **SCH-10**: Student and instructor receive notification (in-app + email) on reservation request, approval, change, and reminder
-- [ ] **SCH-11**: System verifies **instructor currencies and qualifications** required by the lesson (per SYL-18) before allowing the reservation to be confirmed
+- [x] **SCH-11**: System verifies **instructor currencies and qualifications** required by the lesson (per SYL-18) before allowing the reservation to be confirmed
 - [x] **SCH-12**: System verifies **student qualifications and currencies** required by the lesson (per SYL-19 rules + SYL-12) before allowing the reservation
 - [x] **SCH-13**: Schedulable resource types include **flight, simulator, oral, academic/ground**, and miscellaneous (safety meeting, briefing) — not only flight reservations
 - [ ] **SCH-14**: **"Next activity" suggestion** — when scheduling a student, system proposes the next lesson the student is due to take based on syllabus progress, prerequisites, and currencies
@@ -96,16 +96,16 @@
 - [x] **SYL-12**: Currency tracking: BFR, IPC, medical class+expiration, solo endorsement scope+expiration, day/night/PIC currency — surfaced on student profile and used by SCH-05
 - [x] **SYL-13**: Every course component (Stage, Phase, Unit, Lesson, Line Item) can carry **Objectives** and **Completion Standards** as structured text fields shown to instructor on the grade sheet
 - [x] **SYL-14**: Line items can be flagged **Required**, **Optional**, or **Must Pass**; course completion logic respects these flags
-- [ ] **SYL-15**: **Incomplete line items auto-roll forward** — any Required or Must Pass line item not satisfactorily completed in a lesson is automatically inserted into the next lesson's grade sheet until satisfied
-- [ ] **SYL-16**: **Prerequisite enforcement** — a lesson cannot be scheduled or graded until all prerequisite lessons/line items are complete
-- [ ] **SYL-17**: **Management override** — admin/chief instructor can authorize a student to perform a lesson out of syllabus order; override is logged with reason, authorizer, and timestamp, and surfaces in the audit trail
-- [ ] **SYL-18**: Lesson definition can specify **unit duration** (planned hours), **required resources** (aircraft type, sim type), **resource configuration** (e.g. IFR-equipped, complex), and **instructor qualifications/currencies** required to teach it
-- [ ] **SYL-19**: Syllabus rules engine — multiple rules per course component (e.g. "Must hold solo endorsement before this lesson", "Aircraft must be IFR-equipped", "Instructor must hold CFII"); rules evaluated at scheduling and grading time
-- [ ] **SYL-20**: Authorized repeats — each line item / lesson can declare maximum repeat count for unsatisfactory completion before management review is required
-- [ ] **SYL-21**: Per-student **course minimums tracker** (FAA hour minimums: dual, solo, night, cross-country, instrument, etc.) updated in real time after each flight close-out
-- [ ] **SYL-22**: **Ahead/behind training plan indicator** — projects expected progress at current pace and shows whether the student is on, ahead of, or behind plan
-- [ ] **SYL-23**: **Projected checkride and course completion date** — derived from remaining required hours/lessons and the student's recent training cadence
-- [ ] **SYL-24**: **Automated training record audit** — nightly job verifies every student's record for missing lessons, missing endorsements, missing hours, missing stage checks; surfaces exceptions on the admin audit dashboard
+- [x] **SYL-15**: **Incomplete line items auto-roll forward** — any Required or Must Pass line item not satisfactorily completed in a lesson is automatically inserted into the next lesson's grade sheet until satisfied
+- [x] **SYL-16**: **Prerequisite enforcement** — a lesson cannot be scheduled or graded until all prerequisite lessons/line items are complete
+- [x] **SYL-17**: **Management override** — admin/chief instructor can authorize a student to perform a lesson out of syllabus order; override is logged with reason, authorizer, and timestamp, and surfaces in the audit trail
+- [x] **SYL-18**: Lesson definition can specify **unit duration** (planned hours), **required resources** (aircraft type, sim type), **resource configuration** (e.g. IFR-equipped, complex), and **instructor qualifications/currencies** required to teach it
+- [x] **SYL-19**: Syllabus rules engine — multiple rules per course component (e.g. "Must hold solo endorsement before this lesson", "Aircraft must be IFR-equipped", "Instructor must hold CFII"); rules evaluated at scheduling and grading time
+- [x] **SYL-20**: Authorized repeats — each line item / lesson can declare maximum repeat count for unsatisfactory completion before management review is required
+- [x] **SYL-21**: Per-student **course minimums tracker** (FAA hour minimums: dual, solo, night, cross-country, instrument, etc.) updated in real time after each flight close-out
+- [x] **SYL-22**: **Ahead/behind training plan indicator** — projects expected progress at current pace and shows whether the student is on, ahead of, or behind plan
+- [x] **SYL-23**: **Projected checkride and course completion date** — derived from remaining required hours/lessons and the student's recent training cadence
+- [x] **SYL-24**: **Automated training record audit** — nightly job verifies every student's record for missing lessons, missing endorsements, missing hours, missing stage checks; surfaces exceptions on the admin audit dashboard
 - [x] **SYL-25**: **Test grade entry** — instructor can record written/oral test scores against any course component (knowledge test, end-of-stage test, end-of-course oral)
 
 ### Student Experience
@@ -142,7 +142,7 @@
 - [ ] **IPF-03**: **Instructor pass rate** — for each instructor, percentage of their students who pass checkrides on first attempt, displayed on the instructor profile
 - [ ] **IPF-04**: **Instructor flight/duty hour violation warnings** — system warns when scheduling would push an instructor past configurable daily/weekly hour limits (FAR 61.195)
 - [ ] **IPF-05**: **Instructor workload monitor** — admin dashboard panel showing each instructor's scheduled hours this week, students assigned, pending grades
-- [ ] **IPF-06**: **Management alerts** for any training activity flown out of syllabus order, beyond authorized repeats, or otherwise non-conforming (consumes SYL-17/SYL-20 events)
+- [x] **IPF-06**: **Management alerts** for any training activity flown out of syllabus order, beyond authorized repeats, or otherwise non-conforming (consumes SYL-17/SYL-20 events)
 
 ### Flight Tracking & Dispatch
 
@@ -304,7 +304,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SCH-08      | Phase 3 | Complete |
 | SCH-09      | Phase 3 | Complete |
 | SCH-10      | Phase 8 | Pending  |
-| SCH-11      | Phase 6 | Pending  |
+| SCH-11      | Phase 6 | Complete |
 | SCH-12      | Phase 5 | Complete |
 | SCH-13      | Phase 3 | Complete |
 | SCH-14      | Phase 6 | Pending  |
@@ -346,16 +346,16 @@ Explicitly excluded — documented to prevent scope creep.
 | SYL-12      | Phase 5 | Complete |
 | SYL-13      | Phase 5 | Complete |
 | SYL-14      | Phase 5 | Complete |
-| SYL-15      | Phase 6 | Pending  |
-| SYL-16      | Phase 6 | Pending  |
-| SYL-17      | Phase 6 | Pending  |
-| SYL-18      | Phase 6 | Pending  |
-| SYL-19      | Phase 6 | Pending  |
-| SYL-20      | Phase 6 | Pending  |
-| SYL-21      | Phase 6 | Pending  |
-| SYL-22      | Phase 6 | Pending  |
-| SYL-23      | Phase 6 | Pending  |
-| SYL-24      | Phase 6 | Pending  |
+| SYL-15      | Phase 6 | Complete |
+| SYL-16      | Phase 6 | Complete |
+| SYL-17      | Phase 6 | Complete |
+| SYL-18      | Phase 6 | Complete |
+| SYL-19      | Phase 6 | Complete |
+| SYL-20      | Phase 6 | Complete |
+| SYL-21      | Phase 6 | Complete |
+| SYL-22      | Phase 6 | Complete |
+| SYL-23      | Phase 6 | Complete |
+| SYL-24      | Phase 6 | Complete |
 | SYL-25      | Phase 5 | Complete |
 | STU-01      | Phase 8 | Pending  |
 | STU-02      | Phase 5 | Complete |
@@ -367,7 +367,7 @@ Explicitly excluded — documented to prevent scope creep.
 | IPF-03      | Phase 8 | Pending  |
 | IPF-04      | Phase 8 | Pending  |
 | IPF-05      | Phase 8 | Pending  |
-| IPF-06      | Phase 6 | Pending  |
+| IPF-06      | Phase 6 | Complete |
 | REP-01      | Phase 8 | Pending  |
 | REP-02      | Phase 8 | Pending  |
 | REP-03      | Phase 8 | Pending  |

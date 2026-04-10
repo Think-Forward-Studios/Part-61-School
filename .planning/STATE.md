@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Not started
-status: completed
-last_updated: '2026-04-09T17:09:05.443Z'
+current_plan: 2 of 4
+status: in_progress
+last_updated: '2026-04-10T00:25:00.000Z'
 progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 23
-  completed_plans: 22
-  percent: 96
+  total_phases: 8
+  completed_phases: 5
+  total_plans: 27
+  completed_plans: 23
+  percent: 85
 ---
 
 # STATE: Part 61 School
@@ -21,15 +21,15 @@ progress:
 
 **Core Value:** Give a Part 61 school a single source of truth for fleet, training, and scheduling so it can operate as professionally as a 141 school.
 
-**Current Focus:** Phase 3 — scheduling & dispatch execution.
+**Current Focus:** Phase 6 — syllabus rules, progression & audit.
 
 ## Current Position
 
-- **Phase:** 05-syllabus-model-grading-records
-- **Current Plan:** Not started
-- **Total Plans in Phase:** 5
-- **Status:** Milestone complete
-- **Progress:** [██████████] 96%
+- **Phase:** 06-syllabus-rules-progression-audit
+- **Current Plan:** 2 of 4
+- **Total Plans in Phase:** 4
+- **Status:** In progress (Plan 01 complete)
+- **Progress:** [████████░░] 85%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ progress:
 | Phase 05-syllabus-model-grading-records P02 | 22m    | 2 tasks  | 6 files  |
 | Phase 05 P04                                | 18m    | 2 tasks  | 23 files |
 | Phase 05 P05                                | 22m    | 2 tasks  | 14 files |
+| Phase 06 P01                                | 45m    | 4 tasks  | 25 files |
 
 ## Accumulated Context
 
@@ -137,6 +138,14 @@ progress:
 - `users.id` is NOT defaultRandom — it mirrors Supabase `auth.users.id`
 - Active role lives in `app.active_role` GUC (not JWT); the access token hook emits it for client convenience only
 
+### Decisions (06-01)
+
+- Collapsed 5 column-addition migrations into 2 (0023 enums + 0024 all columns) — same content, fewer files
+- student_progress_forecast_cache uses student_enrollment_id as PK (no id column); audit trigger dropped because fn_log_change expects id
+- session_replication_role = replica used to bypass published-version seal trigger during minimum_hours backfill
+- pg_cron registration wrapped in DO/EXCEPTION for graceful local dev fallback (extension not always available)
+- is_passing_grade SQL helper supports 3 scales: absolute_ipm, relative_5, pass_fail — mirrors TS helper
+
 ### Revision History
 
 - 2026-04-06: Initial 7-phase roadmap created (75 requirements)
@@ -152,10 +161,10 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Continuation agent to finish `.planning/phases/05-syllabus-model-grading-records/05-03-PLAN.md` Slice B — admin.stageChecks / admin.endorsements / admin.studentCurrencies / gradeSheet / flightLog / record / schedule.checkStudentCurrency + phase5-routers integration tests.
+**Next action:** Execute Plan 06-02 (tRPC wrappers for Phase 6 SQL functions).
 
-**Last session stopped at:** Completed 05-03 Slice A (commits de5052f, 6b554f8, 91deb6d, 5822647) — migrations 0021+0022, adminOrChiefInstructorProcedure, buildInstructorSignerSnapshot, domain labels, admin.courses router, admin.enrollments router. 175/175 tests. Monorepo typecheck + lint green. SYL-01/03/04 closed by this slice.
-**Resume from:** None
+**Last session stopped at:** Completed 06-01-PLAN.md — 8 migrations (0023-0030), 12 SQL functions, 4 triggers, pg_cron job, minimum_hours seed. 221/221 tests. SYL-15..24 + SCH-11 + IPF-06 database layer complete.
+**Resume from:** Plan 06-02
 
 **Files:**
 
