@@ -17,7 +17,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 - [x] **Phase 3: Scheduling & Dispatch Execution** - Reservations with DB-level conflict prevention, multi-activity-type scheduling, dispatch screen, check-in/out, overdue alerts, XC following, FIF, flight close-out (completed 2026-04-08)
 - [x] **Phase 4: CAMP Maintenance** - Real `isAirworthyAt`, inspections, ADs, squawks, work orders, parts, logbook export, downtime prediction (completed 2026-04-09)
 - [x] **Phase 5: Syllabus Model, Grading & Records** - Course→Stage→Phase→Unit→Lesson→LineItem hierarchy, seeded templates, versioning, grading, stage checks, endorsements, 141.101 + IACRA exports, test grades (completed 2026-04-09)
-- [ ] **Phase 6: Syllabus Rules, Progression & Audit** - Required/Optional/Must-Pass, auto-rollover, prerequisite+currency enforcement, mgmt override, rules engine, course minimums, ahead/behind, projected completion, nightly audit, ETA next-activity
+- [x] **Phase 6: Syllabus Rules, Progression & Audit** - Required/Optional/Must-Pass, auto-rollover, prerequisite+currency enforcement, mgmt override, rules engine, course minimums, ahead/behind, projected completion, nightly audit, ETA next-activity (completed 2026-04-10)
 - [ ] **Phase 7: ADS-B Fleet Integration** - Integrate existing ADS-B Tracker service: live fleet map, deep-links, geofence, flight replay
 - [ ] **Phase 8: Experience, Reporting, Messaging & Beta** - Role dashboards, notifications, full audit log, cost tracking, standard reports, IM/broadcast, dispatch cues, multi-base reporting, beta hardening
 
@@ -186,7 +186,7 @@ Plans:
 | 3. Scheduling & Dispatch Execution         | 0/0            | Complete    | 2026-04-08 |
 | 4. CAMP Maintenance                        | 0/0            | Complete    | 2026-04-09 |
 | 5. Syllabus Model, Grading & Records       | 5/5            | Complete    | 2026-04-09 |
-| 6. Syllabus Rules, Progression & Audit     | 1/4 | In Progress|  |
+| 6. Syllabus Rules, Progression & Audit     | 1/4            | Complete    | 2026-04-10 |
 | 7. ADS-B Fleet Integration                 | 0/0            | Not started | -          |
 | 8. Experience, Reporting, Messaging & Beta | 0/0            | Not started | -          |
 
