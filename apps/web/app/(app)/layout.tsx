@@ -10,8 +10,7 @@ import { BaseSwitcher } from '@/components/BaseSwitcher';
 import { LogoutButton } from '@/components/LogoutButton';
 
 const ROLES: readonly Role[] = ['student', 'instructor', 'mechanic', 'admin'];
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isRole(x: unknown): x is Role {
   return typeof x === 'string' && (ROLES as readonly string[]).includes(x);
 }
@@ -63,9 +62,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     const match = await db
       .select({ baseId: userBase.baseId })
       .from(userBase)
-      .where(
-        and(eq(userBase.userId, user.id), eq(userBase.baseId, cookieBaseRaw)),
-      )
+      .where(and(eq(userBase.userId, user.id), eq(userBase.baseId, cookieBaseRaw)))
       .limit(1);
     if (match[0]) activeBaseId = match[0].baseId;
   }
@@ -115,6 +112,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </a>
         <a href="/flight-log" style={{ fontSize: '0.85rem' }}>
           Flight Log
+        </a>
+        <a href="/fleet-map" style={{ fontSize: '0.85rem' }}>
+          Fleet Map
         </a>
         <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: '1rem' }}>
           <BaseSwitcher availableBases={availableBases} activeBaseId={activeBaseId} />
