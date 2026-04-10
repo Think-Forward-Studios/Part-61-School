@@ -1,10 +1,13 @@
 /**
- * record router — Phase 5-03 (SYL-14).
+ * record router — Phase 5-03 (SYL-14) + Phase 6-02.
  *
  * Student-facing read-only queries. EVERY procedure MUST scope to
  * ctx.session.userId — never to an arbitrary userId in input.
+ *
+ * Phase 6 adds: getMyProgressForecast, getMyMinimumsStatus.
  */
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import {
   flightLogTime,
@@ -136,4 +139,88 @@ export const recordRouter = router({
       .orderBy(desc(personnelCurrency.effectiveAt));
     return rows;
   }),
+
+  /**
+   * Phase 6 — getMyProgressForecast.
+   *
+   * Returns the cached forecast for the student's active enrollment.
+   * If no cache exists, refreshes then reads.
+   */
+  getMyProgressForecast: protectedProcedure.query(async ({ ctx }) => {
+    const tx = ctx.tx as Tx;
+    const userId = ctx.session!.userId;
+
+    // Find active enrollment
+    const enrollments = await tx
+      .select()
+      .from(studentCourseEnrollment)
+      .where(
+        and(
+          eq(studentCourseEnrollment.userId, userId),
+          isNull(studentCourseEnrollment.deletedAt),
+          isNull(studentCourseEnrollment.completedAt),
+          isNull(studentCourseEnrollment.withdrawnAt),
+        ),
+      )
+      .limit(1);
+    const enrollment = enrollments[0];
+    if (!enrollment) {
+      return null;
+    }
+
+    // Read cache; refresh if missing
+    let cacheRows = (await tx.execute(sql`
+      select * from public.student_progress_forecast_cache
+      where student_enrollment_id = ${enrollment.id}::uuid
+      limit 1
+    `)) as unknown as Array<Record<string, unknown>>;
+
+    if (!cacheRows[0]) {
+      await tx.execute(sql`
+        select public.refresh_student_progress_forecast(${enrollment.id}::uuid)
+      `);
+      cacheRows = (await tx.execute(sql`
+        select * from public.student_progress_forecast_cache
+        where student_enrollment_id = ${enrollment.id}::uuid
+        limit 1
+      `)) as unknown as Array<Record<string, unknown>>;
+    }
+
+    return cacheRows[0] ?? null;
+  }),
+
+  /**
+   * Phase 6 — getMyMinimumsStatus.
+   *
+   * Returns the student's course minimums tracker view row.
+   * Authz: only the student's own enrollment.
+   */
+  getMyMinimumsStatus: protectedProcedure
+    .input(z.object({ enrollmentId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const userId = ctx.session!.userId;
+
+      // Verify student owns the enrollment
+      const enrollments = await tx
+        .select()
+        .from(studentCourseEnrollment)
+        .where(
+          and(
+            eq(studentCourseEnrollment.id, input.enrollmentId),
+            eq(studentCourseEnrollment.userId, userId),
+            isNull(studentCourseEnrollment.deletedAt),
+          ),
+        )
+        .limit(1);
+      if (!enrollments[0]) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Enrollment not found' });
+      }
+
+      const rows = (await tx.execute(sql`
+        select * from public.student_course_minimums_status
+        where student_enrollment_id = ${input.enrollmentId}::uuid
+      `)) as unknown as Array<Record<string, unknown>>;
+      return rows[0] ?? null;
+    }),
 });
