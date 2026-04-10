@@ -12,3 +12,8 @@ export * from './schemas/maintenanceKindLabels';
 export * from './schemas/gradingLabels';
 export * from './schemas/lessonKindLabels';
 export * from './schemas/endorsementCategoryLabels';
+
+// Phase 6 modules
+export * from './schemas/blockers';
+export * from './schemas/overrideKindLabels';
+export * from './schemas/auditExceptionLabels';

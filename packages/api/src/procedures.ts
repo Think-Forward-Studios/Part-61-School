@@ -36,6 +36,46 @@ export const mechanicOrAdminProcedure = protectedProcedure.use(
  * enrollments, stage check scheduling, endorsement issuance, student
  * currency management). See SYL-01/03/04.
  */
+/**
+ * chiefInstructorOnlyProcedure (Phase 6-02)
+ *
+ * Permits ONLY:
+ *   - activeRole === 'instructor' AND the caller has any user_roles row
+ *     with is_chief_instructor = true.
+ *
+ * Admin-only users are REJECTED. This is STRICTER than
+ * adminOrChiefInstructorProcedure. Used for override grants and
+ * actions that require specific chief instructor authority.
+ */
+export const chiefInstructorOnlyProcedure = protectedProcedure.use(
+  async ({ ctx, next }) => {
+    if (!ctx.session) {
+      throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not signed in' });
+    }
+    if (ctx.session.activeRole !== 'instructor') {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Chief instructor role required',
+      });
+    }
+    const tx = ctx.tx as { execute: (q: ReturnType<typeof sql>) => Promise<unknown> };
+    const rows = (await tx.execute(sql`
+      select 1
+        from public.user_roles ur
+        where ur.user_id = ${ctx.session.userId}
+          and ur.is_chief_instructor = true
+        limit 1
+    `)) as unknown as Array<{ '?column?'?: number }>;
+    if (!rows || rows.length === 0) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Chief instructor flag required for this action',
+      });
+    }
+    return next({ ctx });
+  },
+);
+
 export const adminOrChiefInstructorProcedure = protectedProcedure.use(
   async ({ ctx, next }) => {
     if (!ctx.session) {
