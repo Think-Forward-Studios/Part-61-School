@@ -100,7 +100,22 @@
       "Bash(pnpm --filter ./apps/web lint)",
       "Bash(/usr/bin/curl -sI -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/login)",
       "Read(//private/tmp/**)",
-      "Bash(/usr/bin/curl -s -c /tmp/cookies.txt -b /tmp/cookies.txt -X POST http://localhost:3000/api/trpc/auth.signInWithPassword -H \"Content-Type: application/json\" -d '{\"\"json\"\":{\"\"email\"\":\"\"admin-a@alpha.test\"\",\"\"password\"\":\"\"admin-passw0rd\"\"}}' -o /dev/null -w \"%{http_code}\\\\n\")"
+      "Bash(/usr/bin/curl -s -c /tmp/cookies.txt -b /tmp/cookies.txt -X POST http://localhost:3000/api/trpc/auth.signInWithPassword -H \"Content-Type: application/json\" -d '{\"\"json\"\":{\"\"email\"\":\"\"admin-a@alpha.test\"\",\"\"password\"\":\"\"admin-passw0rd\"\"}}' -o /dev/null -w \"%{http_code}\\\\n\")",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs frontmatter validate .planning/phases/05-syllabus-model-grading-records/05-__TRACKED_VAR__-PLAN.md --schema plan)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs verify plan-structure .planning/phases/05-syllabus-model-grading-records/05-__TRACKED_VAR__-PLAN.md)",
+      "Bash(node -e ':*)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs verify plan-structure .planning/phases/05-syllabus-model-grading-records/05-05-PLAN.md)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs state advance-plan)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs state update-progress)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs state record-metric --phase 05 --plan 04 --duration 18m --tasks 2 --files 23)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs state record-session --stopped-at 'Completed 05-04-PLAN.md')",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs roadmap update-plan-progress 5)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs requirements mark-complete SYL-02 SYL-03 SYL-05 SYL-07 SYL-08 SYL-09 SYL-12 SYL-13 SYL-14 SYL-25 STU-03)",
+      "Bash(find apps/web/app -name \"TrainingRecordPanel.tsx\" -exec head -30 {} \\\\;)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs state record-metric --phase 05 --plan 05 --duration 22m --tasks 2 --files 14)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs state record-session --stopped-at 'Completed 05-05 autonomous work; awaiting human-verify checkpoint')",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs requirements mark-complete SYL-10 SYL-11 STU-02 STU-03)",
+      "Bash(python3)"
     ]
   }
 }
