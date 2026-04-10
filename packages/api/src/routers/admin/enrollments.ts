@@ -237,7 +237,7 @@ export const adminEnrollmentsRouter = router({
       const tx = ctx.tx as Tx;
       const rows = (await tx.execute(sql`
         select * from public.student_course_minimums_status
-        where student_enrollment_id = ${input.enrollmentId}::uuid
+        where enrollment_id = ${input.enrollmentId}::uuid
       `)) as unknown as Array<Record<string, unknown>>;
       return rows[0] ?? null;
     }),
@@ -263,7 +263,7 @@ export const adminEnrollmentsRouter = router({
           tgt_lesson.id        as target_lesson_id,
           tgt_lesson.title     as target_lesson_title,
           li.id                as line_item_id,
-          li.objective         as line_item_objective,
+          li.objectives        as line_item_objective,
           li.classification    as line_item_classification
         from public.line_item_grade lig
         join public.lesson_grade_sheet tgt_sheet on tgt_sheet.id = lig.grade_sheet_id

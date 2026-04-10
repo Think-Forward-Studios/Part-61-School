@@ -219,7 +219,7 @@ export const recordRouter = router({
 
       const rows = (await tx.execute(sql`
         select * from public.student_course_minimums_status
-        where student_enrollment_id = ${input.enrollmentId}::uuid
+        where enrollment_id = ${input.enrollmentId}::uuid
       `)) as unknown as Array<Record<string, unknown>>;
       return rows[0] ?? null;
     }),
