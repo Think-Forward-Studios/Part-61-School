@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 2
-status: in_progress
-last_updated: '2026-04-10T03:41:38.000Z'
+current_plan: 3
+status: executing
+last_updated: '2026-04-10T23:26:39.014Z'
 progress:
-  total_phases: 8
-  completed_phases: 6
+  total_phases: 7
+  completed_phases: 4
   total_plans: 30
-  completed_plans: 26
-  percent: 87
+  completed_plans: 27
+  percent: 90
 ---
 
 # STATE: Part 61 School
@@ -26,10 +26,10 @@ progress:
 ## Current Position
 
 - **Phase:** 07-adsb-fleet-integration
-- **Current Plan:** 2
+- **Current Plan:** 3
 - **Total Plans in Phase:** 3
-- **Status:** In progress
-- **Progress:** [████████░░] 87%
+- **Status:** Ready to execute
+- **Progress:** [█████████░] 90%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ progress:
 | Phase 06 P04                                | 17m    | 1 tasks  | 6 files  |
 | Phase 06 P04                                | 17m    | 1 tasks  | 6 files  |
 | Phase 07-adsb-fleet-integration P01         | 14m    | 2 tasks  | 18 files |
+| Phase 07 P02                                | 43m    | 2 tasks  | 15 files |
 
 ## Accumulated Context
 
@@ -158,6 +159,14 @@ progress:
 - Geofence partial unique index `geofence_active_per_base` enforces one active geofence per base (WHERE deleted_at IS NULL)
 - External service provider pattern: interface in packages/domain, implementation in packages/api/src/providers/
 
+### Decisions (07-02)
+
+- Canvas-generated SDF airplane icon instead of static PNG for MapLibre icon-color recoloring
+- Next.js 15 fleet-map page uses 'use client' with dynamic import (ssr:false disallowed in Server Components)
+- Non-admin geofence detection via trpc.admin.geofence.getActive query error state
+- Terra-draw dynamically imported to avoid SSR issues, loaded only when admin initiates draw mode
+- Circle geofences saved as GeoJSON Point + radiusNm, converted to 72-sided polygon for rendering/checks
+
 ### Revision History
 
 - 2026-04-06: Initial 7-phase roadmap created (75 requirements)
@@ -173,10 +182,10 @@ progress:
 
 ## Session Continuity
 
-**Next action:** Execute 07-02-PLAN.md (fleet map UI with MapLibre + school aircraft + traffic + sidebar + geofence drawing + alerts).
+**Next action:** Execute 07-03-PLAN.md (track replay + dispatch deep-links).
 
-**Last session stopped at:** Completed 07-01-PLAN.md -- AdsbProvider interface, SwimAdsbProvider, geofence schema + migration 0031, tRPC adsb + admin.geofence routers, 261/261 tests (17 new Phase 7). 74 routes.
-**Resume from:** Plan 07-02 (fleet map UI)
+**Last session stopped at:** Completed 07-02-PLAN.md -- Fleet map UI with MapLibre + school aircraft/traffic layers + geofence overlay/editor/alert + fleet sidebar + header nav link. 70 routes. 15 files created/modified.
+**Resume from:** Plan 07-03 (track replay + dispatch deep-links)
 
 **Files:**
 
