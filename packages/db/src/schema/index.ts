@@ -53,3 +53,6 @@ export * from './downtime_forecast';
 export * from './lessonOverride';
 export * from './trainingRecordAuditException';
 export * from './studentProgressForecastCache';
+
+// Phase 7 modules (ADS-B fleet integration)
+export * from './geofence';

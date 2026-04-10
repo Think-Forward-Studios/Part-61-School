@@ -297,6 +297,13 @@ export const auditExceptionSeverityEnum = pgEnum('audit_exception_severity', [
   'critical',
 ]);
 
+// ============================================================================
+// Phase 7 new enums (ADS-B fleet integration)
+// ============================================================================
+
+// ADS-05: geofence shape kind
+export const geofenceKindEnum = pgEnum('geofence_kind', ['polygon', 'circle']);
+
 // FLT-05: aircraft equipment tag enum (locked list in CONTEXT)
 export const aircraftEquipmentTagEnum = pgEnum('aircraft_equipment_tag', [
   'ifr_equipped',

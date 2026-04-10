@@ -17,3 +17,6 @@ export * from './schemas/endorsementCategoryLabels';
 export * from './schemas/blockers';
 export * from './schemas/overrideKindLabels';
 export * from './schemas/auditExceptionLabels';
+
+// Phase 7 modules (ADS-B)
+export * from './adsb';

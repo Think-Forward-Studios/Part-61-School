@@ -1,11 +1,5 @@
 import { sql } from 'drizzle-orm';
-import {
-  pgPolicy,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { doublePrecision, pgPolicy, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Tenancy: schools and bases.
@@ -24,12 +18,8 @@ export const schools = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(),
     timezone: text('timezone').notNull(), // IANA name, e.g. 'America/Chicago'
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   () => [
@@ -58,12 +48,10 @@ export const bases = pgTable(
       .references(() => schools.id),
     name: text('name').notNull(),
     timezone: text('timezone'), // nullable: falls back to schools.timezone
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    latitude: doublePrecision('latitude'), // Phase 7: map center
+    longitude: doublePrecision('longitude'), // Phase 7: map center
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   () => [
