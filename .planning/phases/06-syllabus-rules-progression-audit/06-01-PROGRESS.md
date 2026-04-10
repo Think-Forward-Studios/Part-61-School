@@ -65,11 +65,7 @@ are pushed into later tasks (to be renumbered accordingly):
 
 ### ~~Task 2a — New tables + cross-tenant RLS tests~~ DONE (commit `8da490d`)
 
-### Task 2b — SQL functions + views + rollover/race tests
-- `packages/db/migrations/0029_phase6_views.sql` — `student_course_minimums_status`, `management_override_activity`
-- `packages/db/migrations/0030_phase6_functions.sql` — `is_passing_grade`, six `check_*` functions, `evaluate_lesson_eligibility`, `compute_rollover_line_items`, `suggest_next_activity`
-- `tests/rls/phase6-rollover.test.ts`
-- `tests/rls/phase6-override-race.test.ts`
+### ~~Task 2b — SQL functions + views + rollover/race tests~~ DONE (commit `efa3679`)
 
 ### Task 2c — Forecast/audit functions + triggers + pg_cron + seed backfill
 - Extend `0030` (or new file) with `student_progress_forecast`, `refresh_student_progress_forecast`, `run_training_record_audit`
@@ -77,6 +73,28 @@ are pushed into later tasks (to be renumbered accordingly):
 - `0032_phase6_pg_cron.sql` — `cron.schedule('phase6_nightly_training_record_audit', '0 7 * * *', ...)`
 - `0033_phase6_seed_minimums.sql` — backfill PPL / IR / Comm-SEL `minimum_hours` + cadence
 - `tests/rls/phase6-pg-cron.test.ts` — cron smoke + audit idempotency
+
+## Commits Landed (Task 2b)
+
+4. `efa3679` -- `feat(06-01): task 2b - SQL rules engine`
+   - `packages/db/migrations/0026_phase6_views.sql`
+   - `packages/db/migrations/0027_phase6_functions.sql`
+   - `supabase/migrations/20260409000013_phase6_views.sql`
+   - `supabase/migrations/20260409000014_phase6_functions.sql`
+   - `tests/rls/phase6-functions.test.ts` (13 new tests)
+   - Functions: `is_passing_grade`, `check_lesson_prerequisites`,
+     `check_student_qualifications`, `check_instructor_qualifications`,
+     `check_resource_requirements`, `check_lesson_repeat_limit`,
+     `evaluate_lesson_eligibility`, `compute_rollover_line_items`,
+     `suggest_next_activity`
+   - Views: `student_course_minimums_status`, `management_override_activity`
+
+## Verification After Task 2b
+
+- `pnpm dlx supabase db reset` -> clean (all 27 migrations apply: 0000-0027)
+- `pnpm -r typecheck` -> green (6 workspaces)
+- `pnpm -r lint` -> green (banned-term clean)
+- `pnpm --filter @part61/rls-tests test` -> **213/213 green** (200 baseline + 13 new)
 
 ## Reserved Numbering for Continuation
 
@@ -87,17 +105,17 @@ Continuation agents should start new migrations at **0026**. Suggested mapping:
 | ---- | --------------- | ---------- | ----------------------------------- |
 | 1    | 0023-0027       | 0023-0024  | enums + column additions            |
 | 2a   | 0028            | **0025**   | new tables + `line_item_grade` col  |
-| 2b   | 0029            | **0026**   | views                               |
-| 2b   | 0030            | **0027**   | SQL functions                       |
+| 2b   | 0029            | **0026**   | views (DONE)                        |
+| 2b   | 0030            | **0027**   | SQL functions (DONE)                |
 | 2c   | 0031            | **0028**   | triggers                            |
 | 2c   | 0032            | **0029**   | pg_cron + seed minimums (combinable)|
 
-**`supabase/migrations/` — consumed through 20260409000012.**
-Task 2a consumed 000012. The next supabase mirror timestamp is **20260409000013**.
+**`supabase/migrations/` — consumed through 20260409000014.**
+Task 2b consumed 000013 (views) + 000014 (functions). The next supabase mirror timestamp is **20260409000015**.
 
 ## Test Baseline
 
-- **200/200** RLS tests passing (187 baseline + 13 new Phase 6 table tests)
+- **213/213** RLS tests passing (187 baseline + 13 Phase 6 table tests + 13 Phase 6 function tests)
 - Runner: `pnpm --filter @part61/rls-tests test`
 - Test directory: `tests/rls/` (NOT `packages/db/tests/` as some PLAN.md
   entries imply — those paths in the plan are stale and should be updated to
