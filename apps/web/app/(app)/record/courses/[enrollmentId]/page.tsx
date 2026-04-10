@@ -7,12 +7,25 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { db, users } from '@part61/db';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { loadTrainingRecord } from '@/lib/trainingRecord';
+import { StudentNextActivityChip } from '../../_components/StudentNextActivityChip';
+import { StudentProgressForecastPanel } from '../../_components/StudentProgressForecastPanel';
+import { StudentMinimumsPanel } from '../../_components/StudentMinimumsPanel';
+import { StudentRolloverQueuePanel } from '../../_components/StudentRolloverQueuePanel';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ enrollmentId: string }>;
+
+type RolloverRow = {
+  line_item_grade_id: string;
+  source_lesson_title: string;
+  source_sealed_at: string | null;
+  target_lesson_title: string;
+  line_item_objective: string | null;
+  line_item_classification: string;
+};
 
 export default async function StudentEnrollmentPage({ params }: { params: Params }) {
   const { enrollmentId } = await params;
@@ -29,6 +42,30 @@ export default async function StudentEnrollmentPage({ params }: { params: Params
   if (!data) notFound();
 
   const { course, gradeSheets, stageChecks, endorsements, testGrades } = data;
+
+  // Phase 6: rollover line items for this enrollment
+  const rolloverRows = (await db.execute(sql`
+    select
+      lig.id               as line_item_grade_id,
+      src_lesson.title     as source_lesson_title,
+      src_sheet.sealed_at  as source_sealed_at,
+      tgt_lesson.title     as target_lesson_title,
+      li.objectives        as line_item_objective,
+      li.classification    as line_item_classification
+    from public.line_item_grade lig
+    join public.lesson_grade_sheet tgt_sheet on tgt_sheet.id = lig.grade_sheet_id
+    join public.lesson           tgt_lesson on tgt_lesson.id = tgt_sheet.lesson_id
+    join public.lesson_grade_sheet src_sheet on src_sheet.id = lig.rollover_from_grade_sheet_id
+    join public.lesson           src_lesson on src_lesson.id = src_sheet.lesson_id
+    join public.line_item        li         on li.id = lig.line_item_id
+    where tgt_sheet.student_enrollment_id = ${enrollmentId}::uuid
+      and lig.rollover_from_grade_sheet_id is not null
+      and tgt_sheet.sealed_at is null
+    order by src_sheet.sealed_at desc
+  `)) as unknown as RolloverRow[];
+
+  // Check if enrollment is active (not completed or withdrawn)
+  const isActive = !course.completedAt;
 
   return (
     <main style={{ padding: '1rem', maxWidth: 960 }}>
@@ -63,6 +100,27 @@ export default async function StudentEnrollmentPage({ params }: { params: Params
           Download 141.101 Training Record PDF
         </a>
       </p>
+
+      {/* Phase 6: Progress surfaces scoped to this enrollment */}
+      {isActive ? (
+        <>
+          <StudentNextActivityChip enrollmentId={enrollmentId} />
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1rem',
+              marginTop: '1rem',
+            }}
+          >
+            <StudentProgressForecastPanel />
+            <StudentMinimumsPanel enrollmentId={enrollmentId} />
+          </div>
+
+          <StudentRolloverQueuePanel rows={rolloverRows} />
+        </>
+      ) : null}
 
       <section style={{ marginTop: '1rem' }}>
         <h2>Grade sheets (sealed)</h2>

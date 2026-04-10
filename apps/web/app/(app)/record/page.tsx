@@ -10,6 +10,10 @@ import { sql } from 'drizzle-orm';
 import { db } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { loadIacraTotals, minutesToHours } from '@/lib/trainingRecord';
+import { StudentNextActivityChip } from './_components/StudentNextActivityChip';
+import { StudentProgressForecastPanel } from './_components/StudentProgressForecastPanel';
+import { StudentMinimumsPanel } from './_components/StudentMinimumsPanel';
+import { StudentRolloverQueuePanel } from './_components/StudentRolloverQueuePanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +49,15 @@ type Currency = {
   kind: string;
   effective_at: string;
   expires_at: string | null;
+};
+
+type RolloverRow = {
+  line_item_grade_id: string;
+  source_lesson_title: string;
+  source_sealed_at: string | null;
+  target_lesson_title: string;
+  line_item_objective: string | null;
+  line_item_classification: string;
 };
 
 export default async function RecordPage() {
@@ -104,11 +117,91 @@ export default async function RecordPage() {
   const totalHours = minutesToHours(totals.totalMinutes);
 
   const active = enrollments.find((e) => !e.completed_at && !e.withdrawn_at);
+  const activeEnrollments = enrollments.filter((e) => !e.completed_at && !e.withdrawn_at);
   const now = Date.now();
+
+  // Phase 6: rollover line items for the most-recent active enrollment
+  let rolloverRows: RolloverRow[] = [];
+  if (active) {
+    rolloverRows = (await db.execute(sql`
+      select
+        lig.id               as line_item_grade_id,
+        src_lesson.title     as source_lesson_title,
+        src_sheet.sealed_at  as source_sealed_at,
+        tgt_lesson.title     as target_lesson_title,
+        li.objectives        as line_item_objective,
+        li.classification    as line_item_classification
+      from public.line_item_grade lig
+      join public.lesson_grade_sheet tgt_sheet on tgt_sheet.id = lig.grade_sheet_id
+      join public.lesson           tgt_lesson on tgt_lesson.id = tgt_sheet.lesson_id
+      join public.lesson_grade_sheet src_sheet on src_sheet.id = lig.rollover_from_grade_sheet_id
+      join public.lesson           src_lesson on src_lesson.id = src_sheet.lesson_id
+      join public.line_item        li         on li.id = lig.line_item_id
+      where tgt_sheet.student_enrollment_id = ${active.id}::uuid
+        and lig.rollover_from_grade_sheet_id is not null
+        and tgt_sheet.sealed_at is null
+      order by src_sheet.sealed_at desc
+    `)) as unknown as RolloverRow[];
+  }
 
   return (
     <main style={{ padding: '1rem', maxWidth: 960 }}>
       <h1>My Training Record</h1>
+
+      {/* Phase 6: Progress surfaces for active enrollment */}
+      {active ? (
+        <>
+          {activeEnrollments.length > 1 ? (
+            <p
+              style={{
+                marginTop: '0.75rem',
+                padding: '0.5rem 0.75rem',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: 6,
+                fontSize: '0.85rem',
+                color: '#1e40af',
+              }}
+            >
+              You have {activeEnrollments.length} active enrollments. Showing:{' '}
+              <strong>{active.course_title ?? 'course'}</strong>.{' '}
+              <Link href="/admin/enrollments" style={{ color: '#1e40af' }}>
+                View all enrollments
+              </Link>
+            </p>
+          ) : null}
+
+          <StudentNextActivityChip enrollmentId={active.id} />
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1rem',
+              marginTop: '1rem',
+            }}
+          >
+            <StudentProgressForecastPanel />
+            <StudentMinimumsPanel enrollmentId={active.id} />
+          </div>
+
+          <StudentRolloverQueuePanel rows={rolloverRows} />
+        </>
+      ) : (
+        <p
+          style={{
+            marginTop: '0.75rem',
+            padding: '0.5rem 0.75rem',
+            background: '#f5f5f5',
+            border: '1px solid #e5e7eb',
+            borderRadius: 6,
+            fontSize: '0.85rem',
+            color: '#6b7280',
+          }}
+        >
+          You are not currently enrolled in a course. Contact your chief instructor to enroll.
+        </p>
+      )}
 
       <section style={{ marginTop: '1rem' }}>
         <h2>Enrollments</h2>
@@ -252,11 +345,7 @@ export default async function RecordPage() {
         )}
       </section>
 
-      {active ? null : (
-        <p style={{ marginTop: '1rem', color: '#888', fontSize: '0.85rem' }}>
-          No active enrollment.
-        </p>
-      )}
+      {/* Empty-state for no active enrollment is rendered above with Phase 6 panels */}
     </main>
   );
 }
