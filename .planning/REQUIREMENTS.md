@@ -51,7 +51,7 @@
 - [x] **SCH-02**: Reservation conflicts (same aircraft or same instructor overlapping) are prevented at the database level using a Postgres `EXCLUDE USING gist` constraint on `tstzrange` — application code cannot bypass this
 - [x] **SCH-03**: Instructor or admin must approve a student's reservation request before it is confirmed
 - [x] **SCH-04**: A reservation cannot be confirmed for an aircraft that is grounded or whose `isAirworthyAt(reservation_start)` is false
-- [ ] **SCH-05**: Reservation cannot be confirmed if student is missing a prerequisite (medical expired, no solo endorsement for solo flight, currency lapsed)
+- [x] **SCH-05**: Reservation cannot be confirmed if student is missing a prerequisite (medical expired, no solo endorsement for solo flight, currency lapsed)
 - [x] **SCH-06**: Recurring reservations (e.g. "every Tue/Thu 4pm for 6 weeks") are supported
 - [x] **SCH-07**: Calendar views: by aircraft, by instructor, by student, by day/week/month
 - [x] **SCH-08**: Reservation lifecycle: requested → approved → dispatched (briefing complete) → flown (Hobbs in/out captured) → closed → archived
@@ -60,7 +60,7 @@
 - [x] **SCH-11**: System verifies **instructor currencies and qualifications** required by the lesson (per SYL-18) before allowing the reservation to be confirmed
 - [x] **SCH-12**: System verifies **student qualifications and currencies** required by the lesson (per SYL-19 rules + SYL-12) before allowing the reservation
 - [x] **SCH-13**: Schedulable resource types include **flight, simulator, oral, academic/ground**, and miscellaneous (safety meeting, briefing) — not only flight reservations
-- [ ] **SCH-14**: **"Next activity" suggestion** — when scheduling a student, system proposes the next lesson the student is due to take based on syllabus progress, prerequisites, and currencies
+- [x] **SCH-14**: **"Next activity" suggestion** — when scheduling a student, system proposes the next lesson the student is due to take based on syllabus progress, prerequisites, and currencies
 - [x] **SCH-15**: Personnel can schedule **unavailability** (vacation, doctor, dental, sick) that blocks reservations against them
 - [x] **SCH-16**: **Block scheduling** — admin can pre-define recurring blocks of (instructor + aircraft + slot) and students request into those blocks
 - [x] **SCH-17**: Schedule view distinguishes flight, sim, oral, academic, and unavailability with visual cues
@@ -298,7 +298,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SCH-02      | Phase 3 | Complete |
 | SCH-03      | Phase 3 | Complete |
 | SCH-04      | Phase 3 | Complete |
-| SCH-05      | Phase 6 | Pending  |
+| SCH-05      | Phase 6 | Complete |
 | SCH-06      | Phase 3 | Complete |
 | SCH-07      | Phase 3 | Complete |
 | SCH-08      | Phase 3 | Complete |
@@ -307,7 +307,7 @@ Explicitly excluded — documented to prevent scope creep.
 | SCH-11      | Phase 6 | Complete |
 | SCH-12      | Phase 5 | Complete |
 | SCH-13      | Phase 3 | Complete |
-| SCH-14      | Phase 6 | Pending  |
+| SCH-14      | Phase 6 | Complete |
 | SCH-15      | Phase 3 | Complete |
 | SCH-16      | Phase 3 | Complete |
 | SCH-17      | Phase 3 | Complete |
