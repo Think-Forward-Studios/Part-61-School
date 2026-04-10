@@ -347,6 +347,37 @@ export const scheduleReservationsRouter = router({
         }
       }
 
+      // Phase 6 — full lesson eligibility gate (SCH-05, SCH-11).
+      // Only fires when BOTH lesson_id AND student_enrollment_id are set.
+      // When lesson_id IS NULL (Phase 3 simple reservations), this block
+      // is skipped entirely — preserving Phase 3/5 regression.
+      if (r.lessonId && r.studentEnrollmentId && r.aircraftId && r.instructorId) {
+        const eligRows = (await tx.execute(sql`
+          select public.evaluate_lesson_eligibility(
+            ${r.studentEnrollmentId}::uuid,
+            ${r.lessonId}::uuid,
+            ${r.aircraftId}::uuid,
+            ${r.instructorId}::uuid
+          ) as result
+        `)) as unknown as Array<{ result: unknown }>;
+        const raw = eligRows[0]?.result;
+        if (raw) {
+          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          const result = parsed as {
+            ok: boolean;
+            blockers?: Array<{ kind: string; detail: unknown }>;
+            override_active?: boolean;
+          };
+          if (!result.ok) {
+            throw new TRPCError({
+              code: 'PRECONDITION_FAILED',
+              message: 'Lesson eligibility blockers present',
+              cause: { blockers: result.blockers ?? [] },
+            });
+          }
+        }
+      }
+
       try {
         const updated = await tx
           .update(reservation)
