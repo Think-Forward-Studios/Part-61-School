@@ -184,7 +184,7 @@
 - [x] **ADS-03**: Map can also show surrounding traffic in a configurable bbox (default: school home airport area), using the existing ADS-B Tracker bbox endpoints
 - [x] **ADS-04**: Clicking a school aircraft on the map deep-links to its aircraft profile (current reservation, fleet status, recent flights)
 - [x] **ADS-05**: Geofence alerts: admin can define a training area; system raises an alert when a school aircraft is observed outside it
-- [ ] **ADS-06**: Flight track replay for the most recent flight of each school aircraft (sourced from the ADS-B Tracker `/api/swim/tracks` endpoint)
+- [x] **ADS-06**: Flight track replay for the most recent flight of each school aircraft (sourced from the ADS-B Tracker `/api/swim/tracks` endpoint)
 - [x] **ADS-07**: Provider abstraction: ADS-B integration is wrapped in an `AdsbProvider` interface so the SWIM source can be swapped without touching school app code
 
 ### Notifications
@@ -384,7 +384,7 @@ Explicitly excluded — documented to prevent scope creep.
 | ADS-03      | Phase 7 | Complete |
 | ADS-04      | Phase 7 | Complete |
 | ADS-05      | Phase 7 | Complete |
-| ADS-06      | Phase 7 | Pending  |
+| ADS-06      | Phase 7 | Complete |
 | ADS-07      | Phase 7 | Complete |
 | NOT-01      | Phase 8 | Pending  |
 | NOT-02      | Phase 8 | Pending  |
