@@ -15,6 +15,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { trpc } from '@/lib/trpc/client';
+import { BlockerList } from './_components/BlockerList';
+import { GrantOverrideDialog } from './_components/GrantOverrideDialog';
+import type { Blocker } from '@part61/domain';
 
 type FormValues = {
   activityType: 'flight' | 'simulator' | 'oral' | 'academic' | 'misc';
@@ -54,6 +57,10 @@ export function ReservationForm({
   aircraftOptions,
   instructorOptions,
   roomOptions,
+  initialStudentId,
+  initialLessonId,
+  initialEnrollmentId,
+  isAdminOrChiefInstructor,
 }: {
   initialStart: string | null;
   initialEnd: string | null;
@@ -61,9 +68,14 @@ export function ReservationForm({
   aircraftOptions: Array<{ id: string; label: string }>;
   instructorOptions: Array<{ id: string; label: string }>;
   roomOptions: Array<{ id: string; label: string }>;
+  initialStudentId?: string | null;
+  initialLessonId?: string | null;
+  initialEnrollmentId?: string | null;
+  isAdminOrChiefInstructor?: boolean;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
   const requestMut = trpc.schedule.request.useMutation();
 
   const {
@@ -84,6 +96,25 @@ export function ReservationForm({
   const activityType = watch('activityType');
   const recurring = watch('recurring');
   const isXc = watch('isXc');
+  const watchedStudentId = watch('studentId');
+  const watchedAircraftId = watch('aircraftId');
+  const watchedInstructorId = watch('instructorId');
+
+  // Phase 6: eligibility check when enrollment + lesson are known
+  const enrollmentId = initialEnrollmentId ?? undefined;
+  const lessonId = initialLessonId ?? undefined;
+  const effectiveStudentId = watchedStudentId || initialStudentId || undefined;
+  const eligibility = trpc.schedule.evaluateLessonEligibility.useQuery(
+    {
+      enrollmentId: enrollmentId!,
+      lessonId: lessonId!,
+      aircraftId: watchedAircraftId || '',
+      instructorUserId: watchedInstructorId || '',
+    },
+    {
+      enabled: !!enrollmentId && !!lessonId && !!watchedAircraftId && !!watchedInstructorId,
+    },
+  );
 
   async function onSubmit(v: FormValues) {
     setError(null);
@@ -255,9 +286,52 @@ export function ReservationForm({
           ) : null}
         </fieldset>
       ) : null}
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Requesting…' : 'Request reservation'}
-      </button>
+      {/* Phase 6: inline eligibility blocker display */}
+      {eligibility.data && !eligibility.data.ok ? (
+        <BlockerList
+          blockers={eligibility.data.blockers as Blocker[]}
+          canGrantOverride={!!isAdminOrChiefInstructor}
+          onGrantClick={() => setOverrideDialogOpen(true)}
+          studentId={effectiveStudentId}
+        />
+      ) : null}
+
+      {eligibility.data?.override_active ? (
+        <div
+          style={{
+            marginTop: '0.5rem',
+            padding: '0.5rem 0.75rem',
+            background: '#dbeafe',
+            border: '1px solid #bfdbfe',
+            borderRadius: 4,
+            fontSize: '0.85rem',
+            color: '#1e40af',
+          }}
+        >
+          Active chief-instructor override in place for this lesson.
+        </div>
+      ) : null}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem' }}>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Requesting\u2026' : 'Request reservation'}
+        </button>
+        {eligibility.data && !eligibility.data.ok ? (
+          <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+            Blockers will be re-checked on confirmation.
+          </span>
+        ) : null}
+      </div>
+
+      {enrollmentId && lessonId ? (
+        <GrantOverrideDialog
+          open={overrideDialogOpen}
+          onOpenChange={setOverrideDialogOpen}
+          enrollmentId={enrollmentId}
+          lessonId={lessonId}
+          blockers={(eligibility.data?.blockers as Blocker[] | undefined) ?? []}
+        />
+      ) : null}
     </form>
   );
 }

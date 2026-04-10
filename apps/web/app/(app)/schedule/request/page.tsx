@@ -6,7 +6,13 @@ import { ReservationForm } from './ReservationForm';
 
 export const dynamic = 'force-dynamic';
 
-type Search = Promise<{ start?: string; end?: string }>;
+type Search = Promise<{
+  start?: string;
+  end?: string;
+  studentId?: string;
+  lessonId?: string;
+  enrollmentId?: string;
+}>;
 
 export default async function NewReservationPage({ searchParams }: { searchParams: Search }) {
   const sp = await searchParams;
@@ -17,6 +23,16 @@ export default async function NewReservationPage({ searchParams }: { searchParam
   if (!user) redirect('/login');
   const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
   if (!me) redirect('/login');
+
+  // Phase 6: detect admin or chief instructor for override eligibility
+  const roleRows = (await db.execute(sql`
+    select role, is_chief_instructor
+    from public.user_roles
+    where user_id = ${user.id}::uuid
+  `)) as unknown as Array<{ role: string; is_chief_instructor: boolean }>;
+  const isAdminOrChiefInstructor =
+    roleRows.some((r) => r.role === 'admin') ||
+    roleRows.some((r) => r.role === 'instructor' && r.is_chief_instructor);
 
   const [ac, inst, rms] = await Promise.all([
     db
@@ -48,6 +64,10 @@ export default async function NewReservationPage({ searchParams }: { searchParam
         aircraftOptions={ac.map((a) => ({ id: a.id, label: a.tail }))}
         instructorOptions={instRows.map((i) => ({ id: i.id, label: i.label }))}
         roomOptions={rms.map((r) => ({ id: r.id, label: r.name }))}
+        initialStudentId={sp.studentId ?? null}
+        initialLessonId={sp.lessonId ?? null}
+        initialEnrollmentId={sp.enrollmentId ?? null}
+        isAdminOrChiefInstructor={isAdminOrChiefInstructor}
       />
     </main>
   );
