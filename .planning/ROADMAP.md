@@ -18,7 +18,7 @@ Give a Part 61 school a single source of truth for fleet, training, and scheduli
 - [x] **Phase 4: CAMP Maintenance** - Real `isAirworthyAt`, inspections, ADs, squawks, work orders, parts, logbook export, downtime prediction (completed 2026-04-09)
 - [x] **Phase 5: Syllabus Model, Grading & Records** - Course→Stage→Phase→Unit→Lesson→LineItem hierarchy, seeded templates, versioning, grading, stage checks, endorsements, 141.101 + IACRA exports, test grades (completed 2026-04-09)
 - [x] **Phase 6: Syllabus Rules, Progression & Audit** - Required/Optional/Must-Pass, auto-rollover, prerequisite+currency enforcement, mgmt override, rules engine, course minimums, ahead/behind, projected completion, nightly audit, ETA next-activity (completed 2026-04-10)
-- [ ] **Phase 7: ADS-B Fleet Integration** - Integrate existing ADS-B Tracker service: live fleet map, deep-links, geofence, flight replay
+- [x] **Phase 7: ADS-B Fleet Integration** - Integrate existing ADS-B Tracker service: live fleet map, deep-links, geofence, flight replay (completed 2026-04-11)
 - [ ] **Phase 8: Experience, Reporting, Messaging & Beta** - Role dashboards, notifications, full audit log, cost tracking, standard reports, IM/broadcast, dispatch cues, multi-base reporting, beta hardening
 
 ## Phase Details
@@ -159,7 +159,7 @@ Plans:
 3. The same map can render surrounding traffic in a configurable bbox (default: school home airport area), visually distinguished from school aircraft
 4. Clicking a school aircraft deep-links to its aircraft profile (current reservation, fleet status, recent flights); a flight track replay view renders the most recent flight from the Tracker's `/api/swim/tracks` endpoint
 5. An admin can define a training-area geofence; the system raises an alert when a school aircraft is observed outside it
-   **Plans:** 3 plans
+   **Plans:** 3/3 plans complete
    Plans:
    - [x] 07-01-PLAN.md — AdsbProvider interface + SwimAdsbProvider + geofence schema + migration + tRPC routers + RLS tests
    - [ ] 07-02-PLAN.md — Fleet map UI (MapLibre + school aircraft + traffic + sidebar + geofence drawing + alerts)
@@ -191,7 +191,7 @@ Plans:
 | 4. CAMP Maintenance                        | 0/0            | Complete    | 2026-04-09 |
 | 5. Syllabus Model, Grading & Records       | 5/5            | Complete    | 2026-04-09 |
 | 6. Syllabus Rules, Progression & Audit     | 1/4            | Complete    | 2026-04-10 |
-| 7. ADS-B Fleet Integration                 | 1/3            | In Progress | -          |
+| 7. ADS-B Fleet Integration                 | 1/3            | Complete    | 2026-04-11 |
 | 8. Experience, Reporting, Messaging & Beta | 0/0            | Not started | -          |
 
 ---
