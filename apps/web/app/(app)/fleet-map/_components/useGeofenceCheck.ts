@@ -6,7 +6,19 @@ import { circle as turfCircle } from '@turf/circle';
 import { point } from '@turf/helpers';
 import type { Feature, Polygon } from 'geojson';
 import type { OutsideAircraft } from './GeofenceAlert';
-import type { FleetPosition } from './AircraftLayer';
+
+/** Minimal fleet position shape for geofence checking. */
+export interface FleetPosition {
+  icao24: string;
+  callsign: string | null;
+  tailNumber?: string | null;
+  latitude: number;
+  longitude: number;
+  trueTrack: number | null;
+  apiTime: number;
+  isGrounded: boolean;
+  onGround?: boolean;
+}
 
 interface GeofenceData {
   kind: string;
