@@ -92,7 +92,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .where(eq(userBase.userId, user.id));
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <header
         style={{
           display: 'flex',
@@ -100,6 +100,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           alignItems: 'center',
           padding: '1rem',
           borderBottom: '1px solid #ccc',
+          flexShrink: 0,
         }}
       >
         <strong>{schoolName}</strong>
@@ -122,7 +123,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </span>
         <LogoutButton />
       </header>
-      {children}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>{children}</div>
     </div>
   );
 }

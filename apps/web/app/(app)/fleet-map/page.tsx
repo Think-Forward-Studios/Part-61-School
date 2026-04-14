@@ -54,7 +54,14 @@ export default function FleetMapPage() {
 
   return (
     <MapProvider>
-      <div style={{ position: 'relative', height: '100vh', width: '100%' }}>
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+        }}
+      >
         <LiveMapView fleetAircraft={fleetAircraft} />
         {/* Geofence alert and editor rendered on top of the map */}
         <GeofenceAlert outsideAircraft={[]} />
