@@ -39,11 +39,7 @@ export const lessonGradeSheetStatusEnum = pgEnum('lesson_grade_sheet_status', [
   'sealed',
 ]);
 
-export const stageCheckStatusEnum = pgEnum('stage_check_status', [
-  'scheduled',
-  'passed',
-  'failed',
-]);
+export const stageCheckStatusEnum = pgEnum('stage_check_status', ['scheduled', 'passed', 'failed']);
 
 export const flightLogTimeKindEnum = pgEnum('flight_log_time_kind', [
   'dual_received',
@@ -60,11 +56,17 @@ export const lessonGradeSheet = pgTable(
   'lesson_grade_sheet',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    schoolId: uuid('school_id')
+      .notNull()
+      .references(() => schools.id),
     baseId: uuid('base_id').references(() => bases.id),
     reservationId: uuid('reservation_id').references(() => reservation.id),
-    studentEnrollmentId: uuid('student_enrollment_id').notNull().references(() => studentCourseEnrollment.id),
-    lessonId: uuid('lesson_id').notNull().references(() => lesson.id),
+    studentEnrollmentId: uuid('student_enrollment_id')
+      .notNull()
+      .references(() => studentCourseEnrollment.id),
+    lessonId: uuid('lesson_id')
+      .notNull()
+      .references(() => lesson.id),
     kind: lessonGradeSheetKindEnum('kind').notNull().default('lesson'),
     conductedAt: timestamp('conducted_at', { withTimezone: true }).notNull().defaultNow(),
     conductedByUserId: uuid('conducted_by_user_id').references(() => users.id),
@@ -109,8 +111,12 @@ export const lineItemGrade = pgTable(
   'line_item_grade',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    gradeSheetId: uuid('grade_sheet_id').notNull().references(() => lessonGradeSheet.id),
-    lineItemId: uuid('line_item_id').notNull().references(() => lineItem.id),
+    gradeSheetId: uuid('grade_sheet_id')
+      .notNull()
+      .references(() => lessonGradeSheet.id),
+    lineItemId: uuid('line_item_id')
+      .notNull()
+      .references(() => lineItem.id),
     gradeValue: text('grade_value').notNull(),
     gradeRemarks: text('grade_remarks'),
     position: integer('position').notNull().default(0),
@@ -142,17 +148,30 @@ export const stageCheck = pgTable(
   'stage_check',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    schoolId: uuid('school_id')
+      .notNull()
+      .references(() => schools.id),
     baseId: uuid('base_id').references(() => bases.id),
-    studentEnrollmentId: uuid('student_enrollment_id').notNull().references(() => studentCourseEnrollment.id),
-    stageId: uuid('stage_id').notNull().references(() => stage.id),
-    checkerUserId: uuid('checker_user_id').notNull().references(() => users.id),
+    studentEnrollmentId: uuid('student_enrollment_id')
+      .notNull()
+      .references(() => studentCourseEnrollment.id),
+    stageId: uuid('stage_id')
+      .notNull()
+      .references(() => stage.id),
+    checkerUserId: uuid('checker_user_id')
+      .notNull()
+      .references(() => users.id),
     scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
     conductedAt: timestamp('conducted_at', { withTimezone: true }),
     status: stageCheckStatusEnum('status').notNull().default('scheduled'),
     remarks: text('remarks'),
     signerSnapshot: jsonb('signer_snapshot'),
     sealedAt: timestamp('sealed_at', { withTimezone: true }),
+    // Phase 8 (IPF-03): FAA-checkride discriminator + per-(enrollment,stage)
+    // attempt sequence. attempt_number is maintained by a trigger defined
+    // in migration 0036_phase8_stage_check_faa_flag.sql.
+    isFaaCheckride: boolean('is_faa_checkride').notNull().default(false),
+    attemptNumber: integer('attempt_number').notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
@@ -183,11 +202,15 @@ export const flightLogTime = pgTable(
   'flight_log_time',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    schoolId: uuid('school_id').notNull().references(() => schools.id),
+    schoolId: uuid('school_id')
+      .notNull()
+      .references(() => schools.id),
     baseId: uuid('base_id').references(() => bases.id),
     reservationId: uuid('reservation_id').references(() => reservation.id),
     flightLogEntryId: uuid('flight_log_entry_id'),
-    userId: uuid('user_id').notNull().references(() => users.id),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
     kind: flightLogTimeKindEnum('kind').notNull(),
     dayMinutes: integer('day_minutes').notNull().default(0),
     nightMinutes: integer('night_minutes').notNull().default(0),

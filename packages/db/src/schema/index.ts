@@ -56,3 +56,9 @@ export * from './studentProgressForecastCache';
 
 // Phase 7 modules (ADS-B fleet integration)
 export * from './geofence';
+
+// Phase 8 modules (notifications + messaging + session + rates)
+export * from './notification';
+export * from './messaging';
+export * from './session_activity';
+export * from './school_rate';
