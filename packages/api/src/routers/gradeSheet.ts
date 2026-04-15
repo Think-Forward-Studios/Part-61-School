@@ -28,6 +28,8 @@ import { isPassingGrade, type GradingScale } from '@part61/domain';
 import { router } from '../trpc';
 import { instructorOrAdminProcedure } from '../procedures';
 import { buildInstructorSignerSnapshot } from '../helpers/buildInstructorSignerSnapshot';
+import { createNotification } from '../helpers/notifications';
+import { studentCourseEnrollment } from '@part61/db';
 
 type Tx = {
   insert: typeof import('@part61/db').db.insert;
@@ -41,8 +43,8 @@ function validateGradeForScale(scale: GradingScale, value: string): void {
     scale === 'absolute_ipm'
       ? ['I', 'P', 'PM', 'M'].includes(value)
       : scale === 'relative_5'
-      ? ['1', '2', '3', '4', '5'].includes(value)
-      : ['pass', 'fail'].includes(value);
+        ? ['1', '2', '3', '4', '5'].includes(value)
+        : ['pass', 'fail'].includes(value);
   if (!ok) {
     throw new TRPCError({
       code: 'BAD_REQUEST',
@@ -188,8 +190,7 @@ export const gradeSheetRouter = router({
         position: li.position,
       }));
 
-      // Add rollover stubs (de-duplicated against existing line items)
-      const existingLineItemIds = new Set(items.map((li) => li.id));
+      // Add rollover stubs (in ADDITION to the lesson's own items).
       let rolloverPosition = items.length;
       for (const rr of rolloverRows) {
         // Rollover rows are in ADDITION to the lesson's own items.
@@ -348,10 +349,7 @@ export const gradeSheetRouter = router({
       const defaultScale = (cvRows[0]?.gradingScale ?? 'absolute_ipm') as GradingScale;
 
       // Load line items + grades
-      const items = await tx
-        .select()
-        .from(lineItem)
-        .where(eq(lineItem.lessonId, sheet.lessonId));
+      const items = await tx.select().from(lineItem).where(eq(lineItem.lessonId, sheet.lessonId));
       const grades = await tx
         .select()
         .from(lineItemGrade)
@@ -397,6 +395,35 @@ export const gradeSheetRouter = router({
         })
         .where(eq(lessonGradeSheet.id, sheet.id))
         .returning();
+
+      // Phase 8 NOT-01: notify the student that grading is complete.
+      const enrollmentRows = await tx
+        .select()
+        .from(studentCourseEnrollment)
+        .where(eq(studentCourseEnrollment.id, sheet.studentEnrollmentId))
+        .limit(1);
+      const enr = enrollmentRows[0];
+      if (enr?.userId) {
+        await createNotification(tx, {
+          schoolId: sheet.schoolId,
+          baseId: sheet.baseId,
+          userId: enr.userId,
+          kind: 'grading_complete',
+          title: 'Your lesson has been graded',
+          body: `${l.title ?? 'Lesson'} is complete — open your record to see the grade.`,
+          linkUrl: '/record',
+          sourceTable: 'lesson_grade_sheet',
+          sourceRecordId: sheet.id,
+          emailTemplateKey: 'grading_complete',
+          emailTemplateProps: {
+            studentName: 'Student',
+            instructorName: ctx.session!.email ?? 'Your instructor',
+            lessonTitle: l.title ?? 'Lesson',
+            recordUrl: '/record',
+          },
+        });
+      }
+
       return row;
     }),
 
@@ -404,14 +431,7 @@ export const gradeSheetRouter = router({
     .input(
       z.object({
         studentEnrollmentId: z.string().uuid(),
-        componentKind: z.enum([
-          'course',
-          'stage',
-          'course_phase',
-          'unit',
-          'lesson',
-          'line_item',
-        ]),
+        componentKind: z.enum(['course', 'stage', 'course_phase', 'unit', 'lesson', 'line_item']),
         componentId: z.string().uuid(),
         testKind: z.enum(['knowledge', 'oral', 'end_of_stage', 'practical']),
         score: z.number().optional(),

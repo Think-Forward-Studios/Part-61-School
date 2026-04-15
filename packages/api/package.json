@@ -7,7 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "echo 'no tests yet'",
+    "test": "vitest run",
     "build": "echo 'nothing to build'"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "@part61/config": "workspace:*",
     "@types/node": "^25.5.2",
     "@vitest/runner": "^4.1.4",
+    "postgres": "^3.4.9",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4"
   }

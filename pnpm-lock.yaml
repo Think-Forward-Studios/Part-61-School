@@ -222,6 +222,9 @@ importers:
       '@vitest/runner':
         specifier: ^4.1.4
         version: 4.1.4
+      postgres:
+        specifier: ^3.4.9
+        version: 3.4.9
       typescript:
         specifier: ^5.6.3
         version: 5.9.3

@@ -16,6 +16,7 @@ import { resolveSquawkInput } from '@part61/domain';
 import { router } from '../../trpc';
 import { mechanicOrAdminProcedure, protectedProcedure } from '../../procedures';
 import { buildSignerSnapshot } from '../../helpers/signerSnapshot';
+import { createNotification } from '../../helpers/notifications';
 
 type Tx = {
   insert: typeof import('@part61/db').db.insert;
@@ -42,10 +43,7 @@ export const adminSquawksRouter = router({
       .select()
       .from(aircraftSquawk)
       .where(
-        and(
-          eq(aircraftSquawk.schoolId, ctx.session!.schoolId),
-          isNull(aircraftSquawk.resolvedAt),
-        ),
+        and(eq(aircraftSquawk.schoolId, ctx.session!.schoolId), isNull(aircraftSquawk.resolvedAt)),
       );
     return rows;
   }),
@@ -59,29 +57,27 @@ export const adminSquawksRouter = router({
 
   // Phase 3 legacy: mechanic or admin marks resolved. Retained so
   // Phase 3 callers keep working unchanged.
-  resolve: mechanicOrAdminProcedure
-    .input(resolveSquawkInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const rows = await tx
-        .update(aircraftSquawk)
-        .set({
-          resolvedAt: new Date(),
-          resolvedBy: ctx.session!.userId,
-          resolutionNotes: input.resolutionNotes ?? null,
-        })
-        .where(
-          and(
-            eq(aircraftSquawk.id, input.squawkId),
-            eq(aircraftSquawk.schoolId, ctx.session!.schoolId),
-          ),
-        )
-        .returning();
-      if (rows.length === 0) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Squawk not found' });
-      }
-      return rows[0]!;
-    }),
+  resolve: mechanicOrAdminProcedure.input(resolveSquawkInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const rows = await tx
+      .update(aircraftSquawk)
+      .set({
+        resolvedAt: new Date(),
+        resolvedBy: ctx.session!.userId,
+        resolutionNotes: input.resolutionNotes ?? null,
+      })
+      .where(
+        and(
+          eq(aircraftSquawk.id, input.squawkId),
+          eq(aircraftSquawk.schoolId, ctx.session!.schoolId),
+        ),
+      )
+      .returning();
+    if (rows.length === 0) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Squawk not found' });
+    }
+    return rows[0]!;
+  }),
 
   triage: mechanicOrAdminProcedure
     .input(
@@ -100,7 +96,10 @@ export const adminSquawksRouter = router({
       await buildSignerSnapshot(tx, ctx.session!.userId, 'a_and_p');
       const now = new Date();
       const nextStatus = input.action === 'defer' ? 'deferred' : 'in_work';
-      if (input.action === 'defer' && (!input.deferralJustification || input.deferralJustification.length < 5)) {
+      if (
+        input.action === 'defer' &&
+        (!input.deferralJustification || input.deferralJustification.length < 5)
+      ) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Deferral justification required',
@@ -197,6 +196,47 @@ export const adminSquawksRouter = router({
         )
         .returning();
       if (!rows[0]) throw new TRPCError({ code: 'NOT_FOUND', message: 'Squawk not found' });
+
+      // Phase 8 NOT-01: notify the original opener + all admins /
+      // instructors in the school that the aircraft is cleared.
+      const squawkRow = rows[0]!;
+      const tailRows = (await tx.execute(sql`
+        select tail_number from public.aircraft where id = ${squawkRow.aircraftId}::uuid
+      `)) as unknown as Array<{ tail_number: string | null }>;
+      const aircraftTail = tailRows[0]?.tail_number ?? 'unknown';
+
+      const recipients = (await tx.execute(sql`
+        select distinct u.id
+          from public.users u
+          left join public.user_roles ur on ur.user_id = u.id
+         where u.school_id = ${ctx.session!.schoolId}::uuid
+           and (
+             u.id = ${squawkRow.openedBy}::uuid
+             or ur.role in ('admin', 'instructor')
+           )
+      `)) as unknown as Array<{ id: string }>;
+
+      for (const rcpt of recipients) {
+        if (rcpt.id === ctx.session!.userId) continue;
+        await createNotification(tx, {
+          schoolId: ctx.session!.schoolId,
+          baseId: squawkRow.baseId,
+          userId: rcpt.id,
+          kind: 'squawk_returned_to_service',
+          title: `Cleared for flight: ${aircraftTail}`,
+          body: `${squawkRow.title} — returned to service`,
+          linkUrl: `/admin/squawks/${squawkRow.id}`,
+          sourceTable: 'aircraft_squawk',
+          sourceRecordId: squawkRow.id,
+          emailTemplateKey: 'squawk_returned_to_service',
+          emailTemplateProps: {
+            recipientName: 'Team',
+            aircraftTail,
+            mechanicName: ctx.session!.email ?? 'Mechanic',
+          },
+        });
+      }
+
       return { ...rows[0]!, signer: snapshot };
     }),
 

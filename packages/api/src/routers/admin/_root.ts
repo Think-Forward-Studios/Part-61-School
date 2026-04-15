@@ -21,6 +21,7 @@ import { adminStudentCurrenciesRouter } from './studentCurrencies';
 import { adminOverridesRouter } from './overrides';
 import { adminAuditRouter } from './audit';
 import { adminGeofenceRouter } from './geofence';
+import { adminActiveSessionsRouter } from './activeSessions';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -45,4 +46,5 @@ export const adminRouter = router({
   overrides: adminOverridesRouter,
   audit: adminAuditRouter,
   geofence: adminGeofenceRouter,
+  activeSessions: adminActiveSessionsRouter,
 });

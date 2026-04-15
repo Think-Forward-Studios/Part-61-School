@@ -33,10 +33,8 @@ import {
   passengerManifestUpsertInput,
 } from '@part61/domain';
 import { router } from '../trpc';
-import {
-  instructorOrAdminProcedure,
-  protectedProcedure,
-} from '../procedures';
+import { instructorOrAdminProcedure, protectedProcedure } from '../procedures';
+import { createNotification } from '../helpers/notifications';
 
 type Tx = {
   insert: typeof import('@part61/db').db.insert;
@@ -50,17 +48,11 @@ function numStr(v: number | null | undefined): string | null {
   return v == null ? null : v.toFixed(1);
 }
 
-async function loadReservationOrThrow(
-  tx: Tx,
-  reservationId: string,
-  schoolId: string,
-) {
+async function loadReservationOrThrow(tx: Tx, reservationId: string, schoolId: string) {
   const rows = await tx
     .select()
     .from(reservation)
-    .where(
-      and(eq(reservation.id, reservationId), eq(reservation.schoolId, schoolId)),
-    )
+    .where(and(eq(reservation.id, reservationId), eq(reservation.schoolId, schoolId)))
     .limit(1);
   const r = rows[0];
   if (!r) {
@@ -69,11 +61,7 @@ async function loadReservationOrThrow(
   return r;
 }
 
-async function assertAllFifAcked(
-  tx: Tx,
-  schoolId: string,
-  userId: string,
-): Promise<void> {
+async function assertAllFifAcked(tx: Tx, schoolId: string, userId: string): Promise<void> {
   const rows = (await tx.execute(sql`
     select n.id
       from public.fif_notice n
@@ -129,11 +117,7 @@ export const dispatchRouter = router({
     .input(dispatchMarkStudentPresentInput)
     .mutation(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
-      await loadReservationOrThrow(
-        tx,
-        input.reservationId,
-        ctx.session!.schoolId,
-      );
+      await loadReservationOrThrow(tx, input.reservationId, ctx.session!.schoolId);
       await tx
         .update(reservation)
         .set({
@@ -148,11 +132,7 @@ export const dispatchRouter = router({
     .input(dispatchAuthorizeInput)
     .mutation(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
-      await loadReservationOrThrow(
-        tx,
-        input.reservationId,
-        ctx.session!.schoolId,
-      );
+      await loadReservationOrThrow(tx, input.reservationId, ctx.session!.schoolId);
       await tx
         .update(reservation)
         .set({
@@ -232,147 +212,206 @@ export const dispatchRouter = router({
       return { ok: true };
     }),
 
-  closeOut: protectedProcedure
-    .input(dispatchCloseOutInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const schoolId = ctx.session!.schoolId;
-      const r = await loadReservationOrThrow(tx, input.reservationId, schoolId);
-      if (!['dispatched', 'pending_sign_off'].includes(r.status)) {
+  closeOut: protectedProcedure.input(dispatchCloseOutInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+    const r = await loadReservationOrThrow(tx, input.reservationId, schoolId);
+    if (!['dispatched', 'pending_sign_off'].includes(r.status)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: `Reservation is not active (status: ${r.status})`,
+      });
+    }
+
+    // For flight activities: write the paired flight_in row.
+    if (r.activityType === 'flight' && r.aircraftId) {
+      if (input.hobbsIn == null || input.tachIn == null) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: `Reservation is not active (status: ${r.status})`,
+          message: 'hobbsIn and tachIn are required to close out a flight',
         });
       }
+      // Find the paired flight_out row for this reservation. We match
+      // by aircraft + most recent flight_out since dispatched_at.
+      const outRows = await tx
+        .select()
+        .from(flightLogEntry)
+        .where(
+          and(eq(flightLogEntry.aircraftId, r.aircraftId), eq(flightLogEntry.kind, 'flight_out')),
+        )
+        .orderBy(sql`recorded_at desc`)
+        .limit(1);
+      const outRow = outRows[0];
+      const delta =
+        input.hobbsIn != null && outRow?.hobbsOut ? input.hobbsIn - Number(outRow.hobbsOut) : 0;
+      await tx.insert(flightLogEntry).values({
+        schoolId,
+        baseId: r.baseId,
+        aircraftId: r.aircraftId,
+        kind: 'flight_in',
+        flownAt: new Date(),
+        hobbsIn: numStr(input.hobbsIn),
+        tachIn: numStr(input.tachIn),
+        airframeDelta: delta.toFixed(1),
+        pairedEntryId: outRow?.id ?? null,
+        recordedBy: ctx.session!.userId,
+        notes: input.notes ?? null,
+      });
+    }
 
-      // For flight activities: write the paired flight_in row.
-      if (r.activityType === 'flight' && r.aircraftId) {
-        if (input.hobbsIn == null || input.tachIn == null) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'hobbsIn and tachIn are required to close out a flight',
-          });
-        }
-        // Find the paired flight_out row for this reservation. We match
-        // by aircraft + most recent flight_out since dispatched_at.
-        const outRows = await tx
-          .select()
-          .from(flightLogEntry)
-          .where(
-            and(
-              eq(flightLogEntry.aircraftId, r.aircraftId),
-              eq(flightLogEntry.kind, 'flight_out'),
-            ),
-          )
-          .orderBy(sql`recorded_at desc`)
-          .limit(1);
-        const outRow = outRows[0];
-        const delta =
-          input.hobbsIn != null && outRow?.hobbsOut
-            ? input.hobbsIn - Number(outRow.hobbsOut)
-            : 0;
-        await tx.insert(flightLogEntry).values({
+    // Create squawks. Grounding severity auto-grounds the aircraft.
+    if (input.squawks.length > 0 && r.aircraftId) {
+      for (const sq of input.squawks) {
+        await tx.insert(aircraftSquawk).values({
           schoolId,
           baseId: r.baseId,
           aircraftId: r.aircraftId,
-          kind: 'flight_in',
-          flownAt: new Date(),
-          hobbsIn: numStr(input.hobbsIn),
-          tachIn: numStr(input.tachIn),
-          airframeDelta: delta.toFixed(1),
-          pairedEntryId: outRow?.id ?? null,
-          recordedBy: ctx.session!.userId,
-          notes: input.notes ?? null,
+          severity: sq.severity,
+          title: sq.title,
+          description: sq.description ?? null,
+          openedBy: ctx.session!.userId,
         });
-      }
-
-      // Create squawks. Grounding severity auto-grounds the aircraft.
-      if (input.squawks.length > 0 && r.aircraftId) {
-        for (const sq of input.squawks) {
-          await tx.insert(aircraftSquawk).values({
-            schoolId,
-            baseId: r.baseId,
-            aircraftId: r.aircraftId,
-            severity: sq.severity,
-            title: sq.title,
-            description: sq.description ?? null,
-            openedBy: ctx.session!.userId,
-          });
-          if (sq.severity === 'grounding') {
-            await tx
-              .update(aircraft)
-              .set({ groundedAt: new Date() })
-              .where(eq(aircraft.id, r.aircraftId));
-          }
+        if (sq.severity === 'grounding') {
+          await tx
+            .update(aircraft)
+            .set({ groundedAt: new Date() })
+            .where(eq(aircraft.id, r.aircraftId));
         }
       }
+    }
 
-      // Status transition: instructor sign-off → closed; otherwise
-      // pending_sign_off when the student saves first.
-      const isInstructorOrAdmin =
-        ctx.session!.activeRole === 'instructor' ||
-        ctx.session!.activeRole === 'admin';
-      const newStatus =
-        input.signedOffByInstructor && isInstructorOrAdmin
-          ? 'closed'
-          : 'pending_sign_off';
+    // Status transition: instructor sign-off → closed; otherwise
+    // pending_sign_off when the student saves first.
+    const isInstructorOrAdmin =
+      ctx.session!.activeRole === 'instructor' || ctx.session!.activeRole === 'admin';
+    const newStatus =
+      input.signedOffByInstructor && isInstructorOrAdmin ? 'closed' : 'pending_sign_off';
 
+    await tx
+      .update(reservation)
+      .set({
+        status: newStatus,
+        closedAt: newStatus === 'closed' ? new Date() : null,
+        closedBy: newStatus === 'closed' ? ctx.session!.userId : null,
+      })
+      .where(eq(reservation.id, input.reservationId));
+
+    return { ok: true, status: newStatus };
+  }),
+
+  openSquawk: protectedProcedure.input(openSquawkInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+    const acRows = await tx
+      .select()
+      .from(aircraft)
+      .where(and(eq(aircraft.id, input.aircraftId), eq(aircraft.schoolId, schoolId)))
+      .limit(1);
+    const ac = acRows[0];
+    if (!ac) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Aircraft not found' });
+    }
+    const rows = await tx
+      .insert(aircraftSquawk)
+      .values({
+        schoolId,
+        baseId: ac.baseId,
+        aircraftId: input.aircraftId,
+        severity: input.severity,
+        title: input.title,
+        description: input.description ?? null,
+        openedBy: ctx.session!.userId,
+      })
+      .returning();
+    if (input.severity === 'grounding') {
       await tx
-        .update(reservation)
-        .set({
-          status: newStatus,
-          closedAt: newStatus === 'closed' ? new Date() : null,
-          closedBy: newStatus === 'closed' ? ctx.session!.userId : null,
-        })
-        .where(eq(reservation.id, input.reservationId));
+        .update(aircraft)
+        .set({ groundedAt: new Date() })
+        .where(eq(aircraft.id, input.aircraftId));
+    }
 
-      return { ok: true, status: newStatus };
-    }),
+    // Phase 8 NOT-01: fan out squawk_opened to the mechanic queue
+    // (every user with a mechanic role in this school). If severity
+    // is 'grounding' also fire squawk_grounding (safety-critical) to
+    // admins + instructors — all users with those roles in the
+    // school. These run inside the caller's tx so rollback of the
+    // squawk insert rolls back the notification rows too.
+    const squawk = rows[0]!;
+    const mechanics = (await tx.execute(sql`
+        select distinct u.id
+          from public.users u
+          join public.user_roles ur on ur.user_id = u.id
+         where u.school_id = ${schoolId}::uuid
+           and ur.role = 'mechanic'
+      `)) as unknown as Array<{ id: string }>;
 
-  openSquawk: protectedProcedure
-    .input(openSquawkInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const schoolId = ctx.session!.schoolId;
-      const acRows = await tx
-        .select()
-        .from(aircraft)
-        .where(and(eq(aircraft.id, input.aircraftId), eq(aircraft.schoolId, schoolId)))
-        .limit(1);
-      const ac = acRows[0];
-      if (!ac) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Aircraft not found' });
-      }
-      const rows = await tx
-        .insert(aircraftSquawk)
-        .values({
+    const aircraftTail = ac.tailNumber ?? 'unknown';
+    for (const m of mechanics) {
+      if (m.id === ctx.session!.userId) continue;
+      await createNotification(tx, {
+        schoolId,
+        baseId: ac.baseId,
+        userId: m.id,
+        kind: 'squawk_opened',
+        title: `Squawk on ${aircraftTail}`,
+        body: input.title,
+        linkUrl: `/admin/squawks/${squawk.id}`,
+        sourceTable: 'aircraft_squawk',
+        sourceRecordId: squawk.id,
+        severity: input.severity === 'grounding' ? 'critical' : 'info',
+        emailTemplateKey: 'squawk_opened',
+        emailTemplateProps: {
+          recipientName: 'Mechanic',
+          aircraftTail,
+          squawkTitle: input.title,
+          severity: input.severity,
+          squawkUrl: `/admin/squawks/${squawk.id}`,
+        },
+      });
+    }
+
+    if (input.severity === 'grounding') {
+      // Safety-critical fan-out: every admin + instructor in school.
+      const adminAndInstructors = (await tx.execute(sql`
+          select distinct u.id
+            from public.users u
+            join public.user_roles ur on ur.user_id = u.id
+           where u.school_id = ${schoolId}::uuid
+             and ur.role in ('admin', 'instructor')
+        `)) as unknown as Array<{ id: string }>;
+      for (const p of adminAndInstructors) {
+        if (p.id === ctx.session!.userId) continue;
+        await createNotification(tx, {
           schoolId,
           baseId: ac.baseId,
-          aircraftId: input.aircraftId,
-          severity: input.severity,
-          title: input.title,
-          description: input.description ?? null,
-          openedBy: ctx.session!.userId,
-        })
-        .returning();
-      if (input.severity === 'grounding') {
-        await tx
-          .update(aircraft)
-          .set({ groundedAt: new Date() })
-          .where(eq(aircraft.id, input.aircraftId));
+          userId: p.id,
+          kind: 'squawk_grounding',
+          title: `Aircraft grounded: ${aircraftTail}`,
+          body: input.title,
+          linkUrl: `/admin/squawks/${squawk.id}`,
+          sourceTable: 'aircraft_squawk',
+          sourceRecordId: squawk.id,
+          severity: 'critical',
+          isSafetyCritical: true,
+          emailTemplateKey: 'squawk_grounding',
+          emailTemplateProps: {
+            recipientName: 'Team',
+            aircraftTail,
+            squawkTitle: input.title,
+            squawkUrl: `/admin/squawks/${squawk.id}`,
+          },
+        });
       }
-      return rows[0]!;
-    }),
+    }
+
+    return squawk;
+  }),
 
   passengerManifestUpsert: instructorOrAdminProcedure
     .input(passengerManifestUpsertInput)
     .mutation(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
-      await loadReservationOrThrow(
-        tx,
-        input.reservationId,
-        ctx.session!.schoolId,
-      );
+      await loadReservationOrThrow(tx, input.reservationId, ctx.session!.schoolId);
       await tx
         .delete(passengerManifest)
         .where(eq(passengerManifest.reservationId, input.reservationId));

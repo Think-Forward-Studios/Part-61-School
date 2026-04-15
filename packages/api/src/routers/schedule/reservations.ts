@@ -37,10 +37,8 @@ import {
   reservationUpdateInput,
 } from '@part61/domain';
 import { router } from '../../trpc';
-import {
-  instructorOrAdminProcedure,
-  protectedProcedure,
-} from '../../procedures';
+import { instructorOrAdminProcedure, protectedProcedure } from '../../procedures';
+import { createNotification } from '../../helpers/notifications';
 
 type Tx = {
   insert: typeof import('@part61/db').db.insert;
@@ -79,9 +77,7 @@ function parseLowerBound(range: string): string {
 function expandRecurrence(
   startsAt: Date,
   endsAt: Date,
-  rec: NonNullable<
-    import('@part61/domain').ReservationRequestInput['recurrence']
-  >,
+  rec: NonNullable<import('@part61/domain').ReservationRequestInput['recurrence']>,
 ): Array<{ start: Date; end: Date }> {
   const out: Array<{ start: Date; end: Date }> = [];
   const durationMs = endsAt.getTime() - startsAt.getTime();
@@ -127,9 +123,7 @@ async function computeStudentCurrencyBlockers(
     .limit(1);
   const l = lessonRows[0];
   if (!l) return [];
-  const required = Array.isArray(l.requiredCurrencies)
-    ? (l.requiredCurrencies as unknown[])
-    : [];
+  const required = Array.isArray(l.requiredCurrencies) ? (l.requiredCurrencies as unknown[]) : [];
   if (required.length === 0) return [];
   // Accept both ['medical','bfr'] and [{kind:'medical'}] shapes
   const kinds = required
@@ -165,11 +159,7 @@ async function computeStudentCurrencyBlockers(
   return blockers;
 }
 
-async function assertAirworthyAt(
-  tx: Tx,
-  aircraftId: string,
-  at: Date,
-): Promise<void> {
+async function assertAirworthyAt(tx: Tx, aircraftId: string, at: Date): Promise<void> {
   const rows = (await tx.execute(
     sql`select public.is_airworthy_at(${aircraftId}::uuid, ${at.toISOString()}::timestamptz) as ok`,
   )) as unknown as Array<{ ok: boolean }>;
@@ -181,17 +171,12 @@ async function assertAirworthyAt(
   }
 }
 
-async function assertNoActiveHold(
-  tx: Tx,
-  userId: string | null | undefined,
-): Promise<void> {
+async function assertNoActiveHold(tx: Tx, userId: string | null | undefined): Promise<void> {
   if (!userId) return;
   const rows = await tx
     .select({ id: personHold.id })
     .from(personHold)
-    .where(
-      and(eq(personHold.userId, userId), sql`${personHold.clearedAt} is null`),
-    )
+    .where(and(eq(personHold.userId, userId), sql`${personHold.clearedAt} is null`))
     .limit(1);
   if (rows.length > 0) {
     throw new TRPCError({
@@ -199,6 +184,13 @@ async function assertNoActiveHold(
       message: 'Person has an active hold or grounding',
     });
   }
+}
+
+async function loadAircraftTail(tx: Tx, aircraftId: string): Promise<string> {
+  const rows = (await tx.execute(sql`
+    select tail_number from public.aircraft where id = ${aircraftId}::uuid
+  `)) as unknown as Array<{ tail_number: string }>;
+  return rows[0]?.tail_number ?? 'TBD';
 }
 
 function mapPostgresError(err: unknown): never {
@@ -219,50 +211,48 @@ function mapPostgresError(err: unknown): never {
 }
 
 export const scheduleReservationsRouter = router({
-  request: protectedProcedure
-    .input(reservationRequestInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const schoolId = ctx.session!.schoolId;
-      const baseId = ctx.session!.activeBaseId;
-      if (!baseId) {
+  request: protectedProcedure.input(reservationRequestInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+    const baseId = ctx.session!.activeBaseId;
+    if (!baseId) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'No active base in session',
+      });
+    }
+
+    // If parentBlockInstanceId is provided, inherit instructor/aircraft/room
+    // from the parent block via the trigger (BEFORE INSERT). We still pass
+    // any explicit fields so the caller can override.
+    let parentBlockId: string | null = null;
+    if (input.parentBlockInstanceId) {
+      const inst = await tx
+        .select()
+        .from(scheduleBlockInstance)
+        .where(eq(scheduleBlockInstance.id, input.parentBlockInstanceId))
+        .limit(1);
+      if (inst.length === 0) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'No active base in session',
+          code: 'NOT_FOUND',
+          message: 'Block instance not found',
         });
       }
+      parentBlockId = input.parentBlockInstanceId;
+    }
 
-      // If parentBlockInstanceId is provided, inherit instructor/aircraft/room
-      // from the parent block via the trigger (BEFORE INSERT). We still pass
-      // any explicit fields so the caller can override.
-      let parentBlockId: string | null = null;
-      if (input.parentBlockInstanceId) {
-        const inst = await tx
-          .select()
-          .from(scheduleBlockInstance)
-          .where(eq(scheduleBlockInstance.id, input.parentBlockInstanceId))
-          .limit(1);
-        if (inst.length === 0) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Block instance not found',
-          });
-        }
-        parentBlockId = input.parentBlockInstanceId;
-      }
+    // Expand recurrence if requested; otherwise a single instance.
+    const instances = input.recurrence
+      ? expandRecurrence(input.startsAt, input.endsAt, input.recurrence)
+      : [{ start: input.startsAt, end: input.endsAt }];
 
-      // Expand recurrence if requested; otherwise a single instance.
-      const instances = input.recurrence
-        ? expandRecurrence(input.startsAt, input.endsAt, input.recurrence)
-        : [{ start: input.startsAt, end: input.endsAt }];
+    const seriesId = instances.length > 1 ? crypto.randomUUID() : null;
 
-      const seriesId = instances.length > 1 ? crypto.randomUUID() : null;
-
-      try {
-        const inserted: Array<{ id: string }> = [];
-        for (const inst of instances) {
-          const rangeLit = rangeLiteral(inst.start, inst.end);
-          const rows = (await tx.execute(sql`
+    try {
+      const inserted: Array<{ id: string }> = [];
+      for (const inst of instances) {
+        const rangeLit = rangeLiteral(inst.start, inst.end);
+        const rows = (await tx.execute(sql`
             insert into public.reservation (
               school_id, base_id, activity_type, time_range, status,
               aircraft_id, instructor_id, student_id, room_id,
@@ -290,13 +280,46 @@ export const scheduleReservationsRouter = router({
             )
             returning id
           `)) as unknown as Array<{ id: string }>;
-          if (rows[0]) inserted.push(rows[0]);
-        }
-        return { reservationIds: inserted.map((r) => r.id), seriesId };
-      } catch (err) {
-        mapPostgresError(err);
+        if (rows[0]) inserted.push(rows[0]);
       }
-    }),
+
+      // Phase 8 SCH-10 / NOT-01: notify the instructor (if set) that
+      // a new reservation is pending their decision. If no instructor
+      // is attached yet, fall back to school admins — but v1 just
+      // targets the instructor and defers the admin-fallback path.
+      for (const { id: reservationId } of inserted) {
+        if (input.instructorId) {
+          const aircraftTail = input.aircraftId
+            ? await loadAircraftTail(tx, input.aircraftId)
+            : 'TBD';
+          const startTimeLocal = input.startsAt.toISOString();
+          await createNotification(tx, {
+            schoolId,
+            baseId,
+            userId: input.instructorId,
+            kind: 'reservation_requested',
+            title: 'New reservation request',
+            body: `${aircraftTail} on ${startTimeLocal}`,
+            linkUrl: `/schedule/${reservationId}`,
+            sourceTable: 'reservation',
+            sourceRecordId: reservationId,
+            emailTemplateKey: 'reservation_requested',
+            emailTemplateProps: {
+              recipientName: 'Instructor',
+              studentName: input.studentId ? 'Student' : 'Requester',
+              aircraftTail,
+              startTimeLocal,
+              reservationUrl: `/schedule/${reservationId}`,
+            },
+          });
+        }
+      }
+
+      return { reservationIds: inserted.map((r) => r.id), seriesId };
+    } catch (err) {
+      mapPostgresError(err);
+    }
+  }),
 
   approve: instructorOrAdminProcedure
     .input(reservationApproveInput)
@@ -332,11 +355,7 @@ export const scheduleReservationsRouter = router({
       await assertNoActiveHold(tx, r.instructorId);
       // SCH-12 — student currency gate (only when lesson_id is set)
       if (r.lessonId && r.studentId) {
-        const blockers = await computeStudentCurrencyBlockers(
-          tx,
-          r.lessonId,
-          r.studentId,
-        );
+        const blockers = await computeStudentCurrencyBlockers(tx, r.lessonId, r.studentId);
         if (blockers.length > 0) {
           throw new TRPCError({
             code: 'PRECONDITION_FAILED',
@@ -388,36 +407,85 @@ export const scheduleReservationsRouter = router({
           })
           .where(eq(reservation.id, input.reservationId))
           .returning();
+
+        // Phase 8 SCH-10: notify the student (and instructor if the
+        // approver isn't also the instructor) that the reservation is
+        // confirmed. Language note: "confirmed" not "approved" in the
+        // user-facing string.
+        const startIsoApproved = parseLowerBound(r.timeRange);
+        const aircraftTail = r.aircraftId ? await loadAircraftTail(tx, r.aircraftId) : 'TBD';
+        const linkUrl = `/schedule/${r.id}`;
+        if (r.studentId) {
+          await createNotification(tx, {
+            schoolId: r.schoolId,
+            baseId: r.baseId,
+            userId: r.studentId,
+            kind: 'reservation_approved',
+            title: 'Reservation confirmed',
+            body: `${aircraftTail} on ${startIsoApproved}`,
+            linkUrl,
+            sourceTable: 'reservation',
+            sourceRecordId: r.id,
+            emailTemplateKey: 'reservation_approved',
+            emailTemplateProps: {
+              studentName: 'Student',
+              instructorName: 'Instructor',
+              aircraftTail,
+              startTimeLocal: startIsoApproved,
+              reservationUrl: linkUrl,
+            },
+          });
+        }
+        if (r.instructorId && r.instructorId !== ctx.session!.userId) {
+          await createNotification(tx, {
+            schoolId: r.schoolId,
+            baseId: r.baseId,
+            userId: r.instructorId,
+            kind: 'reservation_approved',
+            title: 'Reservation confirmed',
+            body: `${aircraftTail} on ${startIsoApproved}`,
+            linkUrl,
+            sourceTable: 'reservation',
+            sourceRecordId: r.id,
+            emailTemplateKey: 'reservation_approved',
+            emailTemplateProps: {
+              studentName: 'Student',
+              instructorName: 'Instructor',
+              aircraftTail,
+              startTimeLocal: startIsoApproved,
+              reservationUrl: linkUrl,
+            },
+          });
+        }
+
         return updated[0]!;
       } catch (err) {
         mapPostgresError(err);
       }
     }),
 
-  list: protectedProcedure
-    .input(reservationListInput)
-    .query(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const mode = input.mode;
-      const role = ctx.session!.activeRole;
-      const userId = ctx.session!.userId;
-      const schoolId = ctx.session!.schoolId;
+  list: protectedProcedure.input(reservationListInput).query(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const mode = input.mode;
+    const role = ctx.session!.activeRole;
+    const userId = ctx.session!.userId;
+    const schoolId = ctx.session!.schoolId;
 
-      if (mode === 'full' && role !== 'instructor' && role !== 'admin') {
+    if (mode === 'full' && role !== 'instructor' && role !== 'admin') {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Only instructors or admins may view full schedule details',
+      });
+    }
+
+    if (mode === 'freebusy') {
+      if (!input.resourceType || !input.resourceId || !input.from || !input.to) {
         throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'Only instructors or admins may view full schedule details',
+          code: 'BAD_REQUEST',
+          message: 'resourceType, resourceId, from, to are required for freebusy',
         });
       }
-
-      if (mode === 'freebusy') {
-        if (!input.resourceType || !input.resourceId || !input.from || !input.to) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'resourceType, resourceId, from, to are required for freebusy',
-          });
-        }
-        const rows = (await tx.execute(sql`
+      const rows = (await tx.execute(sql`
           select public.free_busy(
             ${input.resourceType}::text,
             ${input.resourceId}::uuid,
@@ -425,11 +493,11 @@ export const scheduleReservationsRouter = router({
             ${input.to.toISOString()}::timestamptz
           ) as range
         `)) as unknown as Array<{ range: string }>;
-        return { mode: 'freebusy' as const, ranges: rows.map((r) => r.range) };
-      }
+      return { mode: 'freebusy' as const, ranges: rows.map((r) => r.range) };
+    }
 
-      if (mode === 'mine') {
-        const rows = (await tx.execute(sql`
+    if (mode === 'mine') {
+      const rows = (await tx.execute(sql`
           select *
             from public.reservation
            where school_id = ${schoolId}::uuid
@@ -440,10 +508,10 @@ export const scheduleReservationsRouter = router({
            order by time_range
            limit 500
         `)) as unknown as Array<Record<string, unknown>>;
-        return { mode: 'mine' as const, rows };
-      }
+      return { mode: 'mine' as const, rows };
+    }
 
-      const rows = (await tx.execute(sql`
+    const rows = (await tx.execute(sql`
         select *
           from public.reservation
          where school_id = ${schoolId}::uuid
@@ -451,8 +519,8 @@ export const scheduleReservationsRouter = router({
          order by time_range
          limit 1000
       `)) as unknown as Array<Record<string, unknown>>;
-      return { mode: 'full' as const, rows };
-    }),
+    return { mode: 'full' as const, rows };
+  }),
 
   update: instructorOrAdminProcedure
     .input(reservationUpdateInput)
@@ -488,53 +556,120 @@ export const scheduleReservationsRouter = router({
           mapPostgresError(err);
         }
       }
+
+      // Phase 8 SCH-10: notify student + instructor when the time moves.
+      if (input.startsAt) {
+        const rRowsChanged = await tx
+          .select()
+          .from(reservation)
+          .where(eq(reservation.id, input.reservationId))
+          .limit(1);
+        const rChanged = rRowsChanged[0];
+        if (rChanged) {
+          const aircraftTail = rChanged.aircraftId
+            ? await loadAircraftTail(tx, rChanged.aircraftId)
+            : 'TBD';
+          const newStart = input.startsAt.toISOString();
+          const linkUrl = `/schedule/${rChanged.id}`;
+          const recipients = [rChanged.studentId, rChanged.instructorId].filter(
+            (u): u is string => !!u && u !== ctx.session!.userId,
+          );
+          for (const uid of recipients) {
+            await createNotification(tx, {
+              schoolId: rChanged.schoolId,
+              baseId: rChanged.baseId,
+              userId: uid,
+              kind: 'reservation_changed',
+              title: 'Reservation updated',
+              body: `${aircraftTail} moved to ${newStart}`,
+              linkUrl,
+              sourceTable: 'reservation',
+              sourceRecordId: rChanged.id,
+              emailTemplateKey: 'reservation_changed',
+              emailTemplateProps: {
+                recipientName: 'Pilot',
+                aircraftTail,
+                oldStartTimeLocal: 'prior time',
+                newStartTimeLocal: newStart,
+                reservationUrl: linkUrl,
+              },
+            });
+          }
+        }
+      }
+
       return { ok: true };
     }),
 
-  cancel: protectedProcedure
-    .input(reservationCancelInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const rows = await tx
-        .select()
-        .from(reservation)
-        .where(
-          and(
-            eq(reservation.id, input.reservationId),
-            eq(reservation.schoolId, ctx.session!.schoolId),
-          ),
-        )
-        .limit(1);
-      const r = rows[0];
-      if (!r) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Reservation not found' });
-      }
-      if (['closed', 'flown', 'cancelled', 'no_show'].includes(r.status)) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `Cannot cancel a reservation in status ${r.status}`,
-        });
-      }
-      // Derive free vs late if not explicitly provided.
-      const startIso = parseLowerBound(r.timeRange);
-      const startsAt = new Date(startIso);
-      const hoursUntilStart = (startsAt.getTime() - Date.now()) / 3_600_000;
-      const reason =
-        input.reason ?? (hoursUntilStart >= 24 ? 'cancelled_free' : 'cancelled_late');
+  cancel: protectedProcedure.input(reservationCancelInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const rows = await tx
+      .select()
+      .from(reservation)
+      .where(
+        and(
+          eq(reservation.id, input.reservationId),
+          eq(reservation.schoolId, ctx.session!.schoolId),
+        ),
+      )
+      .limit(1);
+    const r = rows[0];
+    if (!r) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Reservation not found' });
+    }
+    if (['closed', 'flown', 'cancelled', 'no_show'].includes(r.status)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: `Cannot cancel a reservation in status ${r.status}`,
+      });
+    }
+    // Derive free vs late if not explicitly provided.
+    const startIso = parseLowerBound(r.timeRange);
+    const startsAt = new Date(startIso);
+    const hoursUntilStart = (startsAt.getTime() - Date.now()) / 3_600_000;
+    const reason = input.reason ?? (hoursUntilStart >= 24 ? 'cancelled_free' : 'cancelled_late');
 
-      const updated = await tx
-        .update(reservation)
-        .set({
-          status: 'cancelled',
-          closeOutReason: reason,
-          closedAt: new Date(),
-          closedBy: ctx.session!.userId,
-          notes: input.notes ?? r.notes,
-        })
-        .where(eq(reservation.id, input.reservationId))
-        .returning();
-      return updated[0]!;
-    }),
+    const updated = await tx
+      .update(reservation)
+      .set({
+        status: 'cancelled',
+        closeOutReason: reason,
+        closedAt: new Date(),
+        closedBy: ctx.session!.userId,
+        notes: input.notes ?? r.notes,
+      })
+      .where(eq(reservation.id, input.reservationId))
+      .returning();
+
+    // Phase 8 SCH-10: notify the other parties about the cancellation.
+    const aircraftTail = r.aircraftId ? await loadAircraftTail(tx, r.aircraftId) : 'TBD';
+    const cancelRecipients = [r.studentId, r.instructorId].filter(
+      (u): u is string => !!u && u !== ctx.session!.userId,
+    );
+    for (const uid of cancelRecipients) {
+      await createNotification(tx, {
+        schoolId: r.schoolId,
+        baseId: r.baseId,
+        userId: uid,
+        kind: 'reservation_cancelled',
+        title: 'Reservation cancelled',
+        body: `${aircraftTail} — ${reason}`,
+        linkUrl: `/schedule/${r.id}`,
+        sourceTable: 'reservation',
+        sourceRecordId: r.id,
+        emailTemplateKey: 'reservation_cancelled',
+        emailTemplateProps: {
+          recipientName: 'Pilot',
+          aircraftTail,
+          startTimeLocal: startIso,
+          cancelledBy: ctx.session!.email ?? 'Scheduler',
+          reason: input.notes ?? undefined,
+        },
+      });
+    }
+
+    return updated[0]!;
+  }),
 
   markNoShow: instructorOrAdminProcedure
     .input(reservationMarkNoShowInput)
@@ -603,23 +738,21 @@ export const scheduleReservationsRouter = router({
       return { blockers };
     }),
 
-  getById: protectedProcedure
-    .input(reservationIdInput)
-    .query(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const rows = await tx
-        .select()
-        .from(reservation)
-        .where(
-          and(
-            eq(reservation.id, input.reservationId),
-            eq(reservation.schoolId, ctx.session!.schoolId),
-          ),
-        )
-        .limit(1);
-      if (!rows[0]) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Reservation not found' });
-      }
-      return rows[0];
-    }),
+  getById: protectedProcedure.input(reservationIdInput).query(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const rows = await tx
+      .select()
+      .from(reservation)
+      .where(
+        and(
+          eq(reservation.id, input.reservationId),
+          eq(reservation.schoolId, ctx.session!.schoolId),
+        ),
+      )
+      .limit(1);
+    if (!rows[0]) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Reservation not found' });
+    }
+    return rows[0];
+  }),
 });

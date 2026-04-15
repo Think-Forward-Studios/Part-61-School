@@ -60,6 +60,9 @@ export const adminStageChecksRouter = router({
         stageId: z.string().uuid(),
         checkerUserId: z.string().uuid(),
         scheduledAt: z.date(),
+        // Phase 8 (IPF-03): mark this stage check as an FAA checkride
+        // for pass-rate computation in 08-03. Defaults to false.
+        isFaaCheckride: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -77,10 +80,7 @@ export const adminStageChecksRouter = router({
           message: 'Enrollment not found',
         });
       }
-      if (
-        enr.primaryInstructorId &&
-        enr.primaryInstructorId === input.checkerUserId
-      ) {
+      if (enr.primaryInstructorId && enr.primaryInstructorId === input.checkerUserId) {
         throw new TRPCError({
           code: 'PRECONDITION_FAILED',
           message:
@@ -96,6 +96,7 @@ export const adminStageChecksRouter = router({
           checkerUserId: input.checkerUserId,
           scheduledAt: input.scheduledAt,
           status: 'scheduled',
+          isFaaCheckride: input.isFaaCheckride ?? false,
           createdBy: ctx.session!.userId,
           updatedBy: ctx.session!.userId,
         })

@@ -12,6 +12,9 @@ import { fifRouter } from './fif';
 import { gradeSheetRouter } from './gradeSheet';
 import { recordRouter } from './record';
 import { adsbRouter } from './adsb';
+import { notificationsRouter } from './notifications';
+import { messagingRouter } from './messaging';
+import { broadcastsRouter } from './broadcasts';
 
 export const appRouter = router({
   auth: authRouter,
@@ -27,6 +30,9 @@ export const appRouter = router({
   gradeSheet: gradeSheetRouter,
   record: recordRouter,
   adsb: adsbRouter,
+  notifications: notificationsRouter,
+  messaging: messagingRouter,
+  broadcasts: broadcastsRouter,
 });
 
 export type AppRouter = typeof appRouter;
