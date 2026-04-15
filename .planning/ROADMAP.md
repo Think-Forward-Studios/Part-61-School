@@ -179,20 +179,28 @@ Plans:
 5. Standard reports (fleet utilization, instructor utilization + pass rate + workload + duty-hour warnings, student progress, no-show rate, squawk turnaround, course completion rate) are exportable as CSV and PDF, and can be filtered by base or rolled up across all bases
 6. Internal IM works between users with unread badges; admin can broadcast to a role; admin active-session view shows who is logged in and can IM them directly
 7. A beta readiness checklist passes: CFI review of all export templates for terminology compliance, E2E tests covering the safety-critical flows (scheduling conflict, airworthiness gate, sign-off authority, currency/prerequisite block, rollover, override audit), and a partner-school onboarding runbook exists
-   **Plans**: TBD
+
+**Plans:** 5 plans
+Plans:
+
+- [ ] 08-01-PLAN.md — Notifications + email (Resend) + Realtime + messaging/broadcast data model + pg_cron reminders + createNotification helper + stage_check FAA-checkride flag
+- [ ] 08-02-PLAN.md — Role dashboards (student/instructor/mechanic) + messaging drawer + notification bell + broadcast banner + dispatch cue subscriber + notification prefs UI
+- [ ] 08-03-PLAN.md — Audit log UI + training activity trail + live/projected cost tracking + rate configuration + instructor metrics (pass rate / duty hours / workload)
+- [ ] 08-04-PLAN.md — Six standard reports (fleet util, instructor util, student progress, no-show rate, squawk turnaround, course completion) + CSV/PDF exports + multi-base rollup
+- [ ] 08-05-PLAN.md — Playwright E2E (6 safety-critical + 3 smoke specs) + CI integration + terminology review checklist + onboarding runbook + phase human-verify
 
 ## Progress
 
-| Phase                                      | Plans Complete | Status      | Completed  |
-| ------------------------------------------ | -------------- | ----------- | ---------- |
-| 1. Foundation & Terminology Contract       | 2/4            | Complete    | 2026-04-07 |
-| 2. Personnel, Admin & Fleet Primitives     | 0/0            | Complete    | 2026-04-08 |
-| 3. Scheduling & Dispatch Execution         | 0/0            | Complete    | 2026-04-08 |
-| 4. CAMP Maintenance                        | 0/0            | Complete    | 2026-04-09 |
-| 5. Syllabus Model, Grading & Records       | 5/5            | Complete    | 2026-04-09 |
-| 6. Syllabus Rules, Progression & Audit     | 1/4            | Complete    | 2026-04-10 |
-| 7. ADS-B Fleet Integration                 | 1/3            | Complete    | 2026-04-11 |
-| 8. Experience, Reporting, Messaging & Beta | 0/0            | Not started | -          |
+| Phase                                      | Plans Complete | Status   | Completed  |
+| ------------------------------------------ | -------------- | -------- | ---------- |
+| 1. Foundation & Terminology Contract       | 2/4            | Complete | 2026-04-07 |
+| 2. Personnel, Admin & Fleet Primitives     | 0/0            | Complete | 2026-04-08 |
+| 3. Scheduling & Dispatch Execution         | 0/0            | Complete | 2026-04-08 |
+| 4. CAMP Maintenance                        | 0/0            | Complete | 2026-04-09 |
+| 5. Syllabus Model, Grading & Records       | 5/5            | Complete | 2026-04-09 |
+| 6. Syllabus Rules, Progression & Audit     | 1/4            | Complete | 2026-04-10 |
+| 7. ADS-B Fleet Integration                 | 1/3            | Complete | 2026-04-11 |
+| 8. Experience, Reporting, Messaging & Beta | 0/5            | Planned  | -          |
 
 ---
 
