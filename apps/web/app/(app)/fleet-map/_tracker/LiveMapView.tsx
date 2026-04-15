@@ -3,12 +3,13 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import MapGL, { NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
 import { DeckGLOverlay } from './DeckGLOverlay';
-import { ScatterplotLayer, PathLayer, IconLayer, PolygonLayer } from '@deck.gl/layers';
+import { ScatterplotLayer, PathLayer, IconLayer, PolygonLayer, TextLayer } from '@deck.gl/layers';
 import { useQuery } from '@tanstack/react-query';
 import {
   fetchWaypoints,
   fetchAirports,
   fetchNavaids,
+  fetchStates,
   fetchSwimLatest,
   fetchSwimTracks,
   fetchSwimStats,
@@ -23,10 +24,13 @@ import ControlPanel from './ControlPanel';
 import FilterPanel, { type Filters } from './FilterPanel';
 import HomeAirportPanel from './HomeAirportPanel';
 
+// Initial view: centered on Alabama at a state-level zoom.
+// TODO: replace with the school's primary base lat/lon once the admin
+// schema surfaces it (tracked for Phase 8 polish).
 const INITIAL_VIEW = {
-  latitude: 39.8,
-  longitude: -98.5,
-  zoom: 4,
+  latitude: 32.8,
+  longitude: -86.8,
+  zoom: 6.5,
   pitch: 0,
   bearing: 0,
 };
@@ -382,6 +386,24 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
     structuralSharing: false,
   });
 
+  // OpenSky /states feed — raw ADS-B from the community receiver network.
+  // SWIM is FAA-correlated and tends to drop uncorrelated VFR traffic
+  // (pattern work, practice areas, no flight plan), so we union in the
+  // raw ADS-B view so school aircraft doing VFR practice stay visible.
+  // SWIM-vs-OpenSky de-duplication happens in the merge below, keyed
+  // on ICAO24 with the fresher api_time winning.
+  const statesQuery = useQuery({
+    queryKey: ['states', fetchBBox],
+    queryFn: async () => {
+      const data = await fetchStates(fetchBBox);
+      setDataRevision((r) => r + 1);
+      return data;
+    },
+    enabled: layers.aircraft,
+    refetchInterval: 5_000,
+    structuralSharing: false,
+  });
+
   // SWIM tracks — refresh every 15 seconds
   const swimTracksQuery = useQuery({
     queryKey: ['swim-tracks', fetchBBox],
@@ -469,10 +491,49 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // Union SWIM (FAA-correlated) + OpenSky /states (raw ADS-B) so VFR
+  // aircraft that aren't correlated in SWIM (pattern work, practice
+  // areas, no flight plan) still show on the map. De-dupe by ICAO24
+  // with the fresher api_time winning — so a stale SWIM fix doesn't
+  // override a newer ADS-B fix and vice versa.
+  const mergedStates = useMemo<AircraftState[]>(() => {
+    const byIcao = new Map<string, AircraftState>();
+    const ingest = (arr: readonly AircraftState[] | undefined) => {
+      if (!arr) return;
+      for (const d of arr) {
+        if (!d.icao24) continue;
+        const existing = byIcao.get(d.icao24);
+        if (!existing) {
+          byIcao.set(d.icao24, d);
+          continue;
+        }
+        const existingT = existing.api_time ?? 0;
+        const incomingT = d.api_time ?? 0;
+        if (incomingT > existingT) {
+          // Keep flight-plan fields from the older record if the newer
+          // one lacks them (OpenSky doesn't carry TAIS data).
+          byIcao.set(d.icao24, {
+            ...existing,
+            ...d,
+            ac_type: d.ac_type ?? existing.ac_type,
+            airport: d.airport ?? existing.airport,
+            entry_fix: d.entry_fix ?? existing.entry_fix,
+            exit_fix: d.exit_fix ?? existing.exit_fix,
+            flight_rules: d.flight_rules ?? existing.flight_rules,
+            flight_type: d.flight_type ?? existing.flight_type,
+          });
+        }
+      }
+    };
+    ingest(swimLatestQuery.data);
+    ingest(statesQuery.data);
+    return Array.from(byIcao.values());
+  }, [swimLatestQuery.data, statesQuery.data]);
+
   // Filter aircraft data — home airport radius is the primary filter when set
   const filteredStates = useMemo(() => {
-    if (!swimLatestQuery.data) return [];
-    let data = swimLatestQuery.data;
+    if (mergedStates.length === 0) return [];
+    let data = mergedStates;
     if (homeAirport) {
       data = data.filter(
         (d) =>
@@ -492,7 +553,7 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
       data = data.filter((d) => d.baro_altitude != null && d.baro_altitude <= maxM);
     }
     return data;
-  }, [swimLatestQuery.data, filters, homeAirport, homeRadiusNm]);
+  }, [mergedStates, filters, homeAirport, homeRadiusNm]);
 
   const filteredTracks = useMemo(() => {
     if (!swimTracksQuery.data) return [];
@@ -511,8 +572,10 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
     if (filters.callsign)
       data = data.filter((d) => (d.callsign || '').toUpperCase().includes(filters.callsign));
 
-    // Build a lookup of latest live positions so track endpoints match arrow positions
-    const livePositions = new Map((swimLatestQuery.data ?? []).map((s) => [s.icao24, s]));
+    // Build a lookup of latest live positions so track endpoints match
+    // arrow positions. Uses the merged (SWIM + OpenSky) view so ADS-B-
+    // only aircraft also get their trail extended to the current fix.
+    const livePositions = new Map(mergedStates.map((s) => [s.icao24, s]));
 
     // Extend each track's last point to the current live position if available
     return data.map((track) => {
@@ -531,7 +594,7 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
         alts: [...track.alts, live.baro_altitude ?? null],
       };
     });
-  }, [swimTracksQuery.data, swimLatestQuery.data, filters, homeAirport, homeRadiusNm]);
+  }, [swimTracksQuery.data, mergedStates, filters, homeAirport, homeRadiusNm]);
 
   const handleHover = useCallback(
     (info: { object?: unknown; x?: number; y?: number; layer?: { id?: string } }) => {
@@ -806,43 +869,6 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
       );
     }
 
-    // School-fleet highlight: bright orange halo under school aircraft icons
-    if (layers.aircraft && filteredStates.length > 0 && fleetTailSet.size > 0) {
-      const schoolPositions = filteredStates.filter((d) =>
-        fleetTailSet.has(normalizeTail(d.callsign)),
-      );
-      if (schoolPositions.length > 0) {
-        result.push(
-          new ScatterplotLayer<AircraftState>({
-            id: 'school-fleet-halo',
-            data: schoolPositions,
-            getPosition: (d) => {
-              const [lon, lat] = deadReckon(
-                d.latitude,
-                d.longitude,
-                d.velocity,
-                d.true_track,
-                d.api_time,
-              );
-              return [lon, lat, (d.baro_altitude ?? 0) - 1];
-            },
-            getFillColor: [255, 140, 0, 180],
-            getRadius: 22,
-            radiusUnits: 'pixels',
-            radiusMinPixels: 16,
-            radiusMaxPixels: 36,
-            pickable: false,
-            stroked: true,
-            getLineColor: [255, 200, 0, 255],
-            lineWidthMinPixels: 2,
-            updateTriggers: {
-              getPosition: [dataRevision, animTick],
-            },
-          }),
-        );
-      }
-    }
-
     if (layers.aircraft && filteredStates.length > 0) {
       result.push(
         new IconLayer<AircraftState>({
@@ -863,9 +889,14 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
             return { url, width: 64, height: 64, anchorY: 32 };
           },
           getSize: (d) => {
-            if (selectedIcao24 === d.icao24) return 28;
+            const isSchoolAc = fleetTailSet.has(normalizeTail(d.callsign));
+            if (selectedIcao24 === d.icao24) return 32;
             if (selectedIcao24 != null) return 14;
-            return 20;
+            // School fleet aircraft render much larger than surrounding
+            // traffic so the airplane silhouette is unambiguous even at
+            // state-wide zoom. Non-fleet aircraft stay at 20 so they
+            // don't clutter the map.
+            return isSchoolAc ? 40 : 20;
           },
           getAngle: (d) => -(d.true_track ?? 0),
           getColor: (d) => {
@@ -873,6 +904,12 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
             const isDimmed = selectedIcao24 != null && !isSelected;
             if (isDimmed) return [80, 80, 80, 60];
             if (isSelected) return [255, 255, 255, 255];
+            // School fleet aircraft ignore the altitude-based palette
+            // and render in a distinctive bright orange so they're
+            // identifiable at a glance among all other traffic.
+            if (fleetTailSet.has(normalizeTail(d.callsign))) {
+              return [255, 145, 0, 255];
+            }
             const altFt = (d.baro_altitude ?? 0) * 3.281;
             if (altFt < 10000) return [0, 255, 100, 230];
             if (altFt < 33000) return [0, 200, 255, 230];
@@ -880,17 +917,63 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
           },
           sizeScale: 1,
           sizeMinPixels: 10,
-          sizeMaxPixels: 32,
+          sizeMaxPixels: 48,
           pickable: true,
           billboard: false,
           updateTriggers: {
-            getColor: [selectedIcao24, dataRevision],
-            getSize: [selectedIcao24, dataRevision],
+            getColor: [selectedIcao24, dataRevision, fleetTailSet],
+            getSize: [selectedIcao24, dataRevision, fleetTailSet],
             getPosition: [dataRevision, animTick],
             getIcon: dataRevision,
           },
         }),
       );
+
+      // School-fleet tail labels so each fleet aircraft is identifiable
+      // by name even at wide zoom. The icon itself is already tinted
+      // orange + upsized in the IconLayer above; this layer adds a
+      // small tail-number callout floating above it. Only shown when
+      // no single aircraft is being tracked (so selection dimming stays
+      // clean).
+      if (fleetTailSet.size > 0 && selectedIcao24 == null) {
+        const schoolPositions = filteredStates.filter((d) =>
+          fleetTailSet.has(normalizeTail(d.callsign)),
+        );
+        if (schoolPositions.length > 0) {
+          result.push(
+            new TextLayer<AircraftState>({
+              id: 'school-fleet-label',
+              data: schoolPositions,
+              getPosition: (d) => {
+                const [lon, lat] = deadReckon(
+                  d.latitude,
+                  d.longitude,
+                  d.velocity,
+                  d.true_track,
+                  d.api_time,
+                );
+                return [lon, lat, (d.baro_altitude ?? 0) + 1];
+              },
+              getText: (d) => (d.callsign ?? '').trim(),
+              getSize: 12,
+              getColor: [255, 200, 100, 255],
+              getPixelOffset: [0, -32],
+              getTextAnchor: 'middle',
+              getAlignmentBaseline: 'bottom',
+              fontFamily: 'Menlo, "Courier New", monospace',
+              fontWeight: 700,
+              outlineWidth: 3,
+              outlineColor: [0, 0, 0, 230],
+              fontSettings: { sdf: true },
+              background: false,
+              pickable: false,
+              updateTriggers: {
+                getPosition: [dataRevision, animTick],
+              },
+            }),
+          );
+        }
+      }
     }
 
     // Home airport radius ring + filtered traffic
@@ -945,6 +1028,7 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
     viewState.zoom,
     planeIconUrl,
     heloIconUrl,
+    fleetTailSet,
   ]);
 
   const toggleLayer = useCallback((key: keyof LayerVisibility) => {
@@ -1059,6 +1143,7 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
 
       {/* Map */}
       <MapGL
+        id="fleetMap"
         {...viewState}
         onMove={onViewStateChange}
         onClick={handleMapClick}

@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+/*
+ * Ported from the standalone ADS-B Tracker so the /fleet-map route's
+ * ported components render with their intended styling. Intentionally
+ * OMITS the global `html, body { height:100%; overflow:hidden }` that
+ * Tracker sets on its root — that lock would break scrolling on every
+ * other page in the school app (courses, people, admin lists). The
+ * lock is scoped to the fleet-map route via
+ * apps/web/app/(app)/fleet-map/layout.tsx instead.
+ */
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #e0e0e0;
+  --panel-bg: #111111;
+  --panel-border: #1e1e1e;
+  --accent-cyan: #00e5ff;
+  --accent-green: #00e676;
+  --accent-orange: #ff9100;
+  --accent-yellow: #ffd600;
+  --accent-red: #ff1744;
+  --text-dim: #6b6b6b;
+  --text-secondary: #999999;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Map tooltip (used by Tracker's DeckGL hover overlay) */
+.map-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  color: var(--foreground);
+  max-width: 280px;
+  box-shadow: 0 4px 20px rgba(0, 229, 255, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.map-tooltip .tooltip-title {
+  color: var(--accent-cyan);
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.map-tooltip .tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 1px 0;
+}
+
+.map-tooltip .tooltip-label {
+  color: var(--text-secondary);
+}
+
+.map-tooltip .tooltip-value {
+  color: var(--foreground);
+  font-weight: 500;
+}
