@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function GatePage() {
+  return (
+    <Suspense fallback={null}>
+      <GateForm />
+    </Suspense>
+  );
+}
+
+function GateForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') || '/';
