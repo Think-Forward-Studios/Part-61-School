@@ -47,7 +47,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/invite') ||
     pathname.startsWith('/verify') ||
     pathname.startsWith('/auth/callback') ||
-    pathname.startsWith('/api/');
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/gate');
 
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone();
