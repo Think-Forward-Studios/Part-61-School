@@ -1,0 +1,9 @@
+{
+  "extends": "@part61/config/tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "module": "commonjs",
+    "moduleResolution": "node"
+  },
+  "include": ["."]
+}
