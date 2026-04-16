@@ -63,6 +63,53 @@ export default function LoginPage() {
         <Link href="/reset-password">Forgot password?</Link>
       </p>
       <p>Invited? Check your email for an activation link.</p>
+
+      <div
+        style={{
+          marginTop: '2rem',
+          padding: '1rem',
+          border: '1px solid #333',
+          borderRadius: 8,
+          fontSize: '0.85rem',
+          color: '#999',
+        }}
+      >
+        <strong style={{ color: '#ccc' }}>Test accounts</strong> (password: <code>demo</code>)
+        <table style={{ width: '100%', marginTop: '0.5rem', borderCollapse: 'collapse' }}>
+          <tbody>
+            {[
+              { role: 'Admin', email: 'admin@tfs.test' },
+              { role: 'Instructor', email: 'instructor@tfs.test' },
+              { role: 'Student', email: 'student@tfs.test' },
+              { role: 'Mechanic', email: 'mechanic@tfs.test' },
+            ].map((u) => (
+              <tr key={u.role}>
+                <td style={{ padding: '0.25rem 0' }}>{u.role}</td>
+                <td style={{ padding: '0.25rem 0' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail(u.email);
+                      setPassword('demo');
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#6b9fff',
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'underline',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    {u.email}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
