@@ -55,6 +55,48 @@ export const adminSquawksRouter = router({
       return await loadSquawk(tx, input.squawkId, ctx.session!.schoolId);
     }),
 
+  /**
+   * Phase 8 (08-02): mechanic dashboard — squawks triaged by or
+   * needing triage from the caller. No explicit assignment column
+   * exists, so we show open/triaged/in_work squawks that the
+   * mechanic triaged OR that still need triage (status='open').
+   */
+  listAssignedToMe: protectedProcedure.query(async ({ ctx }) => {
+    const tx = ctx.tx as Tx;
+    const userId = ctx.session!.userId;
+    const schoolId = ctx.session!.schoolId;
+    const rows = (await (tx as { execute: Tx['execute'] }).execute(sql`
+      select * from public.aircraft_squawk
+      where school_id = ${schoolId}::uuid
+        and resolved_at is null
+        and deleted_at is null
+        and (triaged_by = ${userId}::uuid or status = 'open')
+      order by opened_at desc
+      limit 50
+    `)) as unknown as Array<Record<string, unknown>>;
+    return rows;
+  }),
+
+  /**
+   * Phase 8 (08-02): student dashboard — open squawks for a specific aircraft.
+   */
+  listOpenForAircraft: protectedProcedure
+    .input(z.object({ aircraftId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const rows = await tx
+        .select()
+        .from(aircraftSquawk)
+        .where(
+          and(
+            eq(aircraftSquawk.schoolId, ctx.session!.schoolId),
+            eq(aircraftSquawk.aircraftId, input.aircraftId),
+            isNull(aircraftSquawk.resolvedAt),
+          ),
+        );
+      return rows;
+    }),
+
   // Phase 3 legacy: mechanic or admin marks resolved. Retained so
   // Phase 3 callers keep working unchanged.
   resolve: mechanicOrAdminProcedure.input(resolveSquawkInput).mutation(async ({ ctx, input }) => {

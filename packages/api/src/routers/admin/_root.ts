@@ -22,6 +22,7 @@ import { adminOverridesRouter } from './overrides';
 import { adminAuditRouter } from './audit';
 import { adminGeofenceRouter } from './geofence';
 import { adminActiveSessionsRouter } from './activeSessions';
+import { adminRatesRouter } from './rates';
 
 export const adminRouter = router({
   people: adminPeopleRouter,
@@ -47,4 +48,5 @@ export const adminRouter = router({
   audit: adminAuditRouter,
   geofence: adminGeofenceRouter,
   activeSessions: adminActiveSessionsRouter,
+  rates: adminRatesRouter,
 });

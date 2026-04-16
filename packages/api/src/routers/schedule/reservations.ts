@@ -39,6 +39,7 @@ import {
 import { router } from '../../trpc';
 import { instructorOrAdminProcedure, protectedProcedure } from '../../procedures';
 import { createNotification } from '../../helpers/notifications';
+import { checkDutyHoursForProposal } from '../../helpers/duty_hours';
 
 type Tx = {
   insert: typeof import('@part61/db').db.insert;
@@ -66,6 +67,18 @@ function parseLowerBound(range: string): string {
   // Normalize "2027-01-10 14:00:00+00" → "2027-01-10T14:00:00+00:00"
   let iso = raw.replace(' ', 'T');
   // Postgres abbreviates "+00" → expand to "+00:00" for Date parser.
+  iso = iso.replace(/([+-]\d{2})$/, '$1:00');
+  return iso;
+}
+
+/**
+ * Parse the upper bound of a tstzrange literal.
+ */
+function parseUpperBound(range: string): string {
+  const match = range.match(/,\s*(?:"([^"]+)"|([^\)]+))\)$/);
+  const raw = (match?.[1] ?? match?.[2] ?? '').trim();
+  if (!raw) return new Date().toISOString();
+  let iso = raw.replace(' ', 'T');
   iso = iso.replace(/([+-]\d{2})$/, '$1:00');
   return iso;
 }
@@ -397,6 +410,50 @@ export const scheduleReservationsRouter = router({
         }
       }
 
+      // Phase 8 IPF-04: duty-hour check (FAR 61.195(a)(2)).
+      // Layered ON TOP of 08-01 notification emitters — do not alter them.
+      if (r.instructorId && r.activityType === 'flight') {
+        const startIsoForDuty = parseLowerBound(r.timeRange);
+        const endIsoForDuty = parseUpperBound(r.timeRange);
+        if (startIsoForDuty && endIsoForDuty) {
+          const dutyCheck = await checkDutyHoursForProposal(tx, {
+            instructorId: r.instructorId,
+            proposedStart: new Date(startIsoForDuty),
+            proposedEnd: new Date(endIsoForDuty),
+          });
+          if (dutyCheck.block) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message:
+                'Duty hours exceeded (FAR 61.195) — instructor has ' +
+                dutyCheck.existingMinutes +
+                ' minutes in the 24h window; proposed adds ' +
+                dutyCheck.proposedMinutes +
+                '.',
+            });
+          }
+          if (dutyCheck.warn) {
+            await createNotification(tx, {
+              schoolId: r.schoolId,
+              baseId: r.baseId,
+              userId: r.instructorId,
+              kind: 'duty_hour_warning',
+              title: 'Approaching duty-hour limit',
+              body: `This reservation brings your 24h training time to ${dutyCheck.totalMinutes} minutes.`,
+              linkUrl: `/schedule/${r.id}`,
+              sourceTable: 'reservation',
+              sourceRecordId: r.id,
+              emailTemplateKey: 'duty_hour_warning',
+              emailTemplateProps: {
+                instructorName: 'Instructor',
+                reservationUrl: `/schedule/${r.id}`,
+                totalMinutes: dutyCheck.totalMinutes,
+              },
+            });
+          }
+        }
+      }
+
       try {
         const updated = await tx
           .update(reservation)
@@ -463,6 +520,30 @@ export const scheduleReservationsRouter = router({
         mapPostgresError(err);
       }
     }),
+
+  /**
+   * Phase 8 (08-02): instructor dashboard — reservations awaiting
+   * the caller's confirmation (status='requested' + instructor_id = me).
+   */
+  listRequestedForMe: protectedProcedure.query(async ({ ctx }) => {
+    const tx = ctx.tx as Tx;
+    const rows = (await tx.execute(sql`
+      select r.*,
+        coalesce(pp.first_name || ' ' || pp.last_name, u.full_name, u.email) as student_name,
+        a.tail_number as aircraft_tail
+      from public.reservation r
+      left join public.users u on u.id = r.student_id
+      left join public.person_profile pp on pp.user_id = r.student_id
+      left join public.aircraft a on a.id = r.aircraft_id
+      where r.school_id = ${ctx.session!.schoolId}::uuid
+        and r.instructor_id = ${ctx.session!.userId}::uuid
+        and r.status = 'requested'
+        and r.deleted_at is null
+      order by lower(r.time_range) asc
+      limit 20
+    `)) as unknown as Array<Record<string, unknown>>;
+    return rows;
+  }),
 
   list: protectedProcedure.input(reservationListInput).query(async ({ ctx, input }) => {
     const tx = ctx.tx as Tx;

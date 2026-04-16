@@ -67,15 +67,31 @@ const maintenanceKind = z.enum([
 const mechAuthority = z.enum(['none', 'a_and_p', 'ia']);
 
 export const adminWorkOrdersRouter = router({
+  /**
+   * Phase 8 (08-02): mechanic dashboard — open work orders assigned to caller.
+   */
+  listAssignedToMe: protectedProcedure.query(async ({ ctx }) => {
+    const tx = ctx.tx as Tx;
+    const rows = (await tx.execute(sql`
+      select wo.*
+        from public.work_order wo
+       where wo.school_id = ${ctx.session!.schoolId}::uuid
+         and wo.deleted_at is null
+         and wo.assigned_to_user_id = ${ctx.session!.userId}::uuid
+         and wo.status not in ('completed', 'cancelled')
+       order by wo.created_at desc
+       limit 50
+    `)) as unknown as Array<Record<string, unknown>>;
+    return rows;
+  }),
+
   list: protectedProcedure
     .input(
       z
         .object({
           aircraftId: z.string().uuid().optional(),
           limit: z.number().int().positive().max(200).default(50),
-          cursor: z
-            .object({ createdAt: z.string(), id: z.string().uuid() })
-            .optional(),
+          cursor: z.object({ createdAt: z.string(), id: z.string().uuid() }).optional(),
         })
         .optional(),
     )
@@ -109,10 +125,7 @@ export const adminWorkOrdersRouter = router({
         .select()
         .from(workOrder)
         .where(
-          and(
-            eq(workOrder.id, input.workOrderId),
-            eq(workOrder.schoolId, ctx.session!.schoolId),
-          ),
+          and(eq(workOrder.id, input.workOrderId), eq(workOrder.schoolId, ctx.session!.schoolId)),
         )
         .limit(1);
       if (!rows[0]) throw new TRPCError({ code: 'NOT_FOUND', message: 'Work order not found' });
@@ -120,10 +133,7 @@ export const adminWorkOrdersRouter = router({
         .select()
         .from(workOrderTask)
         .where(
-          and(
-            eq(workOrderTask.workOrderId, input.workOrderId),
-            isNull(workOrderTask.deletedAt),
-          ),
+          and(eq(workOrderTask.workOrderId, input.workOrderId), isNull(workOrderTask.deletedAt)),
         );
       return { ...rows[0], tasks };
     }),
@@ -176,7 +186,7 @@ export const adminWorkOrdersRouter = router({
       const tx = ctx.tx as Tx;
       const derived: RequiredMechanicAuthority = input.kind
         ? taskKindRequiredAuthority(input.kind as MaintenanceItemKind)
-        : (input.requiredAuthority as RequiredMechanicAuthority | undefined) ?? 'a_and_p';
+        : ((input.requiredAuthority as RequiredMechanicAuthority | undefined) ?? 'a_and_p');
       const inserted = await tx
         .insert(workOrderTask)
         .values({
@@ -322,10 +332,7 @@ export const adminWorkOrdersRouter = router({
         .select()
         .from(workOrder)
         .where(
-          and(
-            eq(workOrder.id, input.workOrderId),
-            eq(workOrder.schoolId, ctx.session!.schoolId),
-          ),
+          and(eq(workOrder.id, input.workOrderId), eq(workOrder.schoolId, ctx.session!.schoolId)),
         )
         .limit(1);
       const wo = woRows[0];
@@ -337,9 +344,7 @@ export const adminWorkOrdersRouter = router({
       const tasks = await tx
         .select()
         .from(workOrderTask)
-        .where(
-          and(eq(workOrderTask.workOrderId, wo.id), isNull(workOrderTask.deletedAt)),
-        );
+        .where(and(eq(workOrderTask.workOrderId, wo.id), isNull(workOrderTask.deletedAt)));
       if (tasks.length === 0) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Work order has no tasks' });
       }

@@ -28,6 +28,7 @@ export const scheduleRouter = router({
   markNoShow: scheduleReservationsRouter.markNoShow,
   getById: scheduleReservationsRouter.getById,
   checkStudentCurrency: scheduleReservationsRouter.checkStudentCurrency,
+  listRequestedForMe: scheduleReservationsRouter.listRequestedForMe,
   recurring: scheduleRecurringRouter,
   blocks: scheduleBlocksRouter,
   freebusy: scheduleFreeBusyRouter,
@@ -58,9 +59,7 @@ export const scheduleRouter = router({
       `)) as unknown as Array<{ result: unknown }>;
       const raw = rows[0]?.result;
       if (!raw) return { ok: true, blockers: [] };
-      const parsed = EligibilityResultSchema.parse(
-        typeof raw === 'string' ? JSON.parse(raw) : raw,
-      );
+      const parsed = EligibilityResultSchema.parse(typeof raw === 'string' ? JSON.parse(raw) : raw);
       return parsed;
     }),
 

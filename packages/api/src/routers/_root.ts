@@ -15,6 +15,8 @@ import { adsbRouter } from './adsb';
 import { notificationsRouter } from './notifications';
 import { messagingRouter } from './messaging';
 import { broadcastsRouter } from './broadcasts';
+import { costRouter } from './cost';
+import { instructorMetricsRouter } from './instructorMetrics';
 
 export const appRouter = router({
   auth: authRouter,
@@ -33,6 +35,8 @@ export const appRouter = router({
   notifications: notificationsRouter,
   messaging: messagingRouter,
   broadcasts: broadcastsRouter,
+  cost: costRouter,
+  instructorMetrics: instructorMetricsRouter,
 });
 
 export type AppRouter = typeof appRouter;

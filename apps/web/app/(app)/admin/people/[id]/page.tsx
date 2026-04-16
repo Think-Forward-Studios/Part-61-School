@@ -28,6 +28,7 @@ import { MinimumsStatusPanel } from './_panels/MinimumsStatusPanel';
 import { ProgressForecastPanel } from './_panels/ProgressForecastPanel';
 import { RolloverQueuePanel } from './_panels/RolloverQueuePanel';
 import { NextActivityChip } from './_panels/NextActivityChip';
+import { InstructorMetricsPanel } from './_components/InstructorMetricsPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,15 +76,14 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
     .from(instructorQualification)
     .where(and(eq(instructorQualification.userId, id), isNull(instructorQualification.revokedAt)));
 
-  const contacts = await db
-    .select()
-    .from(emergencyContact)
-    .where(eq(emergencyContact.userId, id));
+  const contacts = await db.select().from(emergencyContact).where(eq(emergencyContact.userId, id));
 
   const releases = await db
     .select()
     .from(infoReleaseAuthorization)
-    .where(and(eq(infoReleaseAuthorization.userId, id), isNull(infoReleaseAuthorization.revokedAt)));
+    .where(
+      and(eq(infoReleaseAuthorization.userId, id), isNull(infoReleaseAuthorization.revokedAt)),
+    );
 
   const experience = await db
     .select()
@@ -147,8 +147,7 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
           </strong>
           <div>Reason: {activeHold.reason}</div>
           <div style={{ fontSize: '0.85rem', color: '#555' }}>
-            Placed by {activeHold.createdBy} on{' '}
-            {new Date(activeHold.createdAt).toLocaleString()}
+            Placed by {activeHold.createdBy} on {new Date(activeHold.createdAt).toLocaleString()}
           </div>
         </div>
       ) : null}
@@ -164,7 +163,11 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
         }}
       />
 
-      <RolesPanel userId={id} roles={roles.map((r) => ({ role: r.role, mechanicAuthority: r.mechanicAuthority }))} />
+      <RolesPanel
+        userId={id}
+        roles={roles.map((r) => ({ role: r.role, mechanicAuthority: r.mechanicAuthority }))}
+      />
+      {roles.some((r) => r.role === 'instructor') && <InstructorMetricsPanel personId={id} />}
       <HoldsPanel userId={id} holds={holds.map(serialize)} />
       <CurrenciesPanel userId={id} currencies={currencies.map(serialize)} />
       <QualificationsPanel userId={id} quals={quals.map(serialize)} />
@@ -176,16 +179,16 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
 
       {primaryEnrollment ? (
         <section style={{ marginTop: '2rem', borderTop: '2px solid #e5e7eb', paddingTop: '1rem' }}>
-          <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.5rem' }}>
-            Course progress
-          </h2>
+          <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.5rem' }}>Course progress</h2>
           {activeEnrollments.length > 1 ? (
             <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '0 0 0.75rem' }}>
               Student has {activeEnrollments.length} active enrollments. Showing:{' '}
-              {primaryEnrollment.course_title ?? primaryEnrollment.course_code ?? 'Untitled course'}.{' '}
+              {primaryEnrollment.course_title ?? primaryEnrollment.course_code ?? 'Untitled course'}
+              .{' '}
               <Link href={`/admin/enrollments?studentId=${id}`}>
                 Open enrollments to view others
-              </Link>.
+              </Link>
+              .
             </p>
           ) : null}
           <MinimumsStatusPanel enrollmentId={primaryEnrollment.id} />

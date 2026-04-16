@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { DispatchBoard } from './DispatchBoard';
+import { CueSubscriber } from '@/components/dispatch/CueSubscriber';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,11 +36,10 @@ export default async function DispatchPage() {
         }}
       >
         <h1 style={{ margin: 0 }}>Dispatch</h1>
-        <span style={{ color: '#666', fontSize: '0.85rem' }}>
-          Live · refreshes every 15s
-        </span>
+        <span style={{ color: '#666', fontSize: '0.85rem' }}>Live · refreshes every 15s</span>
       </header>
       <DispatchBoard />
+      <CueSubscriber />
     </main>
   );
 }

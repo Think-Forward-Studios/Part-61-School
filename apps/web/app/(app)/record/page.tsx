@@ -14,6 +14,7 @@ import { StudentNextActivityChip } from './_components/StudentNextActivityChip';
 import { StudentProgressForecastPanel } from './_components/StudentProgressForecastPanel';
 import { StudentMinimumsPanel } from './_components/StudentMinimumsPanel';
 import { StudentRolloverQueuePanel } from './_components/StudentRolloverQueuePanel';
+import { CostSummary } from './_components/CostSummary';
 
 export const dynamic = 'force-dynamic';
 
@@ -148,6 +149,9 @@ export default async function RecordPage() {
     <main style={{ padding: '1rem', maxWidth: 960 }}>
       <h1>My Training Record</h1>
 
+      {/* Phase 8: Cost summary */}
+      <CostSummary studentId={user.id} enrollmentId={active?.id} />
+
       {/* Phase 6: Progress surfaces for active enrollment */}
       {active ? (
         <>
@@ -218,8 +222,7 @@ export default async function RecordPage() {
               return (
                 <li key={e.id}>
                   <Link href={`/record/courses/${e.id}`}>
-                    {e.course_code ?? 'course'} — {e.course_title ?? '—'}{' '}
-                    ({e.version_label ?? '—'})
+                    {e.course_code ?? 'course'} — {e.course_title ?? '—'} ({e.version_label ?? '—'})
                   </Link>{' '}
                   <span style={{ color: '#888', fontSize: '0.85rem' }}>· {status}</span>
                   {!e.withdrawn_at ? (
@@ -315,11 +318,7 @@ export default async function RecordPage() {
                       ? 'expiring'
                       : 'current';
               const color =
-                state === 'expired'
-                  ? '#fee2e2'
-                  : state === 'expiring'
-                    ? '#fef3c7'
-                    : '#dcfce7';
+                state === 'expired' ? '#fee2e2' : state === 'expiring' ? '#fef3c7' : '#dcfce7';
               return (
                 <li key={c.id}>
                   {c.kind}{' '}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { db, users, aircraft, aircraftCurrentTotals } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ManagementOverridesPanel } from '../_components/ManagementOverridesPanel';
+import { WorkloadMonitor } from './_components/WorkloadMonitor';
 
 export const dynamic = 'force-dynamic';
 
@@ -178,6 +179,10 @@ export default async function AdminDashboardPage() {
           ))}
         </div>
       )}
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={{ fontSize: '1.1rem' }}>Instructor Workload</h2>
+        <WorkloadMonitor />
+      </section>
       <ManagementOverridesPanel schoolId={schoolId} />
     </main>
   );
