@@ -56,13 +56,20 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Seed the part61.active_role cookie on first authenticated request of a
-  // session. The custom access token hook stamps the user's default role
-  // into the JWT as `active_role`; we copy it into a cookie so the (app)
-  // and /admin server layouts can read it synchronously without an extra
-  // JWT decode. Only set it if missing — user may have explicitly switched
-  // roles via /switch-role, which owns the cookie after that.
-  if (user && !isAuthRoute && !request.cookies.get('part61.active_role')) {
+  // Seed or validate the part61.active_role cookie. The custom access token
+  // hook stamps the user's default role into the JWT as `active_role`; we
+  // copy it into a cookie so the (app) and /admin server layouts can read
+  // it synchronously without an extra JWT decode.
+  //
+  // Phase 8 fix: also validate when the cookie IS present — if the user
+  // changed (different browser session logged in), the stale cookie from
+  // the previous user may reference a role the current user doesn't hold.
+  // We detect this by comparing the cookie's role against the JWT's roles[]
+  // claim and reset if the cookie role isn't in the user's role set.
+  const existingRoleCookie = request.cookies.get('part61.active_role')?.value;
+  const needsRoleSeed = user && !isAuthRoute && !existingRoleCookie;
+  const needsRoleValidation = user && !isAuthRoute && existingRoleCookie;
+  if (needsRoleSeed || needsRoleValidation) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -86,7 +93,34 @@ export async function updateSession(request: NextRequest) {
         // ignore — fall through to layout fallback
       }
     }
-    if (resolvedRole) {
+    // If the cookie already exists, validate it against the JWT's roles[].
+    // If the current user doesn't hold the cookie's role, reset to the
+    // JWT's active_role (fixes stale cookie from a different user's session).
+    let finalRole = resolvedRole;
+    if (existingRoleCookie && session?.access_token) {
+      try {
+        const payload = session.access_token.split('.')[1];
+        if (payload) {
+          const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+          const decoded = JSON.parse(Buffer.from(padded, 'base64url').toString('utf-8')) as {
+            roles?: string[];
+          };
+          const userRoles = decoded.roles ?? [];
+          if (userRoles.length > 0 && !userRoles.includes(existingRoleCookie)) {
+            // Cookie role is invalid for this user — reset to JWT default
+            finalRole = resolvedRole ?? userRoles[0];
+          } else {
+            // Cookie is valid — don't overwrite it
+            finalRole = undefined;
+          }
+        }
+      } catch {
+        // ignore — keep existing cookie
+        finalRole = undefined;
+      }
+    }
+
+    if (finalRole) {
       const cookieOpts = {
         httpOnly: true,
         sameSite: 'lax' as const,
@@ -94,8 +128,8 @@ export async function updateSession(request: NextRequest) {
         path: '/',
         maxAge: 60 * 60 * 24 * 30,
       };
-      request.cookies.set('part61.active_role', resolvedRole);
-      supabaseResponse.cookies.set('part61.active_role', resolvedRole, cookieOpts);
+      request.cookies.set('part61.active_role', finalRole);
+      supabaseResponse.cookies.set('part61.active_role', finalRole, cookieOpts);
     }
   }
 
