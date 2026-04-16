@@ -8,6 +8,10 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
 import { BaseSwitcher } from '@/components/BaseSwitcher';
 import { LogoutButton } from '@/components/LogoutButton';
+import { NotificationBell } from '@/components/NotificationBell';
+import { MessagingToggleButton } from '@/components/MessagingDrawer';
+import { BroadcastBanner } from '@/components/BroadcastBanner';
+import { AppShellProviders } from '@/components/AppShellProviders';
 
 const ROLES: readonly Role[] = ['student', 'instructor', 'mechanic', 'admin'];
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -92,38 +96,53 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .where(eq(userBase.userId, user.id));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <header
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'center',
-          padding: '1rem',
-          borderBottom: '1px solid #ccc',
-          flexShrink: 0,
-        }}
-      >
-        <strong>{schoolName}</strong>
-        <span>
-          Signed in as {shadow.email} — active role: {activeRole}
-          {activeBaseName ? ` — base: ${activeBaseName}` : ''}
-        </span>
-        <a href="/record" style={{ fontSize: '0.85rem' }}>
-          My Record
-        </a>
-        <a href="/flight-log" style={{ fontSize: '0.85rem' }}>
-          Flight Log
-        </a>
-        <a href="/fleet-map" style={{ fontSize: '0.85rem' }}>
-          Fleet Map
-        </a>
-        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: '1rem' }}>
-          <BaseSwitcher availableBases={availableBases} activeBaseId={activeBaseId} />
-          {rolesList.length > 1 ? <RoleSwitcher roles={rolesList} active={activeRole} /> : null}
-        </span>
-        <LogoutButton />
-      </header>
-      <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>{children}</div>
-    </div>
+    <AppShellProviders userId={user.id} schoolId={shadow.schoolId}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <BroadcastBanner />
+        <header
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            alignItems: 'center',
+            padding: '1rem',
+            borderBottom: '1px solid #ccc',
+            flexShrink: 0,
+          }}
+        >
+          <strong>{schoolName}</strong>
+          <span>
+            Signed in as {shadow.email} — active role: {activeRole}
+            {activeBaseName ? ` — base: ${activeBaseName}` : ''}
+          </span>
+          <a href="/record" style={{ fontSize: '0.85rem' }}>
+            My Record
+          </a>
+          <a href="/flight-log" style={{ fontSize: '0.85rem' }}>
+            Flight Log
+          </a>
+          <a href="/fleet-map" style={{ fontSize: '0.85rem' }}>
+            Fleet Map
+          </a>
+          <a href="/profile/notifications" style={{ fontSize: '0.85rem' }}>
+            Notification prefs
+          </a>
+          <span
+            style={{
+              marginLeft: 'auto',
+              display: 'inline-flex',
+              gap: '0.5rem',
+              alignItems: 'center',
+            }}
+          >
+            <NotificationBell />
+            <MessagingToggleButton />
+            <BaseSwitcher availableBases={availableBases} activeBaseId={activeBaseId} />
+            {rolesList.length > 1 ? <RoleSwitcher roles={rolesList} active={activeRole} /> : null}
+          </span>
+          <LogoutButton />
+        </header>
+        <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>{children}</div>
+      </div>
+    </AppShellProviders>
   );
 }
