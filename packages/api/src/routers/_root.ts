@@ -17,6 +17,7 @@ import { messagingRouter } from './messaging';
 import { broadcastsRouter } from './broadcasts';
 import { costRouter } from './cost';
 import { instructorMetricsRouter } from './instructorMetrics';
+import { reportsRouter } from './reports/_root';
 
 export const appRouter = router({
   auth: authRouter,
@@ -37,6 +38,7 @@ export const appRouter = router({
   broadcasts: broadcastsRouter,
   cost: costRouter,
   instructorMetrics: instructorMetricsRouter,
+  reports: reportsRouter,
 });
 
 export type AppRouter = typeof appRouter;

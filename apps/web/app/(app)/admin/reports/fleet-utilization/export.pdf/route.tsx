@@ -1,0 +1,99 @@
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+import { renderToStream } from '@react-pdf/renderer';
+import { db } from '@part61/db';
+import { sql } from 'drizzle-orm';
+import { resolveCallerContext } from '@/lib/trainingRecord';
+import { ReportPdfShell } from '../../_pdfs/ReportPdfShell';
+
+export async function GET(req: Request) {
+  const caller = await resolveCallerContext();
+  if (!caller || caller.activeRole !== 'admin') {
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const from =
+    searchParams.get('from') ?? new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const to = searchParams.get('to') ?? new Date().toISOString().slice(0, 10);
+  const fromUtc = from + 'T00:00:00Z';
+  const toUtc = to + 'T23:59:59.999Z';
+
+  // allow-banned-term: internal Postgres enum literal
+  const rows = (await db.execute(sql`
+    select
+      a.tail_number,
+      coalesce(a.make, '') || ' ' || coalesce(a.model, '') as make_model,
+      coalesce((
+        select sum(
+          coalesce(fi.hobbs_in::numeric, 0) - coalesce(fo.hobbs_out::numeric, 0)
+        )
+        from public.flight_log_entry fo
+        join public.flight_log_entry fi
+          on fi.paired_entry_id = fo.id and fi.kind = 'flight_in'
+        where fo.kind = 'flight_out'
+          and fo.aircraft_id = a.id
+          and fi.flown_at >= ${fromUtc}::timestamptz
+          and fi.flown_at <= ${toUtc}::timestamptz
+      ), 0)::numeric as flight_hours,
+      coalesce((
+        select sum(extract(epoch from (upper(r.time_range) - lower(r.time_range))) / 3600)
+        from public.reservation r
+        where r.aircraft_id = a.id
+          and r.deleted_at is null
+          and r.status in ('approved', 'dispatched', 'flown', 'closed')
+          and lower(r.time_range) >= ${fromUtc}::timestamptz
+          and lower(r.time_range) <= ${toUtc}::timestamptz
+      ), 0)::numeric as scheduled_hours,
+      coalesce((
+        select count(*)
+        from public.aircraft_squawk s
+        where s.aircraft_id = a.id
+          and s.deleted_at is null
+          and s.opened_at >= ${fromUtc}::timestamptz
+          and s.opened_at <= ${toUtc}::timestamptz
+      ), 0)::int as squawk_count
+    from public.aircraft a
+    where a.school_id = ${caller.schoolId}::uuid
+      and a.deleted_at is null
+    order by a.tail_number
+  `)) as unknown as Array<Record<string, unknown>>;
+
+  const pdfRows = rows.map((r) => {
+    const fh = Number(r.flight_hours ?? 0);
+    const sh = Number(r.scheduled_hours ?? 0);
+    return {
+      tailNumber: String(r.tail_number ?? ''),
+      makeModel: String(r.make_model ?? '').trim(),
+      flightHours: fh.toFixed(1),
+      scheduledHours: sh.toFixed(1),
+      utilizationPct: (sh > 0 ? (fh / sh) * 100 : 0).toFixed(1) + '%',
+      squawkCount: String(r.squawk_count ?? 0),
+    };
+  });
+
+  const stream = await renderToStream(
+    <ReportPdfShell
+      title="Fleet Utilization"
+      filtersApplied={`${from} to ${to}`}
+      columns={[
+        { key: 'tailNumber', label: 'Tail' },
+        { key: 'makeModel', label: 'Make/Model' },
+        { key: 'flightHours', label: 'Flight Hours' },
+        { key: 'scheduledHours', label: 'Scheduled Hours' },
+        { key: 'utilizationPct', label: 'Utilization %' },
+        { key: 'squawkCount', label: 'Squawks' },
+      ]}
+      rows={pdfRows}
+    />,
+  );
+
+  return new Response(stream as unknown as ReadableStream, {
+    headers: {
+      'content-type': 'application/pdf',
+      'content-disposition': `attachment; filename="fleet-utilization-${from}-${to}.pdf"`,
+      'cache-control': 'private, no-store',
+    },
+  });
+}
