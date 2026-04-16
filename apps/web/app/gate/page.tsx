@@ -1,44 +1,16 @@
-'use client';
+// Server component — renders a standard HTML form POST.
+// Avoids JS/fetch entirely so Safari ITP doesn't drop the cookie.
 
-import { Suspense, useState, type FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+type SearchParams = { next?: string; error?: string };
 
-export default function GatePage() {
-  return (
-    <Suspense fallback={null}>
-      <GateForm />
-    </Suspense>
-  );
-}
-
-function GateForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/';
-
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    const res = await fetch('/api/gate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-
-    if (res.ok) {
-      router.push(next);
-      router.refresh();
-    } else {
-      setError('Incorrect password');
-      setLoading(false);
-    }
-  }
+export default async function GatePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const next = params.next || '/';
+  const hasError = params.error === '1';
 
   return (
     <div
@@ -72,16 +44,19 @@ function GateForm() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="gate-password" style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+        <form method="POST" action="/api/gate">
+          <input type="hidden" name="next" value={next} />
+          <label
+            htmlFor="gate-password"
+            style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem' }}
+          >
             Password
           </label>
           <input
             id="gate-password"
+            name="password"
             type="password"
             placeholder="Team password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
             autoFocus
             style={{
@@ -95,28 +70,27 @@ function GateForm() {
               boxSizing: 'border-box',
             }}
           />
-          {error && (
+          {hasError && (
             <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>
-              {error}
+              Incorrect password
             </p>
           )}
           <button
             type="submit"
-            disabled={loading}
             style={{
               width: '100%',
               marginTop: '1rem',
               padding: '0.7rem',
-              background: loading ? '#2a2a2a' : '#fafafa',
-              color: loading ? '#888' : '#0a0a0a',
+              background: '#fafafa',
+              color: '#0a0a0a',
               border: 'none',
               borderRadius: 6,
               fontSize: '0.95rem',
               fontWeight: 600,
-              cursor: loading ? 'wait' : 'pointer',
+              cursor: 'pointer',
             }}
           >
-            {loading ? 'Checking…' : 'Enter'}
+            Enter
           </button>
         </form>
       </div>
