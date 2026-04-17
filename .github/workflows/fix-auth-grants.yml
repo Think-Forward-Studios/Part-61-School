@@ -15,24 +15,58 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - name: Re-grant public schema + table access to supabase_auth_admin
+      - name: Re-grant supabase_auth_admin (comprehensive)
         run: |
           pnpm --filter @part61/db exec node <<'SCRIPT'
           const postgres = require('postgres');
           const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
           (async () => {
+            // Schema + core tables
             await sql.unsafe(`grant usage on schema public to supabase_auth_admin;`);
             await sql.unsafe(`grant select on public.users to supabase_auth_admin;`);
             await sql.unsafe(`grant select on public.user_roles to supabase_auth_admin;`);
-            console.log('Grants re-applied.');
+
+            // Enum types used by user_roles.role (role enum) + users.status
+            // supabase_auth_admin needs USAGE to resolve enum type OIDs.
+            await sql.unsafe(`
+              do $$
+              declare r record;
+              begin
+                for r in
+                  select t.typname, n.nspname
+                    from pg_type t
+                    join pg_namespace n on n.oid = t.typnamespace
+                   where n.nspname = 'public'
+                     and t.typtype = 'e'
+                loop
+                  execute format('grant usage on type public.%I to supabase_auth_admin', r.typname);
+                end loop;
+              end $$;
+            `);
+
+            // Function execute
+            await sql.unsafe(`grant execute on function public.custom_access_token_hook(jsonb) to supabase_auth_admin;`);
+
+            console.log('Grants applied.');
 
             // Verify
             const check = await sql`
               select has_schema_privilege('supabase_auth_admin', 'public', 'USAGE') as schema_usage,
                      has_table_privilege('supabase_auth_admin', 'public.users', 'SELECT') as users_select,
-                     has_table_privilege('supabase_auth_admin', 'public.user_roles', 'SELECT') as user_roles_select
+                     has_table_privilege('supabase_auth_admin', 'public.user_roles', 'SELECT') as user_roles_select,
+                     has_function_privilege('supabase_auth_admin', 'public.custom_access_token_hook(jsonb)', 'EXECUTE') as fn_execute
             `;
-            console.log(check);
+            console.log('Privileges:', check);
+
+            // List enum types
+            const enums = await sql`
+              select t.typname from pg_type t
+              join pg_namespace n on n.oid = t.typnamespace
+              where n.nspname = 'public' and t.typtype = 'e'
+              order by t.typname
+            `;
+            console.log(`Enums in public: ${enums.length}`);
+
             await sql.end();
           })().catch(async (e) => {
             console.error(e);
