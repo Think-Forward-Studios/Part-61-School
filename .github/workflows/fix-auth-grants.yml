@@ -1,0 +1,44 @@
+name: Fix Auth Admin Grants
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Re-grant public schema + table access to supabase_auth_admin
+        run: |
+          pnpm --filter @part61/db exec node <<'SCRIPT'
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+          (async () => {
+            await sql.unsafe(`grant usage on schema public to supabase_auth_admin;`);
+            await sql.unsafe(`grant select on public.users to supabase_auth_admin;`);
+            await sql.unsafe(`grant select on public.user_roles to supabase_auth_admin;`);
+            console.log('Grants re-applied.');
+
+            // Verify
+            const check = await sql`
+              select has_schema_privilege('supabase_auth_admin', 'public', 'USAGE') as schema_usage,
+                     has_table_privilege('supabase_auth_admin', 'public.users', 'SELECT') as users_select,
+                     has_table_privilege('supabase_auth_admin', 'public.user_roles', 'SELECT') as user_roles_select
+            `;
+            console.log(check);
+            await sql.end();
+          })().catch(async (e) => {
+            console.error(e);
+            try { await sql.end(); } catch {}
+            process.exit(1);
+          });
+          SCRIPT
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
