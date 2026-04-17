@@ -103,10 +103,11 @@ jobs:
               `;
               console.log('Shadow user created.');
 
-              // 4. Admin role (default)
+              // 4. Admin role (default). user_roles has no school_id — the
+              //    RLS policy joins through public.users to resolve tenant.
               await tx`
-                insert into public.user_roles (user_id, school_id, role, is_default)
-                values (${AUTH_USER_ID}::uuid, ${school.id}::uuid, 'admin', true)
+                insert into public.user_roles (user_id, role, is_default)
+                values (${AUTH_USER_ID}::uuid, 'admin', true)
               `;
               console.log('Admin role granted.');
 
