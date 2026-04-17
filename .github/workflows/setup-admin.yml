@@ -1,0 +1,157 @@
+name: Setup First Admin
+
+# Creates the first admin user's shadow rows (school + base + public.users +
+# user_roles + user_base + raw_app_meta_data.roles).
+#
+# The auth.users row must already exist (create via Supabase Dashboard first).
+#
+# Inputs:
+#   auth_user_id  - UUID of the auth.users row
+#   email         - matches the auth user's email
+#   school_name   - school display name
+#   base_name     - default base name
+#   timezone      - IANA tz (e.g. America/Chicago)
+on:
+  workflow_dispatch:
+    inputs:
+      auth_user_id:
+        description: 'auth.users UUID'
+        required: true
+        type: string
+      email:
+        description: 'Admin email (must match auth user)'
+        required: true
+        type: string
+      school_name:
+        description: 'School display name'
+        required: true
+        default: 'TFS Flight School'
+        type: string
+      base_name:
+        description: 'Default base name'
+        required: true
+        default: 'Home Base'
+        type: string
+      timezone:
+        description: 'IANA timezone'
+        required: true
+        default: 'America/Chicago'
+        type: string
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create school + base + admin shadow rows
+        run: |
+          pnpm --filter @part61/db exec node <<'SCRIPT'
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+
+          const AUTH_USER_ID = process.env.AUTH_USER_ID;
+          const EMAIL = process.env.EMAIL;
+          const SCHOOL_NAME = process.env.SCHOOL_NAME;
+          const BASE_NAME = process.env.BASE_NAME;
+          const TIMEZONE = process.env.TIMEZONE;
+
+          (async () => {
+            // Verify the auth user actually exists.
+            const authRows = await sql`select id, email from auth.users where id = ${AUTH_USER_ID}::uuid`;
+            if (authRows.length === 0) {
+              throw new Error(`auth.users row not found for id ${AUTH_USER_ID}`);
+            }
+            console.log('Auth user found:', authRows[0].email);
+
+            // Check if shadow row already exists — idempotent.
+            const existing = await sql`select id from public.users where id = ${AUTH_USER_ID}::uuid`;
+            if (existing.length > 0) {
+              console.log('Shadow user already exists. Skipping.');
+              await sql.end();
+              return;
+            }
+
+            await sql.begin(async (tx) => {
+              // 1. School
+              const [school] = await tx`
+                insert into public.schools (id, name, timezone)
+                values (gen_random_uuid(), ${SCHOOL_NAME}, ${TIMEZONE})
+                returning id
+              `;
+              console.log('School created:', school.id);
+
+              // 2. Base
+              const [base] = await tx`
+                insert into public.bases (id, school_id, name, timezone)
+                values (gen_random_uuid(), ${school.id}::uuid, ${BASE_NAME}, ${TIMEZONE})
+                returning id
+              `;
+              console.log('Base created:', base.id);
+
+              // 3. Shadow user
+              await tx`
+                insert into public.users (id, school_id, email, full_name, timezone, status)
+                values (${AUTH_USER_ID}::uuid, ${school.id}::uuid, ${EMAIL}, 'Admin', ${TIMEZONE}, 'active')
+              `;
+              console.log('Shadow user created.');
+
+              // 4. Admin role (default)
+              await tx`
+                insert into public.user_roles (user_id, school_id, role, is_default)
+                values (${AUTH_USER_ID}::uuid, ${school.id}::uuid, 'admin', true)
+              `;
+              console.log('Admin role granted.');
+
+              // 5. Link user to base
+              await tx`
+                insert into public.user_base (user_id, base_id)
+                values (${AUTH_USER_ID}::uuid, ${base.id}::uuid)
+              `;
+              console.log('User linked to base.');
+
+              // 6. Seed roles[] into JWT metadata so the custom access token
+              //    hook has something to stamp on the first login even
+              //    before role_union is recomputed.
+              await tx`
+                update auth.users
+                set raw_app_meta_data =
+                  coalesce(raw_app_meta_data, '{}'::jsonb) || '{"roles":["admin"]}'::jsonb
+                where id = ${AUTH_USER_ID}::uuid
+              `;
+              console.log('JWT metadata updated with roles=[admin].');
+            });
+
+            // Verify
+            const summary = await sql`
+              select u.email, u.status, ur.role, ur.is_default, s.name as school, b.name as base
+              from public.users u
+              join public.user_roles ur on ur.user_id = u.id
+              join public.schools s on s.id = u.school_id
+              left join public.user_base ub on ub.user_id = u.id
+              left join public.bases b on b.id = ub.base_id
+              where u.id = ${AUTH_USER_ID}::uuid
+            `;
+            console.log('\n=== Final admin setup ===');
+            console.log(JSON.stringify(summary, null, 2));
+            await sql.end();
+          })().catch(async (e) => {
+            console.error(e);
+            try { await sql.end(); } catch {}
+            process.exit(1);
+          });
+          SCRIPT
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          AUTH_USER_ID: ${{ github.event.inputs.auth_user_id }}
+          EMAIL: ${{ github.event.inputs.email }}
+          SCHOOL_NAME: ${{ github.event.inputs.school_name }}
+          BASE_NAME: ${{ github.event.inputs.base_name }}
+          TIMEZONE: ${{ github.event.inputs.timezone }}
