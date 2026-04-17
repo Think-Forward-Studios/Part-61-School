@@ -1,3 +1,4 @@
+'use client';
 /**
  * Card — surface container with optional accent, header, footer.
  *

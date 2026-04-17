@@ -1,3 +1,4 @@
+'use client';
 /**
  * Button — three variants.
  *   primary:   amber gradient, uppercase, emphatic
