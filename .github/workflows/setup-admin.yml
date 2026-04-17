@@ -111,10 +111,10 @@ jobs:
               `;
               console.log('Admin role granted.');
 
-              // 5. Link user to base
+              // 5. Link user to base (user_base has its own school_id for RLS)
               await tx`
-                insert into public.user_base (user_id, base_id)
-                values (${AUTH_USER_ID}::uuid, ${base.id}::uuid)
+                insert into public.user_base (user_id, base_id, school_id)
+                values (${AUTH_USER_ID}::uuid, ${base.id}::uuid, ${school.id}::uuid)
               `;
               console.log('User linked to base.');
 
