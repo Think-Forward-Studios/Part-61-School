@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect, notFound } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ActiveSessionsClient } from './_components/ActiveSessionsClient';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +18,12 @@ export default async function ActiveSessionsPage() {
   if (activeRole !== 'admin') notFound();
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1000 }}>
-      <h1 style={{ margin: '0 0 1rem' }}>Active Sessions</h1>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1100, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Monitoring"
+        title="Active Sessions"
+        subtitle="Users currently signed in. Click DM to start a direct conversation."
+      />
       <ActiveSessionsClient />
     </main>
   );

@@ -9,15 +9,21 @@ export function PdfDownloadButton({ slug }: { slug: string }) {
       href={href}
       download
       style={{
-        padding: '0.35rem 0.75rem',
-        background: '#dc2626',
-        color: 'white',
-        borderRadius: 4,
+        padding: '0.5rem 0.9rem',
+        background: '#121826',
+        color: '#fbbf24',
+        border: '1px solid #fbbf2433',
+        borderRadius: 6,
         textDecoration: 'none',
-        fontSize: '0.8rem',
+        fontSize: '0.72rem',
+        fontFamily: '"JetBrains Mono", monospace',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        fontWeight: 600,
+        transition: 'background 0.15s ease, border-color 0.15s ease',
       }}
     >
-      PDF
+      ↓ PDF
     </a>
   );
 }

@@ -95,53 +95,218 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .innerJoin(bases, eq(bases.id, userBase.baseId))
     .where(eq(userBase.userId, user.id));
 
+  const roleColorMap: Record<string, string> = {
+    admin: '#f97316',
+    instructor: '#38bdf8',
+    student: '#34d399',
+    mechanic: '#a78bfa',
+    rental_customer: '#7a869a',
+  };
+  const roleHue = roleColorMap[activeRole] ?? '#7a869a';
+  const roleCallsign: Record<string, string> = {
+    admin: 'OPS',
+    instructor: 'CFI',
+    student: 'STU',
+    mechanic: 'MX',
+    rental_customer: 'REN',
+  };
+
   return (
     <AppShellProviders userId={user.id} schoolId={shadow.schoolId}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div
+        className="tfs-app"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+          background:
+            'radial-gradient(ellipse 120% 40% at 50% 0%, rgba(56, 189, 248, 0.06) 0%, transparent 55%), #05070e',
+          color: 'var(--fg, #f7f9fc)',
+        }}
+      >
         <BroadcastBanner />
         <header
           style={{
             display: 'flex',
-            gap: '1rem',
             alignItems: 'center',
-            padding: '1rem',
-            borderBottom: '1px solid #ccc',
+            padding: '0.75rem 1.5rem',
+            borderBottom: '1px solid var(--border-subtle, #1a2238)',
+            background: 'rgba(13, 18, 32, 0.85)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
             flexShrink: 0,
+            gap: '1.25rem',
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
           }}
         >
-          <strong>{schoolName}</strong>
-          <span>
-            Signed in as {shadow.email} — active role: {activeRole}
-            {activeBaseName ? ` — base: ${activeBaseName}` : ''}
-          </span>
-          <a href="/record" style={{ fontSize: '0.85rem' }}>
-            My Record
-          </a>
-          <a href="/flight-log" style={{ fontSize: '0.85rem' }}>
-            Flight Log
-          </a>
-          <a href="/fleet-map" style={{ fontSize: '0.85rem' }}>
-            Fleet Map
-          </a>
-          <a href="/profile/notifications" style={{ fontSize: '0.85rem' }}>
-            Notification prefs
-          </a>
-          <span
+          {/* Brand */}
+          <div
             style={{
-              marginLeft: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              paddingRight: '1rem',
+              borderRight: '1px solid var(--border-subtle, #1a2238)',
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                display: 'inline-flex',
+                width: 28,
+                height: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#0a0e1a',
+                borderRadius: 6,
+                fontWeight: 800,
+                fontSize: '0.72rem',
+                letterSpacing: '-0.03em',
+                boxShadow: '0 0 12px rgba(251, 191, 36, 0.3)',
+              }}
+            >
+              ◆
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+              <span
+                style={{
+                  fontSize: '0.96rem',
+                  fontWeight: 600,
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {schoolName}
+              </span>
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                  fontSize: '0.58rem',
+                  letterSpacing: '0.2em',
+                  color: '#7a869a',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Part 61 · Operations
+              </span>
+            </div>
+          </div>
+
+          {/* User pill — role callsign */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.3rem 0.7rem 0.3rem 0.35rem',
+              background: 'rgba(18, 24, 38, 0.6)',
+              border: `1px solid ${roleHue}33`,
+              borderRadius: 999,
+              fontSize: '0.8rem',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                color: roleHue,
+                background: `${roleHue}22`,
+                padding: '0.15rem 0.45rem',
+                borderRadius: 999,
+                minWidth: 32,
+                textAlign: 'center',
+              }}
+            >
+              {roleCallsign[activeRole] ?? activeRole.toUpperCase().slice(0, 3)}
+            </span>
+            <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>{shadow.email}</span>
+            {activeBaseName ? (
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: '0.65rem',
+                  color: '#7a869a',
+                  paddingLeft: '0.5rem',
+                  borderLeft: '1px solid #1f2940',
+                  marginLeft: '0.1rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {activeBaseName}
+              </span>
+            ) : null}
+          </div>
+
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* Nav links */}
+          <nav
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+            }}
+          >
+            {[
+              { href: '/record', label: 'Record' },
+              { href: '/flight-log', label: 'Flight Log' },
+              { href: '/fleet-map', label: 'Fleet Map' },
+              { href: '/schedule', label: 'Schedule' },
+            ].map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                style={{
+                  fontSize: '0.82rem',
+                  color: '#cbd5e1',
+                  textDecoration: 'none',
+                  padding: '0.4rem 0.7rem',
+                  borderRadius: 6,
+                  transition: 'background 0.15s ease, color 0.15s ease',
+                }}
+              >
+                {l.label}
+              </a>
+            ))}
+            <a
+              href="/profile/notifications"
+              style={{
+                fontSize: '0.82rem',
+                color: '#7a869a',
+                textDecoration: 'none',
+                padding: '0.4rem 0.7rem',
+                borderRadius: 6,
+              }}
+            >
+              Prefs
+            </a>
+          </nav>
+
+          {/* Right controls */}
+          <div
+            style={{
               display: 'inline-flex',
               gap: '0.5rem',
               alignItems: 'center',
+              paddingLeft: '0.75rem',
+              borderLeft: '1px solid #1a2238',
             }}
           >
             <NotificationBell />
             <MessagingToggleButton />
             <BaseSwitcher availableBases={availableBases} activeBaseId={activeBaseId} />
             {rolesList.length > 1 ? <RoleSwitcher roles={rolesList} active={activeRole} /> : null}
-          </span>
-          <LogoutButton />
+            <LogoutButton />
+          </div>
         </header>
-        <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>{children}</div>
+
+        <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
       </div>
     </AppShellProviders>
   );

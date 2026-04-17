@@ -5,6 +5,7 @@ import { db, users, aircraft, aircraftCurrentTotals } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ManagementOverridesPanel } from '../_components/ManagementOverridesPanel';
 import { WorkloadMonitor } from './_components/WorkloadMonitor';
+import { PageHeader, Metric, Card } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,121 +68,181 @@ export default async function AdminDashboardPage() {
     .where(isNull(aircraft.deletedAt));
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1200 }}>
-      <h1>Admin Dashboard</h1>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1400, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Operations"
+        title="Admin Dashboard"
+        subtitle="Today's flight line, approvals, and fleet status at a glance."
+      />
 
       <section
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.5rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '0.9rem',
+          marginBottom: '2rem',
         }}
       >
-        <Link
+        <Metric
+          label="Today's flight line"
+          value={flightLineCount}
+          caption="Open the dispatch board →"
           href="/dispatch"
-          style={{
-            padding: '1rem',
-            border: '1px solid #bfdbfe',
-            borderRadius: 8,
-            background: '#eff6ff',
-            textDecoration: 'none',
-            color: 'inherit',
-          }}
-        >
-          <div style={{ fontSize: '0.8rem', color: '#1e40af' }}>Today&apos;s flight line</div>
-          <div style={{ fontSize: '2rem', fontWeight: 700 }}>{flightLineCount}</div>
-          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Open the dispatch board →</div>
-        </Link>
-        <Link
+          accent="#38bdf8"
+        />
+        <Metric
+          label="Pending requests"
+          value={pendingCount}
+          caption="Review the queue →"
           href="/schedule/approvals"
-          style={{
-            padding: '1rem',
-            border: '1px solid #fde68a',
-            borderRadius: 8,
-            background: '#fffbeb',
-            textDecoration: 'none',
-            color: 'inherit',
-          }}
-        >
-          <div style={{ fontSize: '0.8rem', color: '#b45309' }}>Pending approvals</div>
-          <div style={{ fontSize: '2rem', fontWeight: 700 }}>{pendingCount}</div>
-          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Review the queue →</div>
-        </Link>
-        <Link
+          tone="warn"
+        />
+        <Metric
+          label="Flight Information"
+          value="FIF"
+          caption="Post & manage notices →"
           href="/admin/fif"
-          style={{
-            padding: '1rem',
-            border: '1px solid #e5e7eb',
-            borderRadius: 8,
-            background: 'white',
-            textDecoration: 'none',
-            color: 'inherit',
-          }}
-        >
-          <div style={{ fontSize: '0.8rem', color: '#374151' }}>Flight Information File</div>
-          <div style={{ fontSize: '1rem', fontWeight: 700, marginTop: '0.25rem' }}>
-            Post & manage notices
-          </div>
-          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Open →</div>
-        </Link>
+          accent="#a78bfa"
+        />
       </section>
 
-      <h2 style={{ fontSize: '1.1rem' }}>Fleet totals</h2>
-      {rows.length === 0 ? (
-        <p style={{ color: '#888' }}>No aircraft in your fleet yet.</p>
-      ) : (
+      <section style={{ marginBottom: '2rem' }}>
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '1rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            marginBottom: '0.75rem',
           }}
         >
-          {rows.map((r) => (
-            <Link
-              key={r.aircraftId}
-              href={`/admin/aircraft/${r.aircraftId}`}
-              style={{
-                display: 'block',
-                padding: '1rem',
-                border: '1px solid #ddd',
-                borderRadius: 8,
-                textDecoration: 'none',
-                color: 'inherit',
-                background: 'white',
-              }}
-            >
-              <h3 style={{ margin: 0 }}>{r.tail}</h3>
-              <div style={{ color: '#555', fontSize: '0.85rem' }}>
-                {r.make ?? ''} {r.model ?? ''}
-              </div>
-              <table style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                <tbody>
-                  <tr>
-                    <td>Hobbs</td>
-                    <td style={{ textAlign: 'right' }}>{fmt(r.currentHobbs)}</td>
-                  </tr>
-                  <tr>
-                    <td>Tach</td>
-                    <td style={{ textAlign: 'right' }}>{fmt(r.currentTach)}</td>
-                  </tr>
-                  <tr>
-                    <td>Airframe</td>
-                    <td style={{ textAlign: 'right' }}>{fmt(r.currentAirframe)}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div style={{ fontSize: '0.8rem', color: '#888', marginTop: '0.5rem' }}>
-                Last flown: {r.lastFlownAt ? new Date(r.lastFlownAt).toLocaleString() : 'never'}
-              </div>
-            </Link>
-          ))}
+          <h2
+            style={{
+              margin: 0,
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '0.7rem',
+              letterSpacing: '0.3em',
+              color: '#7a869a',
+              textTransform: 'uppercase',
+              fontWeight: 500,
+            }}
+          >
+            Fleet · {rows.length} aircraft
+          </h2>
+          <Link
+            href="/admin/aircraft"
+            style={{
+              fontSize: '0.78rem',
+              color: '#38bdf8',
+              textDecoration: 'none',
+              fontFamily: '"JetBrains Mono", monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+            }}
+          >
+            All aircraft →
+          </Link>
         </div>
-      )}
-      <section style={{ marginTop: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.1rem' }}>Instructor Workload</h2>
-        <WorkloadMonitor />
+        {rows.length === 0 ? (
+          <p style={{ color: '#7a869a', fontSize: '0.88rem' }}>
+            No aircraft in your fleet yet. Add one in{' '}
+            <Link href="/admin/aircraft/new">Aircraft → New</Link>.
+          </p>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '0.9rem',
+            }}
+          >
+            {rows.map((r) => (
+              <Card
+                key={r.aircraftId}
+                href={`/admin/aircraft/${r.aircraftId}`}
+                accent="#38bdf8"
+                title={
+                  <span
+                    style={{
+                      fontFamily: '"Antonio", system-ui, sans-serif',
+                      fontSize: '1.3rem',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {r.tail}
+                  </span>
+                }
+                subtitle={`${r.make ?? ''} ${r.model ?? ''}`.trim() || undefined}
+                footer={
+                  <span
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '0.72rem',
+                    }}
+                  >
+                    Last flown: {r.lastFlownAt ? new Date(r.lastFlownAt).toLocaleString() : 'never'}
+                  </span>
+                }
+              >
+                <table
+                  style={{
+                    width: '100%',
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  <tbody>
+                    <tr>
+                      <td style={{ color: '#7a869a', padding: '0.1rem 0' }}>HOBBS</td>
+                      <td style={{ textAlign: 'right', color: '#f7f9fc' }}>
+                        {fmt(r.currentHobbs)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ color: '#7a869a', padding: '0.1rem 0' }}>TACH</td>
+                      <td style={{ textAlign: 'right', color: '#f7f9fc' }}>{fmt(r.currentTach)}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ color: '#7a869a', padding: '0.1rem 0' }}>AIRFRAME</td>
+                      <td style={{ textAlign: 'right', color: '#f7f9fc' }}>
+                        {fmt(r.currentAirframe)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section style={{ marginBottom: '2rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            marginBottom: '0.75rem',
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '0.7rem',
+              letterSpacing: '0.3em',
+              color: '#7a869a',
+              textTransform: 'uppercase',
+              fontWeight: 500,
+            }}
+          >
+            Instructor workload · this week
+          </h2>
+        </div>
+        <Card padded={false} elev={1}>
+          <div style={{ padding: '0.5rem 1rem' }}>
+            <WorkloadMonitor />
+          </div>
+        </Card>
       </section>
       <ManagementOverridesPanel schoolId={schoolId} />
     </main>

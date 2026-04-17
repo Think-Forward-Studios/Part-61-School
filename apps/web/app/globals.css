@@ -12,17 +12,203 @@
  */
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #e0e0e0;
-  --panel-bg: #111111;
-  --panel-border: #1e1e1e;
-  --accent-cyan: #00e5ff;
-  --accent-green: #00e676;
-  --accent-orange: #ff9100;
-  --accent-yellow: #ffd600;
-  --accent-red: #ff1744;
-  --text-dim: #6b6b6b;
-  --text-secondary: #999999;
+  /* ============================================================
+   * Aviation design system — "Pre-flight briefing" aesthetic.
+   *
+   * Surfaces are midnight navy with warm amber as the primary
+   * action color. Role palette maps to airport operations:
+   *   OPS (admin)       — orange
+   *   CFI (instructor)  — sky
+   *   STU (student)     — mint
+   *   MX  (mechanic)    — violet
+   * ============================================================ */
+
+  /* Surfaces */
+  --bg: #05070e;
+  --bg-raised: #0a0e1a;
+  --surface: #0d1220;
+  --surface-elev: #121826;
+  --surface-elev-2: #182036;
+  --surface-glass: rgba(18, 24, 38, 0.72);
+
+  /* Borders */
+  --border-subtle: #1a2238;
+  --border: #1f2940;
+  --border-strong: #293352;
+
+  /* Text */
+  --fg: #f7f9fc;
+  --fg-muted: #cbd5e1;
+  --fg-dim: #7a869a;
+  --fg-faint: #5b6784;
+  --fg-ghost: #3b4660;
+
+  /* Accents */
+  --amber: #fbbf24;
+  --amber-600: #f59e0b;
+  --amber-700: #d97706;
+  --amber-glow: rgba(251, 191, 36, 0.35);
+
+  --sky: #38bdf8;
+  --sky-600: #0ea5e9;
+  --mint: #34d399;
+  --mint-600: #10b981;
+  --rose: #f87171;
+  --rose-600: #ef4444;
+  --violet: #a78bfa;
+  --violet-600: #8b5cf6;
+  --orange: #f97316;
+  --orange-600: #ea580c;
+
+  /* Role colors (for role-coded UI) */
+  --role-admin: var(--orange);
+  --role-instructor: var(--sky);
+  --role-student: var(--mint);
+  --role-mechanic: var(--violet);
+
+  /* Legacy variables (kept so existing components don't break) */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --panel-bg: var(--surface);
+  --panel-border: var(--border);
+  --accent-cyan: var(--sky);
+  --accent-green: var(--mint);
+  --accent-orange: var(--orange);
+  --accent-yellow: var(--amber);
+  --accent-red: var(--rose);
+  --text-dim: var(--fg-faint);
+  --text-secondary: var(--fg-dim);
+
+  /* Type */
+  --font-display: "Antonio", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  /* Radii */
+  --r-sm: 4px;
+  --r: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --shadow-glow-amber: 0 0 0 1px rgba(251, 191, 36, 0.12),
+    0 8px 30px rgba(251, 191, 36, 0.15);
+
+  /* Timing */
+  --t-fast: 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+  --t: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --t-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+ * Global reset — light touch, don't overwrite Tailwind/shadcn.
+ * ============================================================ */
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle grid backdrop for all authenticated pages */
+body.tfs-app {
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.025) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-attachment: fixed;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--bg);
+}
+
+/* Scrollbar (webkit) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-elev);
+  border-radius: 10px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-elev-2);
+}
+
+/* Inputs + buttons — baseline so raw HTML doesn't look terrible anywhere */
+input,
+textarea,
+select {
+  font-family: inherit;
+  color: var(--fg);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0.55rem 0.75rem;
+  outline: none;
+  transition: border-color var(--t), box-shadow var(--t);
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--fg-faint);
+}
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Links — default to amber so anchors don't disappear on dark bg */
+a {
+  color: var(--sky);
+  text-decoration: none;
+  transition: color var(--t);
+}
+a:hover {
+  color: var(--amber);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--fg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: rgba(251, 191, 36, 0.08);
+  color: var(--amber);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
 }
 
 @theme inline {

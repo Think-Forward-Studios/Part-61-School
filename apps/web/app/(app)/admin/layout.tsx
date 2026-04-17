@@ -17,27 +17,69 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (activeRole !== 'admin') {
     notFound();
   }
+  const navLinks = [
+    { href: '/admin/dashboard', label: 'Dashboard' },
+    { href: '/admin/people', label: 'People' },
+    { href: '/admin/people/pending', label: 'Pending' },
+    { href: '/admin/aircraft', label: 'Aircraft' },
+    { href: '/admin/schedule', label: 'Schedule' },
+    { href: '/admin/rooms', label: 'Rooms' },
+    { href: '/admin/blocks', label: 'Blocks' },
+    { href: '/admin/reports', label: 'Reports' },
+    { href: '/admin/rates', label: 'Rates' },
+    { href: '/admin/audit/logs', label: 'Audit' },
+    { href: '/admin/overrides', label: 'Overrides' },
+    { href: '/admin/school', label: 'Settings' },
+  ];
   return (
     <div>
       <nav
         style={{
           display: 'flex',
-          gap: '1rem',
-          padding: '0.75rem 1rem',
-          borderBottom: '1px solid #eee',
-          background: '#fafafa',
+          gap: '0.15rem',
+          padding: '0.55rem 1.5rem',
+          borderBottom: '1px solid #1a2238',
+          background: 'rgba(10, 14, 26, 0.6)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          overflowX: 'auto',
+          position: 'sticky',
+          top: 61,
+          zIndex: 19,
+          alignItems: 'center',
         }}
       >
-        <Link href="/admin/dashboard">Dashboard</Link>
-        <Link href="/admin/people">People</Link>
-        <Link href="/admin/people/pending">Pending</Link>
-        <Link href="/admin/aircraft">Aircraft</Link>
-        <Link href="/admin/schedule">Schedule</Link>
-        <Link href="/admin/rooms">Rooms</Link>
-        <Link href="/admin/blocks">Blocks</Link>
-        <Link href="/admin/audit/training-records">Audit</Link>
-        <Link href="/admin/overrides">Overrides</Link>
-        <Link href="/admin/school">School Settings</Link>
+        <span
+          style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: '0.6rem',
+            letterSpacing: '0.25em',
+            color: '#f97316',
+            textTransform: 'uppercase',
+            marginRight: '0.75rem',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ◆ Admin
+        </span>
+        {navLinks.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            style={{
+              fontSize: '0.78rem',
+              color: '#cbd5e1',
+              textDecoration: 'none',
+              padding: '0.35rem 0.7rem',
+              borderRadius: 5,
+              whiteSpace: 'nowrap',
+              transition: 'background 0.15s ease, color 0.15s ease',
+            }}
+          >
+            {l.label}
+          </Link>
+        ))}
       </nav>
       {children}
     </div>

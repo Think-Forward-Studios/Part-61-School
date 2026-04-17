@@ -1,19 +1,20 @@
 /**
- * DashboardTile — Phase 8 reusable card shell.
+ * DashboardTile — aviation-styled tile (redesigned 2026-04).
  *
- * Role-dashboard tiles (student/instructor/mechanic) wrap their content
- * in this component for consistent padding, border, and optional accent.
+ * Used by Student/Instructor/Mechanic dashboards. Wraps children in a
+ * surface card with an accent-coded top border.
  */
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-type Accent = 'default' | 'info' | 'warn' | 'critical';
+type Accent = 'default' | 'info' | 'warn' | 'critical' | 'success';
 
-const ACCENTS: Record<Accent, { border: string; bg: string }> = {
-  default: { border: '#e5e7eb', bg: 'white' },
-  info: { border: '#bfdbfe', bg: '#eff6ff' },
-  warn: { border: '#fde68a', bg: '#fffbeb' },
-  critical: { border: '#fecaca', bg: '#fef2f2' },
+const ACCENTS: Record<Accent, { top: string; glow: string }> = {
+  default: { top: '#293352', glow: 'rgba(41, 51, 82, 0)' },
+  info: { top: '#38bdf8', glow: 'rgba(56, 189, 248, 0.12)' },
+  success: { top: '#34d399', glow: 'rgba(52, 211, 153, 0.12)' },
+  warn: { top: '#fbbf24', glow: 'rgba(251, 191, 36, 0.15)' },
+  critical: { top: '#f87171', glow: 'rgba(248, 113, 113, 0.15)' },
 };
 
 interface Props {
@@ -25,37 +26,72 @@ interface Props {
 }
 
 export function DashboardTile({ title, href, action, accent = 'default', children }: Props) {
-  const { border, bg } = ACCENTS[accent];
+  const { top, glow } = ACCENTS[accent];
   const body = (
     <section
       style={{
-        padding: '0.85rem',
-        border: `1px solid ${border}`,
-        borderRadius: 8,
-        background: bg,
+        position: 'relative',
+        background: '#0d1220',
+        border: '1px solid #1f2940',
+        borderTop: `3px solid ${top}`,
+        borderRadius: 12,
+        padding: '1rem 1.1rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
-        minHeight: 140,
+        gap: '0.6rem',
+        minHeight: 160,
+        transition: 'transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
+        boxShadow: `0 1px 0 rgba(255,255,255,0.02) inset, 0 0 30px -15px ${glow}`,
+        color: '#f7f9fc',
       }}
     >
       <header
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'baseline',
           gap: '0.5rem',
         }}
       >
-        <h2 style={{ margin: 0, fontSize: '0.95rem' }}>{title}</h2>
-        {action ? <span>{action}</span> : null}
+        <h2
+          style={{
+            margin: 0,
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.68rem',
+            letterSpacing: '0.25em',
+            color: '#7a869a',
+            textTransform: 'uppercase',
+            fontWeight: 500,
+          }}
+        >
+          {title}
+        </h2>
+        {action ? <span style={{ flexShrink: 0 }}>{action}</span> : null}
       </header>
-      <div style={{ fontSize: '0.85rem', color: '#1f2937' }}>{children}</div>
+      <div style={{ fontSize: '0.88rem', color: '#cbd5e1', flex: 1 }}>{children}</div>
+      {href ? (
+        <div
+          style={{
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.65rem',
+            letterSpacing: '0.2em',
+            color: top === '#293352' ? '#7a869a' : top,
+            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            marginTop: 'auto',
+          }}
+        >
+          Open <span>→</span>
+        </div>
+      ) : null}
     </section>
   );
+
   if (href) {
     return (
-      <Link href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <Link href={href} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
         {body}
       </Link>
     );
