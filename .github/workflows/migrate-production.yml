@@ -1,0 +1,60 @@
+name: Migrate Production DB
+
+# Manually triggered. Runs all Drizzle migrations against the production
+# Supabase database using the PRODUCTION_DATABASE_URL secret.
+#
+# Usage:
+#   1. Add PRODUCTION_DATABASE_URL to repo secrets (Session pooler URI, port 5432)
+#   2. Actions tab → "Migrate Production DB" → Run workflow
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type MIGRATE to confirm you want to apply migrations to production'
+        required: true
+        type: string
+
+jobs:
+  migrate:
+    if: github.event.inputs.confirm == 'MIGRATE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Apply Drizzle migrations
+        run: pnpm --filter @part61/db exec drizzle-kit migrate
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+      - name: Verify schema
+        run: |
+          pnpm --filter @part61/db exec node -e "
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+          (async () => {
+            const hook = await sql\`select proname from pg_proc where proname = 'custom_access_token_hook'\`;
+            const migrations = await sql\`select count(*)::int as n from drizzle.__drizzle_migrations\`;
+            const tables = await sql\`
+              select tablename from pg_tables
+              where schemaname = 'public' and tablename in ('users','user_roles','schools','bases','notification','school_rate')
+              order by tablename
+            \`;
+            console.log('custom_access_token_hook:', hook.length > 0 ? 'PRESENT' : 'MISSING');
+            console.log('migrations applied:', migrations[0].n);
+            console.log('key tables:', tables.map(t => t.tablename).join(', '));
+            await sql.end();
+          })().catch(e => { console.error(e); process.exit(1); });
+          "
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
