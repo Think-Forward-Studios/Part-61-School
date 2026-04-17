@@ -33,17 +33,18 @@ jobs:
 
             for (const u of users) {
               const role = u.role || 'student';
-              const newMeta = {
+              // Use sql.unsafe with a literal JSONB cast so postgres parses
+              // the actual object value, not the JSON.stringify'd string.
+              const metaJson = JSON.stringify({
                 provider: 'email',
                 providers: ['email'],
                 roles: [role],
-              };
-              await sql`
-                update auth.users
-                set raw_app_meta_data = ${JSON.stringify(newMeta)}::jsonb
-                where id = ${u.id}::uuid
-              `;
-              console.log(`Reset ${u.email} → ${JSON.stringify(newMeta)}`);
+              });
+              await sql.unsafe(
+                `update auth.users set raw_app_meta_data = $1::jsonb where id = $2::uuid`,
+                [metaJson, u.id]
+              );
+              console.log(`Reset ${u.email} → ${metaJson}`);
             }
 
             console.log('\nVerify:');
@@ -54,7 +55,9 @@ jobs:
               order by email
             `;
             for (const row of check) {
-              console.log(`${row.email}:`, JSON.stringify(row.raw_app_meta_data));
+              const val = row.raw_app_meta_data;
+              const type = typeof val;
+              console.log(`${row.email}: type=${type} value=`, val);
             }
 
             await sql.end();
