@@ -13,6 +13,14 @@ on:
         description: 'Type MIGRATE to confirm you want to apply migrations to production'
         required: true
         type: string
+      reset:
+        description: 'Wipe public/audit/drizzle schemas first (destroys all data!)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   migrate:
@@ -30,6 +38,26 @@ jobs:
           cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Reset DB schema (only if reset=true)
+        if: github.event.inputs.reset == 'true'
+        run: |
+          pnpm --filter @part61/db exec node -e "
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+          (async () => {
+            // Wipe everything the app created. Preserves Supabase-managed schemas.
+            await sql.unsafe(\`drop schema if exists drizzle cascade;\`);
+            await sql.unsafe(\`drop schema if exists audit cascade;\`);
+            await sql.unsafe(\`drop schema public cascade;\`);
+            await sql.unsafe(\`create schema public;\`);
+            await sql.unsafe(\`grant all on schema public to postgres, anon, authenticated, service_role;\`);
+            console.log('Public, audit, drizzle schemas reset.');
+            await sql.end();
+          })().catch(e => { console.error(e); process.exit(1); });
+          "
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
 
       - name: Apply Drizzle migrations
         run: pnpm --filter @part61/db exec drizzle-kit migrate

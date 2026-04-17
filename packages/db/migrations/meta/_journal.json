@@ -10,10 +10,269 @@
       "breakpoints": true
     },
     {
+      "idx": 1,
+      "version": "7",
+      "when": 1775529073000,
+      "tag": "0001_storage_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775529133000,
+      "tag": "0002_phase2_personnel_aircraft",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775529193000,
+      "tag": "0003_phase2_access_token_hook_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775529253000,
+      "tag": "0004_phase2_submit_registration_fn",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775529313000,
+      "tag": "0005_phase2_fix_aircraft_equipment_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775529373000,
+      "tag": "0006_phase2_audit_fn_coalesce_user_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775529433000,
+      "tag": "0007_phase3_scheduling_dispatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775529493000,
+      "tag": "0008_phase3_view_update",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775529553000,
+      "tag": "0009_phase4_enums",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1775529613000,
+      "tag": "0010_phase4_camp_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1775529673000,
+      "tag": "0011_phase4_functions_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775529733000,
+      "tag": "0012_phase4_replace_is_airworthy_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1775529793000,
+      "tag": "0013_phase4_seed_templates",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1775529853000,
+      "tag": "0014_phase5_currency_rename",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1775529913000,
+      "tag": "0015_phase5_currency_kinds",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1775529973000,
+      "tag": "0016_phase5_course_tree",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1775530033000,
+      "tag": "0017_phase5_grade_stage_endorsement",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1775530093000,
+      "tag": "0018_phase5_functions_triggers_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1775530153000,
+      "tag": "0019_phase5_seed_endorsements",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1775530213000,
+      "tag": "0020_phase5_seed_courses",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1775530273000,
+      "tag": "0021_phase5_chief_instructor",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1775530333000,
+      "tag": "0022_phase5_test_grade",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1775530393000,
+      "tag": "0023_phase6_enums",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1775530453000,
+      "tag": "0024_phase6_column_additions",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1775530513000,
+      "tag": "0025_phase6_new_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1775530573000,
+      "tag": "0026_phase6_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1775530633000,
+      "tag": "0027_phase6_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1775530693000,
+      "tag": "0028_phase6_forecast_audit_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1775530753000,
+      "tag": "0029_phase6_pg_cron",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1775530813000,
+      "tag": "0030_phase6_seed_minimum_hours",
+      "breakpoints": true
+    },
+    {
       "idx": 31,
       "version": "7",
-      "when": 1775791600000,
+      "when": 1775530873000,
       "tag": "0031_phase7_geofence",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1775530933000,
+      "tag": "0032_phase8_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1775530993000,
+      "tag": "0033_phase8_messaging",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1775531053000,
+      "tag": "0034_phase8_cost_and_rates",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1775531113000,
+      "tag": "0035_phase8_pg_cron_reminders",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1775531173000,
+      "tag": "0036_phase8_stage_check_faa_flag",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1775531233000,
+      "tag": "0037_phase8_dispatch_cue_cron",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1775531293000,
+      "tag": "0038_phase8_training_activity_view",
       "breakpoints": true
     }
   ]
