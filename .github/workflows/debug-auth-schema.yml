@@ -1,0 +1,97 @@
+name: Debug Auth Schema
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Dump auth schema state
+        run: |
+          pnpm --filter @part61/db exec node <<'SCRIPT'
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+          (async () => {
+            console.log('=== Triggers on auth.users ===');
+            const triggers = await sql`
+              select t.tgname, t.tgtype, p.proname as function_name, n.nspname as function_schema,
+                     pg_get_triggerdef(t.oid) as definition
+              from pg_trigger t
+              join pg_class c on c.oid = t.tgrelid
+              join pg_namespace cn on cn.oid = c.relnamespace
+              left join pg_proc p on p.oid = t.tgfoid
+              left join pg_namespace n on n.oid = p.pronamespace
+              where cn.nspname = 'auth' and c.relname = 'users'
+                and not t.tgisinternal
+            `;
+            console.log(triggers);
+
+            console.log('\n=== Triggers on auth.identities ===');
+            const trig2 = await sql`
+              select t.tgname, p.proname, n.nspname, pg_get_triggerdef(t.oid) as def
+              from pg_trigger t
+              join pg_class c on c.oid = t.tgrelid
+              join pg_namespace cn on cn.oid = c.relnamespace
+              left join pg_proc p on p.oid = t.tgfoid
+              left join pg_namespace n on n.oid = p.pronamespace
+              where cn.nspname = 'auth' and c.relname = 'identities'
+                and not t.tgisinternal
+            `;
+            console.log(trig2);
+
+            console.log('\n=== Check if auth.users is accessible ===');
+            const users = await sql`select count(*)::int as n from auth.users`;
+            console.log('auth.users count:', users[0].n);
+
+            console.log('\n=== Recent auth schema errors from logs (if exposed) ===');
+            // Show a sample auth.users row shape
+            const sample = await sql`
+              select id, email, encrypted_password is not null as has_password,
+                     email_confirmed_at is not null as confirmed,
+                     raw_app_meta_data
+              from auth.users
+              where email = 'admin@tfs.test'
+              limit 1
+            `;
+            console.log('admin@tfs.test auth row:');
+            console.log(JSON.stringify(sample[0], null, 2));
+
+            console.log('\n=== Functions in public referenced by auth triggers ===');
+            const refs = await sql`
+              select distinct n.nspname as schema, p.proname as function
+              from pg_trigger t
+              join pg_class c on c.oid = t.tgrelid
+              join pg_namespace cn on cn.oid = c.relnamespace
+              left join pg_proc p on p.oid = t.tgfoid
+              left join pg_namespace n on n.oid = p.pronamespace
+              where cn.nspname = 'auth' and not t.tgisinternal
+              order by schema, function
+            `;
+            console.log(refs);
+
+            console.log('\n=== Verify public.handle_new_user exists (standard Supabase fn) ===');
+            const handle = await sql`
+              select proname, n.nspname from pg_proc p
+              join pg_namespace n on n.oid = p.pronamespace
+              where proname in ('handle_new_user', 'create_user_shadow', 'on_auth_user_created')
+            `;
+            console.log(handle);
+
+            await sql.end();
+          })().catch(async (e) => {
+            console.error('FAILED:', e.message);
+            try { await sql.end(); } catch {}
+            process.exit(1);
+          });
+          SCRIPT
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
