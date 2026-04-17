@@ -1,0 +1,210 @@
+name: Seed Test Users
+
+# Creates the 4 demo test accounts shown on the login page:
+#   admin@tfs.test / instructor@tfs.test / student@tfs.test / mechanic@tfs.test
+# All with password: demo
+#
+# Creates auth.users via Supabase Admin API, plus matching public.users +
+# user_roles + user_base shadow rows. Uses the existing school (created by
+# setup-admin workflow) or creates one if none exist.
+#
+# Idempotent — skips users that already exist.
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Create test auth users + shadow rows
+        run: |
+          pnpm --filter @part61/db exec node <<'SCRIPT'
+          const postgres = require('postgres');
+
+          const SUPABASE_URL = process.env.SUPABASE_URL;
+          const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          const DB_URL = process.env.DIRECT_DATABASE_URL;
+
+          const TEST_USERS = [
+            { email: 'admin@tfs.test',      role: 'admin',      fullName: 'Test Admin',      isDefault: true  },
+            { email: 'instructor@tfs.test', role: 'instructor', fullName: 'Test Instructor', isDefault: true  },
+            { email: 'student@tfs.test',    role: 'student',    fullName: 'Test Student',    isDefault: true  },
+            { email: 'mechanic@tfs.test',   role: 'mechanic',   fullName: 'Test Mechanic',   isDefault: true  },
+          ];
+          const PASSWORD = 'demo';
+
+          const sql = postgres(DB_URL, { prepare: false, max: 2 });
+
+          async function supabaseAdmin(path, body) {
+            const res = await fetch(`${SUPABASE_URL}${path}`, {
+              method: 'POST',
+              headers: {
+                'apikey': SERVICE_KEY,
+                'Authorization': `Bearer ${SERVICE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(body),
+            });
+            const text = await res.text();
+            let json;
+            try { json = JSON.parse(text); } catch { json = { raw: text }; }
+            if (!res.ok && res.status !== 422 /* already_exists */) {
+              throw new Error(`Supabase API ${path} failed: ${res.status} ${JSON.stringify(json)}`);
+            }
+            return { status: res.status, json };
+          }
+
+          (async () => {
+            // Ensure a school + base exist. If multiple schools, use the first.
+            let [school] = await sql`select id, name from public.schools order by name limit 1`;
+            if (!school) {
+              console.log('No school found, creating TFS Flight School');
+              [school] = await sql`
+                insert into public.schools (id, name, timezone)
+                values (gen_random_uuid(), 'TFS Flight School', 'America/Chicago')
+                returning id, name
+              `;
+            }
+            console.log(`Using school: ${school.name} (${school.id})`);
+
+            let [base] = await sql`select id, name from public.bases where school_id = ${school.id}::uuid order by name limit 1`;
+            if (!base) {
+              [base] = await sql`
+                insert into public.bases (id, school_id, name, timezone)
+                values (gen_random_uuid(), ${school.id}::uuid, 'Home Base', 'America/Chicago')
+                returning id, name
+              `;
+            }
+            console.log(`Using base: ${base.name} (${base.id})`);
+
+            for (const user of TEST_USERS) {
+              console.log(`\n--- ${user.email} ---`);
+
+              // 1. Create auth.users via Admin API
+              const createRes = await supabaseAdmin('/auth/v1/admin/users', {
+                email: user.email,
+                password: PASSWORD,
+                email_confirm: true,
+                app_metadata: { roles: [user.role] },
+              });
+
+              let authId;
+              if (createRes.json.id) {
+                authId = createRes.json.id;
+                console.log(`Auth user created: ${authId}`);
+              } else {
+                // Already exists — fetch it
+                const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?filter=${encodeURIComponent(`email.eq.${user.email}`)}`, {
+                  headers: { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` },
+                });
+                const listJson = await listRes.json();
+                const existing = (listJson.users || []).find(u => u.email === user.email);
+                if (!existing) {
+                  console.log(`Create response: ${JSON.stringify(createRes.json).slice(0, 200)}`);
+                  throw new Error(`Could not resolve auth user for ${user.email}`);
+                }
+                authId = existing.id;
+                console.log(`Auth user already exists: ${authId}`);
+                // Make sure password is current + metadata is set
+                await supabaseAdmin(`/auth/v1/admin/users/${authId}`, {
+                  password: PASSWORD,
+                  email_confirm: true,
+                  app_metadata: { ...(existing.app_metadata || {}), roles: [user.role] },
+                }).catch(async () => {
+                  // PUT-style update via fetch since supabaseAdmin uses POST
+                  await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${authId}`, {
+                    method: 'PUT',
+                    headers: {
+                      'apikey': SERVICE_KEY,
+                      'Authorization': `Bearer ${SERVICE_KEY}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      password: PASSWORD,
+                      email_confirm: true,
+                      app_metadata: { ...(existing.app_metadata || {}), roles: [user.role] },
+                    }),
+                  });
+                });
+              }
+
+              // Ensure roles[] is set in JWT metadata
+              await sql`
+                update auth.users
+                set raw_app_meta_data =
+                  coalesce(raw_app_meta_data, '{}'::jsonb) || ${JSON.stringify({ roles: [user.role] })}::jsonb
+                where id = ${authId}::uuid
+              `;
+
+              // 2. Shadow user
+              const existingShadow = await sql`select id from public.users where id = ${authId}::uuid`;
+              if (existingShadow.length === 0) {
+                await sql`
+                  insert into public.users (id, school_id, email, full_name, timezone, status)
+                  values (${authId}::uuid, ${school.id}::uuid, ${user.email}, ${user.fullName}, 'America/Chicago', 'active')
+                `;
+                console.log(`Shadow user created.`);
+              } else {
+                console.log(`Shadow user already exists.`);
+              }
+
+              // 3. Role
+              const existingRole = await sql`
+                select id from public.user_roles where user_id = ${authId}::uuid and role = ${user.role}
+              `;
+              if (existingRole.length === 0) {
+                await sql`
+                  insert into public.user_roles (user_id, role, is_default)
+                  values (${authId}::uuid, ${user.role}, ${user.isDefault})
+                `;
+                console.log(`Role ${user.role} granted.`);
+              } else {
+                console.log(`Role ${user.role} already granted.`);
+              }
+
+              // 4. Link to base
+              const existingBaseLink = await sql`
+                select user_id from public.user_base where user_id = ${authId}::uuid and base_id = ${base.id}::uuid
+              `;
+              if (existingBaseLink.length === 0) {
+                await sql`
+                  insert into public.user_base (user_id, base_id, school_id)
+                  values (${authId}::uuid, ${base.id}::uuid, ${school.id}::uuid)
+                `;
+                console.log(`Linked to base.`);
+              } else {
+                console.log(`Already linked to base.`);
+              }
+            }
+
+            // Summary
+            console.log('\n=== Summary ===');
+            const summary = await sql`
+              select u.email, ur.role, ur.is_default, u.status
+              from public.users u
+              join public.user_roles ur on ur.user_id = u.id
+              where u.email in ('admin@tfs.test', 'instructor@tfs.test', 'student@tfs.test', 'mechanic@tfs.test')
+              order by u.email, ur.role
+            `;
+            console.table(summary);
+
+            await sql.end();
+          })().catch(async (e) => {
+            console.error('FAILED:', e.message);
+            try { await sql.end(); } catch {}
+            process.exit(1);
+          });
+          SCRIPT
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
