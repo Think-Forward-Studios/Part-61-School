@@ -1,0 +1,99 @@
+name: Deep Diagnose
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: SQL-side diagnostics
+        run: |
+          pnpm --filter @part61/db exec node <<'SCRIPT'
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+          (async () => {
+            console.log('=== 1. raw_app_meta_data actual type (SQL-side) ===');
+            const types = await sql`
+              select email,
+                     jsonb_typeof(raw_app_meta_data) as meta_type,
+                     raw_app_meta_data->>'roles' as roles_raw,
+                     jsonb_typeof(raw_app_meta_data->'roles') as roles_type
+              from auth.users
+              where email = 'admin@tfs.test'
+            `;
+            console.log(types);
+
+            console.log('\n=== 2. Fix via proper JSONB literal ===');
+            await sql.unsafe(`
+              update auth.users
+              set raw_app_meta_data = jsonb_build_object(
+                'provider', 'email',
+                'providers', jsonb_build_array('email'),
+                'roles', jsonb_build_array(
+                  (select ur.role::text from public.user_roles ur
+                   where ur.user_id = auth.users.id and ur.is_default = true limit 1)
+                )
+              )
+              where email like '%@tfs.test' or email = 'chriswebb@thinkforwardstudio.com'
+            `);
+            console.log('Updated with jsonb_build_object');
+
+            console.log('\n=== 3. Verify ===');
+            const after = await sql`
+              select email,
+                     jsonb_typeof(raw_app_meta_data) as meta_type,
+                     jsonb_typeof(raw_app_meta_data->'roles') as roles_type,
+                     raw_app_meta_data
+              from auth.users
+              where email like '%@tfs.test' or email = 'chriswebb@thinkforwardstudio.com'
+              order by email
+            `;
+            for (const r of after) {
+              console.log(`${r.email}: meta=${r.meta_type}, roles=${r.roles_type}`);
+            }
+
+            console.log('\n=== 4. Check auth hooks table (if exists) ===');
+            try {
+              const hooks = await sql`
+                select hook_table_id, hook_name from auth.hooks
+              `;
+              console.log(hooks);
+            } catch (e) {
+              console.log('auth.hooks not queryable:', e.message);
+            }
+
+            console.log('\n=== 5. What does auth config show for the hook? ===');
+            const config = await sql`
+              select name, value from pg_settings
+              where name ilike '%hook%' or name ilike '%auth%'
+              limit 20
+            `;
+            console.log(config);
+
+            console.log('\n=== 6. Test calling the hook for admin@tfs.test ===');
+            const [admin] = await sql`select id from auth.users where email = 'admin@tfs.test'`;
+            const hookResult = await sql`
+              select public.custom_access_token_hook(
+                jsonb_build_object('user_id', ${admin.id}::text, 'claims', '{}'::jsonb)
+              ) as result
+            `;
+            console.log(JSON.stringify(hookResult[0], null, 2));
+
+            await sql.end();
+          })().catch(async (e) => {
+            console.error(e);
+            try { await sql.end(); } catch {}
+            process.exit(1);
+          });
+          SCRIPT
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
