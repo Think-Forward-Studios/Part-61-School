@@ -1,0 +1,117 @@
+name: Debug Auth Hook
+
+# Diagnoses "Database error querying schema" on login — checks function
+# existence, grants, test-user status, and tries calling the hook.
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run diagnostics
+        run: |
+          pnpm --filter @part61/db exec node <<'SCRIPT'
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+
+          (async () => {
+            console.log('=== 1. Function exists? ===');
+            const fn = await sql`
+              select n.nspname as schema, p.proname as name, p.prosecdef as security_definer
+              from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+              where p.proname = 'custom_access_token_hook'
+            `;
+            console.log(fn);
+
+            console.log('\n=== 2. Grants on the function ===');
+            const grants = await sql`
+              select grantee, privilege_type
+              from information_schema.routine_privileges
+              where routine_name = 'custom_access_token_hook'
+            `;
+            console.log(grants);
+
+            console.log('\n=== 3. Schema grants for supabase_auth_admin ===');
+            const schemaGrants = await sql`
+              select grantee, privilege_type
+              from information_schema.usage_privileges
+              where object_schema = 'public' and grantee = 'supabase_auth_admin'
+            `;
+            console.log(schemaGrants);
+
+            console.log('\n=== 4. Table grants for supabase_auth_admin ===');
+            const tableGrants = await sql`
+              select grantee, table_schema, table_name, privilege_type
+              from information_schema.table_privileges
+              where grantee = 'supabase_auth_admin'
+                and table_schema = 'public'
+                and table_name in ('users', 'user_roles')
+              order by table_name, privilege_type
+            `;
+            console.log(tableGrants);
+
+            console.log('\n=== 5. Test user status ===');
+            const users = await sql`
+              select u.id, u.email, u.status, u.school_id,
+                     array_agg(ur.role) filter (where ur.role is not null) as roles
+              from public.users u
+              left join public.user_roles ur on ur.user_id = u.id
+              where u.email like '%@tfs.test'
+              group by u.id, u.email, u.status, u.school_id
+              order by u.email
+            `;
+            console.log(users);
+
+            console.log('\n=== 6. Try calling the hook as postgres ===');
+            const [sample] = users;
+            if (sample) {
+              try {
+                const hookResult = await sql`
+                  select public.custom_access_token_hook(
+                    jsonb_build_object('user_id', ${sample.id}::text, 'claims', '{}'::jsonb)
+                  ) as result
+                `;
+                console.log('Hook result for', sample.email, ':');
+                console.log(JSON.stringify(hookResult[0], null, 2));
+              } catch (e) {
+                console.log('Hook raised error:', e.message);
+                console.log('Hint:', e.hint);
+              }
+            }
+
+            console.log('\n=== 7. Can supabase_auth_admin EXECUTE the function? ===');
+            await sql`set role supabase_auth_admin`;
+            try {
+              const [sample2] = users;
+              const hookResult = await sql`
+                select public.custom_access_token_hook(
+                  jsonb_build_object('user_id', ${sample2.id}::text, 'claims', '{}'::jsonb)
+                ) as result
+              `;
+              console.log('Hook result AS supabase_auth_admin:');
+              console.log(JSON.stringify(hookResult[0], null, 2));
+            } catch (e) {
+              console.log('Hook FAILED as supabase_auth_admin:', e.message);
+              console.log('Code:', e.code);
+            }
+            await sql`reset role`;
+
+            await sql.end();
+          })().catch(async (e) => {
+            console.error('FAILED:', e.message);
+            try { await sql.end(); } catch {}
+            process.exit(1);
+          });
+          SCRIPT
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
