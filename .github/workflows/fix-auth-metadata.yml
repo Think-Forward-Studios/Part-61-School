@@ -1,0 +1,68 @@
+name: Fix Auth Metadata
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Reset auth.users.raw_app_meta_data to proper object shape
+        run: |
+          pnpm --filter @part61/db exec node <<'SCRIPT'
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+          (async () => {
+            // Get role for each email from public.user_roles
+            const users = await sql`
+              select u.id, u.email,
+                (select ur.role::text from public.user_roles ur
+                  where ur.user_id = u.id and ur.is_default = true
+                  limit 1) as role
+              from auth.users u
+              where u.email like '%@tfs.test' or u.email = 'chriswebb@thinkforwardstudio.com'
+            `;
+
+            for (const u of users) {
+              const role = u.role || 'student';
+              const newMeta = {
+                provider: 'email',
+                providers: ['email'],
+                roles: [role],
+              };
+              await sql`
+                update auth.users
+                set raw_app_meta_data = ${JSON.stringify(newMeta)}::jsonb
+                where id = ${u.id}::uuid
+              `;
+              console.log(`Reset ${u.email} → ${JSON.stringify(newMeta)}`);
+            }
+
+            console.log('\nVerify:');
+            const check = await sql`
+              select email, raw_app_meta_data
+              from auth.users
+              where email like '%@tfs.test' or email = 'chriswebb@thinkforwardstudio.com'
+              order by email
+            `;
+            for (const row of check) {
+              console.log(`${row.email}:`, JSON.stringify(row.raw_app_meta_data));
+            }
+
+            await sql.end();
+          })().catch(async (e) => {
+            console.error(e);
+            try { await sql.end(); } catch {}
+            process.exit(1);
+          });
+          SCRIPT
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
