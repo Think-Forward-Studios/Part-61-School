@@ -4,16 +4,13 @@ import { db, users, personProfile } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { PeopleTable } from './PeopleTable';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 type SearchParams = Promise<{ role?: string; status?: string }>;
 
-export default async function AdminPeoplePage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function AdminPeoplePage({ searchParams }: { searchParams: SearchParams }) {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -77,33 +74,33 @@ export default async function AdminPeoplePage({
   void isNull;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1200 }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <h1>People</h1>
-        <Link
-          href="/admin/people/new"
-          style={{
-            padding: '0.5rem 1rem',
-            background: '#0070f3',
-            color: 'white',
-            borderRadius: 4,
-            textDecoration: 'none',
-          }}
-        >
-          + New Person
-        </Link>
-      </header>
-      <PeopleTable
-        rows={rowsRaw}
-        activeRole={roleFilter}
-        activeStatus={statusFilter}
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Directory"
+        title="People"
+        subtitle={`${rowsRaw.length} ${rowsRaw.length === 1 ? 'record' : 'records'} · students, instructors, mechanics, admins.`}
+        actions={
+          <Link
+            href="/admin/people/new"
+            style={{
+              padding: '0.55rem 0.95rem',
+              background: 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)',
+              color: '#0a0e1a',
+              borderRadius: 8,
+              textDecoration: 'none',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              boxShadow:
+                '0 4px 14px rgba(251, 191, 36, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset',
+            }}
+          >
+            + New Person
+          </Link>
+        }
       />
+      <PeopleTable rows={rowsRaw} activeRole={roleFilter} activeStatus={statusFilter} />
     </main>
   );
 }
