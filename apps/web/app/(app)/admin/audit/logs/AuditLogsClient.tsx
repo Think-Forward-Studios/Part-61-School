@@ -53,6 +53,24 @@ interface Row {
 
 type Cursor = { at: string; id: string } | null;
 
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+};
+
 function isoDaysAgo(days: number): string {
   return new Date(Date.now() - days * 864e5).toISOString();
 }
@@ -159,10 +177,10 @@ export function AuditLogsClient({
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '0.5rem',
           margin: '1rem 0',
-          padding: '0.75rem',
-          background: '#f8fafc',
-          border: '1px solid #e5e7eb',
-          borderRadius: 6,
+          padding: '0.85rem',
+          background: '#121826',
+          border: '1px solid #1f2940',
+          borderRadius: 10,
         }}
       >
         <Field label="Actor user id (UUID)">
@@ -214,13 +232,17 @@ export function AuditLogsClient({
             type="button"
             onClick={applyFilters}
             style={{
-              padding: '0.4rem 0.85rem',
-              background: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
+              padding: '0.45rem 0.9rem',
+              background: 'rgba(56, 189, 248, 0.12)',
+              color: '#38bdf8',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: 6,
               cursor: 'pointer',
-              fontWeight: 500,
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
             }}
           >
             Apply filters
@@ -229,82 +251,141 @@ export function AuditLogsClient({
       </section>
 
       {firstPage.isLoading ? (
-        <p style={{ color: '#6b7280' }}>Loading audit log...</p>
+        <div
+          style={{
+            padding: '3rem 1rem',
+            textAlign: 'center',
+            color: '#7a869a',
+            fontSize: '0.88rem',
+            background: '#0d1220',
+            border: '1px dashed #1f2940',
+            borderRadius: 12,
+          }}
+        >
+          Loading audit log...
+        </div>
       ) : rows.length === 0 ? (
-        <p style={{ color: '#6b7280' }}>No audit rows match the current filters.</p>
+        <div
+          style={{
+            padding: '3rem 1rem',
+            textAlign: 'center',
+            color: '#7a869a',
+            fontSize: '0.88rem',
+            background: '#0d1220',
+            border: '1px dashed #1f2940',
+            borderRadius: 12,
+          }}
+        >
+          No audit rows match the current filters.
+        </div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
-          <thead>
-            <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-              <th style={thStyle}>When (UTC)</th>
-              <th style={thStyle}>Actor</th>
-              <th style={thStyle}>Role</th>
-              <th style={thStyle}>Table</th>
-              <th style={thStyle}>Record</th>
-              <th style={thStyle}>Action</th>
-              <th style={thStyle}>Changed keys</th>
-              <th style={thStyle}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.flatMap((r) => {
-              const isOpen = expanded.has(r.id);
-              const keys = diffKeys(r.before, r.after);
-              const baseRow = (
-                <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={tdStyle}>
-                    {new Date(r.at).toISOString().replace('T', ' ').slice(0, 19)}
-                  </td>
-                  <td style={tdStyle}>
-                    {r.user_email ?? (r.actor_kind === 'user' ? '—' : r.actor_kind)}
-                  </td>
-                  <td style={tdStyle}>{r.actor_role ?? '—'}</td>
-                  <td style={tdStyle}>{r.table_name}</td>
-                  <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '0.7rem' }}>
-                    {r.record_id ?? '—'}
-                  </td>
-                  <td style={tdStyle}>{r.action}</td>
-                  <td style={tdStyle}>{keys.join(', ') || '—'}</td>
-                  <td style={tdStyle}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpanded((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(r.id)) next.delete(r.id);
-                          else next.add(r.id);
-                          return next;
-                        })
-                      }
+        <div
+          style={{
+            background: '#0d1220',
+            border: '1px solid #1f2940',
+            borderRadius: 12,
+            overflow: 'hidden',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#121826' }}>
+                <th style={TH}>When (UTC)</th>
+                <th style={TH}>Actor</th>
+                <th style={TH}>Role</th>
+                <th style={TH}>Table</th>
+                <th style={TH}>Record</th>
+                <th style={TH}>Action</th>
+                <th style={TH}>Changed keys</th>
+                <th style={TH}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.flatMap((r) => {
+                const isOpen = expanded.has(r.id);
+                const keys = diffKeys(r.before, r.after);
+                const baseRow = (
+                  <tr key={r.id} style={{ borderBottom: '1px solid #161d30' }}>
+                    <td
                       style={{
-                        fontSize: '0.7rem',
-                        padding: '0.15rem 0.4rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: 3,
-                        background: 'white',
-                        cursor: 'pointer',
+                        ...TD,
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                        fontSize: '0.76rem',
                       }}
                     >
-                      {isOpen ? 'Hide' : 'Diff'}
-                    </button>
-                  </td>
-                </tr>
-              );
-              if (!isOpen) return [baseRow];
-              const expandedRow = (
-                <tr key={`${r.id}-expand`} style={{ background: '#f9fafb' }}>
-                  <td colSpan={8} style={{ padding: '0.5rem 0.75rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                      <JsonBlock title="Before" value={r.before} />
-                      <JsonBlock title="After" value={r.after} />
-                    </div>
-                  </td>
-                </tr>
-              );
-              return [baseRow, expandedRow];
-            })}
-          </tbody>
-        </table>
+                      {new Date(r.at).toISOString().replace('T', ' ').slice(0, 19)}
+                    </td>
+                    <td style={TD}>
+                      {r.user_email ??
+                        (r.actor_kind === 'user' ? (
+                          <span style={{ color: '#5b6784' }}>—</span>
+                        ) : (
+                          r.actor_kind
+                        ))}
+                    </td>
+                    <td style={TD}>
+                      {r.actor_role ?? <span style={{ color: '#5b6784' }}>—</span>}
+                    </td>
+                    <td style={TD}>{r.table_name}</td>
+                    <td
+                      style={{
+                        ...TD,
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                        fontSize: '0.72rem',
+                      }}
+                    >
+                      {r.record_id ?? <span style={{ color: '#5b6784' }}>—</span>}
+                    </td>
+                    <td style={TD}>{r.action}</td>
+                    <td style={TD}>
+                      {keys.join(', ') || <span style={{ color: '#5b6784' }}>—</span>}
+                    </td>
+                    <td style={TD}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpanded((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(r.id)) next.delete(r.id);
+                            else next.add(r.id);
+                            return next;
+                          })
+                        }
+                        style={{
+                          padding: '0.25rem 0.55rem',
+                          background: 'transparent',
+                          color: '#cbd5e1',
+                          border: '1px solid #293352',
+                          borderRadius: 6,
+                          fontSize: '0.7rem',
+                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {isOpen ? 'Hide' : 'Diff'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+                if (!isOpen) return [baseRow];
+                const expandedRow = (
+                  <tr key={`${r.id}-expand`} style={{ background: '#0b0f1c' }}>
+                    <td colSpan={8} style={{ padding: '0.75rem 0.9rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <JsonBlock title="Before" value={r.before} />
+                        <JsonBlock title="After" value={r.after} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+                return [baseRow, expandedRow];
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {cursor ? (
@@ -313,18 +394,24 @@ export function AuditLogsClient({
             type="button"
             onClick={onLoadMore}
             style={{
-              padding: '0.4rem 0.85rem',
-              background: 'white',
-              border: '1px solid #d1d5db',
-              borderRadius: 4,
+              padding: '0.45rem 0.9rem',
+              background: 'transparent',
+              color: '#cbd5e1',
+              border: '1px solid #293352',
+              borderRadius: 6,
               cursor: 'pointer',
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
             }}
           >
             {loadMore.isFetching ? 'Loading...' : 'Load more'}
           </button>
         </div>
       ) : rows.length > 0 ? (
-        <p style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '0.75rem' }}>
+        <p style={{ color: '#7a869a', fontSize: '0.8rem', marginTop: '0.75rem' }}>
           End of results.
         </p>
       ) : null}
@@ -334,8 +421,21 @@ export function AuditLogsClient({
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.75rem' }}>
-      <span style={{ color: '#374151', fontWeight: 500 }}>{label}</span>
+    <label
+      style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.75rem' }}
+    >
+      <span
+        style={{
+          color: '#7a869a',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          fontSize: '0.66rem',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </span>
       {children}
     </label>
   );
@@ -344,14 +444,27 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function JsonBlock({ title, value }: { title: string; value: unknown }) {
   return (
     <div>
-      <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#6b7280' }}>{title}</div>
+      <div
+        style={{
+          fontSize: '0.66rem',
+          fontWeight: 600,
+          color: '#7a869a',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          marginBottom: '0.35rem',
+        }}
+      >
+        {title}
+      </div>
       <pre
         style={{
-          fontSize: '0.7rem',
-          padding: '0.5rem',
-          background: 'white',
-          border: '1px solid #e5e7eb',
-          borderRadius: 4,
+          fontSize: '0.72rem',
+          padding: '0.65rem',
+          background: '#0d1220',
+          color: '#cbd5e1',
+          border: '1px solid #1f2940',
+          borderRadius: 6,
           margin: 0,
           overflowX: 'auto',
           maxHeight: 240,
@@ -364,18 +477,10 @@ function JsonBlock({ title, value }: { title: string; value: unknown }) {
 }
 
 const inputStyle: React.CSSProperties = {
-  padding: '0.35rem 0.5rem',
-  border: '1px solid #d1d5db',
-  borderRadius: 4,
-  fontSize: '0.85rem',
-};
-
-const thStyle: React.CSSProperties = {
-  padding: '0.4rem',
-  borderBottom: '2px solid #e5e7eb',
-  textAlign: 'left',
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: '0.35rem',
+  padding: '0.4rem 0.6rem',
+  background: '#0d1220',
+  color: '#f7f9fc',
+  border: '1px solid #293352',
+  borderRadius: 6,
+  fontSize: '0.82rem',
 };

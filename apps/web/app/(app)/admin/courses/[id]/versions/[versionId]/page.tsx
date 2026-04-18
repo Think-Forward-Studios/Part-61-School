@@ -16,10 +16,22 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { gradingScaleLabels, type GradingScale } from '@part61/domain';
 import { VersionTreeEditor } from './VersionTreeEditor';
 import { PublishVersionButton } from './PublishVersionButton';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ id: string; versionId: string }>;
+
+const BACK_LINK: React.CSSProperties = {
+  display: 'inline-block',
+  color: '#7a869a',
+  textDecoration: 'none',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.72rem',
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  marginBottom: '0.75rem',
+};
 
 export default async function VersionEditorPage({ params }: { params: Params }) {
   const { id, versionId } = await params;
@@ -28,20 +40,14 @@ export default async function VersionEditorPage({ params }: { params: Params }) 
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
-  const me = (
-    await db.select().from(users).where(eq(users.id, user.id)).limit(1)
-  )[0];
+  const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
   if (!me?.schoolId) redirect('/login');
 
   const c = (await db.select().from(course).where(eq(course.id, id)).limit(1))[0];
   if (!c) notFound();
 
   const v = (
-    await db
-      .select()
-      .from(courseVersion)
-      .where(eq(courseVersion.id, versionId))
-      .limit(1)
+    await db.select().from(courseVersion).where(eq(courseVersion.id, versionId)).limit(1)
   )[0];
   if (!v) notFound();
 
@@ -77,35 +83,36 @@ export default async function VersionEditorPage({ params }: { params: Params }) 
   const canEdit = !isPublished && c.schoolId === me.schoolId;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1100 }}>
-      <p style={{ fontSize: '0.85rem' }}>
-        <Link href={`/admin/courses/${id}`}>← {c.code}</Link>
-      </p>
-      <h1>
-        {c.code} · {v.versionLabel}
-      </h1>
-      <p style={{ color: '#555', fontSize: '0.9rem' }}>
-        Grading scale: {gradingScaleLabels[v.gradingScale as GradingScale]} · Min levels:{' '}
-        {v.minLevels}
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <Link href={`/admin/courses/${id}`} style={BACK_LINK}>
+        ← {c.code}
+      </Link>
+      <PageHeader
+        eyebrow="Training"
+        title={`${c.code} · ${v.versionLabel}`}
+        subtitle={`Grading scale: ${gradingScaleLabels[v.gradingScale as GradingScale]} · Min levels: ${v.minLevels}`}
+      />
 
       {isPublished ? (
         <div
           style={{
-            marginTop: '1rem',
-            padding: '0.75rem',
-            background: '#fef3c7',
-            border: '2px solid #b45309',
-            borderRadius: 4,
-            color: '#7c2d12',
+            marginTop: '0.5rem',
+            padding: '0.85rem 1rem',
+            background: 'rgba(251, 191, 36, 0.08)',
+            border: '1px solid rgba(251, 191, 36, 0.35)',
+            borderRadius: 8,
+            color: '#fbbf24',
+            fontSize: '0.85rem',
           }}
         >
-          <strong>Published — read-only.</strong> This version was sealed on{' '}
-          {new Date(v.publishedAt!).toLocaleString()}. Create a new version to make
-          changes.
+          <strong style={{ color: '#fbbf24' }}>Published — read-only.</strong>{' '}
+          <span style={{ color: '#cbd5e1' }}>
+            This version was sealed on {new Date(v.publishedAt!).toLocaleString()}. Create a new
+            version to make changes.
+          </span>
         </div>
       ) : canEdit ? (
-        <div style={{ marginTop: '1rem' }}>
+        <div style={{ marginTop: '0.5rem' }}>
           <PublishVersionButton versionId={versionId} />
         </div>
       ) : null}

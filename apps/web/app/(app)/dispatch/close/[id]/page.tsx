@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { CloseOutForm } from './CloseOutForm';
 import { LessonPickerSection } from './LessonPickerSection';
 import { FlightTimeCategorization } from './FlightTimeCategorization';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,11 +21,7 @@ export const dynamic = 'force-dynamic';
  * maintenance, etc.) continue to render ONLY the existing close-out
  * form — Phase 3 regression.
  */
-export default async function CloseOutPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function CloseOutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
   const {
@@ -32,9 +29,7 @@ export default async function CloseOutPage({
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const me = (
-    await db.select().from(users).where(eq(users.id, user.id)).limit(1)
-  )[0];
+  const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
   if (!me) redirect('/login');
 
   const r = (
@@ -114,21 +109,16 @@ export default async function CloseOutPage({
 
   const isFlightActivity = r.activityType === 'flight';
   const hobbsDeltaMinutes =
-    flightEntry?.airframeDelta != null
-      ? Math.round(Number(flightEntry.airframeDelta) * 60)
-      : null;
+    flightEntry?.airframeDelta != null ? Math.round(Number(flightEntry.airframeDelta) * 60) : null;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1000 }}>
-      <h1>Close out flight</h1>
-      <p style={{ color: '#666', fontSize: '0.85rem' }}>
-        Reservation {r.id.slice(0, 8)} · status {r.status}
-      </p>
-      <CloseOutForm
-        reservationId={r.id}
-        activityType={r.activityType}
-        canSignOff={canSignOff}
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1600, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Operations"
+        title="Close Flight"
+        subtitle={`Reservation ${r.id.slice(0, 8)} · status ${r.status}`}
       />
+      <CloseOutForm reservationId={r.id} activityType={r.activityType} canSignOff={canSignOff} />
 
       {r.studentId && activeEnrollment?.courseVersionId ? (
         <LessonPickerSection
@@ -148,14 +138,16 @@ export default async function CloseOutPage({
         <section
           style={{
             marginTop: '1rem',
-            padding: '0.75rem',
-            background: '#fef3c7',
-            border: '1px solid #b45309',
-            borderRadius: 4,
+            padding: '0.85rem 1rem',
+            background: 'rgba(251, 191, 36, 0.08)',
+            border: '1px solid rgba(251, 191, 36, 0.4)',
+            borderRadius: 8,
+            color: '#cbd5e1',
+            fontSize: '0.85rem',
           }}
         >
-          <strong>No active enrollment.</strong> This student is not currently enrolled
-          in a published course version, so no lesson can be graded against this
+          <strong style={{ color: '#fbbf24' }}>No active enrollment.</strong> This student is not
+          currently enrolled in a published course version, so no lesson can be graded against this
           reservation.
         </section>
       ) : null}

@@ -11,6 +11,10 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 
+const MONO: React.CSSProperties = {
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+};
+
 export function SignOffCeremony({
   workOrderId,
   allTasksDone,
@@ -37,13 +41,13 @@ export function SignOffCeremony({
       <section
         style={{
           marginTop: '1rem',
-          padding: '0.75rem',
-          border: '1px solid #16a34a',
-          background: '#f0fdf4',
-          borderRadius: 6,
+          padding: '0.85rem 1rem',
+          border: '1px solid rgba(52, 211, 153, 0.4)',
+          background: 'rgba(52, 211, 153, 0.08)',
+          borderRadius: 12,
         }}
       >
-        <strong style={{ color: '#16a34a' }}>✓ Work order closed and signed off.</strong>
+        <strong style={{ color: '#34d399' }}>✓ Work order closed and signed off.</strong>
       </section>
     );
   }
@@ -76,17 +80,18 @@ export function SignOffCeremony({
     <section
       style={{
         marginTop: '1rem',
-        padding: '0.75rem',
-        border: '2px solid #b91c1c',
-        borderRadius: 6,
+        padding: '1rem 1.25rem',
+        background: '#0d1220',
+        border: '1px solid rgba(248, 113, 113, 0.4)',
+        borderRadius: 12,
       }}
     >
-      <h2 style={{ margin: '0 0 0.5rem 0', color: '#7f1d1d' }}>Sign-off</h2>
-      <p style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-        Requires <strong>{highestRequired === 'ia' ? 'IA' : 'A&P'}</strong> authority.
-        {allTasksDone
-          ? ' All tasks are complete.'
-          : ' Not ready — complete every task first.'}
+      <h2 style={{ margin: '0 0 0.5rem 0', color: '#f87171', fontSize: '0.95rem' }}>Sign-off</h2>
+      <p style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>
+        Requires{' '}
+        <strong style={{ color: '#f7f9fc' }}>{highestRequired === 'ia' ? 'IA' : 'A&P'}</strong>{' '}
+        authority.
+        {allTasksDone ? ' All tasks are complete.' : ' Not ready — complete every task first.'}
         {!userCanSign
           ? ` You are signed in as ${userAuthority ?? 'a non-mechanic'} — you cannot sign this work order.`
           : ''}
@@ -96,15 +101,17 @@ export function SignOffCeremony({
         disabled={disabled}
         onClick={() => setOpen(true)}
         style={{
-          padding: '0.75rem 1.5rem',
-          background: disabled ? '#9ca3af' : '#b91c1c',
-          color: 'white',
-          border: disabled ? '0' : '3px solid #7f1d1d',
-          borderRadius: 4,
-          fontSize: '1rem',
+          padding: '0.65rem 1.4rem',
+          background: disabled ? 'rgba(122, 134, 154, 0.12)' : 'rgba(248, 113, 113, 0.15)',
+          color: disabled ? '#7a869a' : '#f87171',
+          border: disabled ? '1px solid #293352' : '1px solid rgba(248, 113, 113, 0.5)',
+          borderRadius: 8,
+          fontSize: '0.82rem',
           fontWeight: 700,
           cursor: disabled ? 'not-allowed' : 'pointer',
-          letterSpacing: '0.03em',
+          ...MONO,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
         }}
       >
         SIGN AND RETURN TO SERVICE
@@ -115,7 +122,7 @@ export function SignOffCeremony({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.6)',
+            background: 'rgba(0,0,0,0.7)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -125,36 +132,44 @@ export function SignOffCeremony({
           <form
             onSubmit={onSubmit}
             style={{
-              background: 'white',
+              background: '#0d1220',
               padding: '1.5rem',
-              borderRadius: 6,
+              borderRadius: 12,
               maxWidth: 560,
               width: '90%',
-              border: '3px solid #b91c1c',
+              border: '1px solid rgba(248, 113, 113, 0.5)',
+              color: '#cbd5e1',
             }}
           >
-            <h3 style={{ margin: 0, color: '#7f1d1d' }}>
+            <h3 style={{ margin: 0, color: '#f87171', fontSize: '1.05rem' }}>
               Sign and Return to Service
             </h3>
             <div
               style={{
                 marginTop: '0.5rem',
                 padding: '0.75rem',
-                background: '#fef2f2',
-                border: '2px solid #b91c1c',
-                borderRadius: 4,
-                color: '#7f1d1d',
+                background: 'rgba(248, 113, 113, 0.08)',
+                border: '1px solid rgba(248, 113, 113, 0.4)',
+                borderRadius: 6,
+                color: '#f87171',
                 fontSize: '0.85rem',
               }}
             >
               <strong>THIS IS LEGALLY BINDING.</strong> By signing, your{' '}
-              {highestRequired === 'ia' ? 'IA' : 'A&P'} certificate will be captured in an
-              immutable snapshot. One sealed logbook entry will be written per applicable
-              book (airframe / engine / prop). The aircraft may be cleared to fly when all
-              other grounding causes are resolved.
+              {highestRequired === 'ia' ? 'IA' : 'A&P'} certificate will be captured in an immutable
+              snapshot. One sealed logbook entry will be written per applicable book (airframe /
+              engine / prop). The aircraft may be cleared to fly when all other grounding causes are
+              resolved.
             </div>
 
-            <label style={{ display: 'block', marginTop: '0.75rem', fontSize: '0.85rem' }}>
+            <label
+              style={{
+                display: 'block',
+                marginTop: '0.75rem',
+                fontSize: '0.8rem',
+                color: '#7a869a',
+              }}
+            >
               Logbook description (will be sealed into the book)
               <textarea
                 name="description"
@@ -165,7 +180,14 @@ export function SignOffCeremony({
               />
             </label>
 
-            <label style={{ display: 'block', marginTop: '0.75rem', fontSize: '0.85rem' }}>
+            <label
+              style={{
+                display: 'block',
+                marginTop: '0.75rem',
+                fontSize: '0.85rem',
+                color: '#cbd5e1',
+              }}
+            >
               <input
                 type="checkbox"
                 checked={confirmed}
@@ -175,9 +197,7 @@ export function SignOffCeremony({
             </label>
 
             {error ? (
-              <p style={{ color: 'crimson', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                {error}
-              </p>
+              <p style={{ color: '#f87171', fontSize: '0.85rem', marginTop: '0.5rem' }}>{error}</p>
             ) : null}
 
             <div
@@ -188,20 +208,46 @@ export function SignOffCeremony({
                 marginTop: '1rem',
               }}
             >
-              <button type="button" onClick={() => setOpen(false)}>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                style={{
+                  padding: '0.4rem 0.9rem',
+                  background: 'transparent',
+                  color: '#cbd5e1',
+                  border: '1px solid #293352',
+                  borderRadius: 6,
+                  fontSize: '0.72rem',
+                  ...MONO,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={signOff.isPending || !confirmed}
                 style={{
-                  padding: '0.6rem 1.2rem',
-                  background: '#b91c1c',
-                  color: 'white',
-                  border: '3px solid #7f1d1d',
-                  borderRadius: 4,
+                  padding: '0.55rem 1.1rem',
+                  background:
+                    signOff.isPending || !confirmed
+                      ? 'rgba(122, 134, 154, 0.12)'
+                      : 'rgba(248, 113, 113, 0.15)',
+                  color: signOff.isPending || !confirmed ? '#7a869a' : '#f87171',
+                  border:
+                    signOff.isPending || !confirmed
+                      ? '1px solid #293352'
+                      : '1px solid rgba(248, 113, 113, 0.5)',
+                  borderRadius: 8,
+                  fontSize: '0.78rem',
                   fontWeight: 700,
                   cursor: signOff.isPending || !confirmed ? 'not-allowed' : 'pointer',
+                  ...MONO,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
                 }}
               >
                 {signOff.isPending ? 'Signing…' : 'Sign off'}

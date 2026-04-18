@@ -7,17 +7,18 @@
  * in_app cells are disabled (always delivered).
  */
 import { NotificationPrefsMatrix } from './NotificationPrefsMatrix';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 export default function NotificationPrefsPage() {
   return (
-    <main style={{ padding: '1rem', maxWidth: 900 }}>
-      <h1>Notification preferences</h1>
-      <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
-        Choose which alerts reach you and how. Safety-critical in-app alerts are always delivered
-        even if you disable the channel.
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Account"
+        title="Notifications"
+        subtitle="Choose which alerts reach you and how. Safety-critical in-app alerts are always delivered even if you disable the channel."
+      />
       <NotificationPrefsMatrix />
     </main>
   );

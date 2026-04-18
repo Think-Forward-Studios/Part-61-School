@@ -19,6 +19,7 @@ import { RecentFlightsPanel } from './RecentFlightsPanel';
 import { FlightLogEntryForm } from './FlightLogEntryForm';
 import { MaintenancePanel } from './MaintenancePanel';
 import { sql } from 'drizzle-orm';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,48 +82,110 @@ export default async function AircraftDetailPage({ params }: { params: Params })
     .limit(25);
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1100 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', flexWrap: 'wrap' }}>
-        <h1 style={{ margin: 0 }}>
-          {row.tailNumber}{' '}
-          <span style={{ fontSize: '1rem', color: '#555' }}>
-            {row.make} {row.model} {row.year ? `(${row.year})` : ''}
-          </span>
-        </h1>
-        <Link
-          href={`/fleet-map/replay/${encodeURIComponent(row.tailNumber)}`}
-          style={{
-            fontSize: '0.85rem',
-            color: '#3b82f6',
-            textDecoration: 'none',
-            fontWeight: 500,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          View last flight &rarr;
-        </Link>
-      </div>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Maintenance"
+        title={row.tailNumber}
+        subtitle={`${row.make ?? ''} ${row.model ?? ''}${row.year ? ` (${row.year})` : ''}`.trim()}
+        actions={
+          <Link
+            href={`/fleet-map/replay/${encodeURIComponent(row.tailNumber)}`}
+            style={{
+              padding: '0.35rem 0.8rem',
+              background: 'rgba(56, 189, 248, 0.12)',
+              color: '#38bdf8',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: 6,
+              textDecoration: 'none',
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            View last flight &rarr;
+          </Link>
+        }
+      />
       <section
         style={{
           display: 'flex',
           gap: '2rem',
-          padding: '1rem',
-          background: '#f7f7f7',
-          borderRadius: 6,
-          margin: '1rem 0',
+          padding: '1rem 1.25rem',
+          background: '#0d1220',
+          border: '1px solid #1f2940',
+          borderRadius: 12,
+          margin: '0 0 1rem',
         }}
       >
         <div>
-          <div style={{ fontSize: '0.8rem', color: '#555' }}>Hobbs</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 'bold' }}>{fmt(totals?.currentHobbs)}</div>
+          <div
+            style={{
+              fontSize: '0.68rem',
+              color: '#7a869a',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Hobbs
+          </div>
+          <div
+            style={{
+              fontSize: '1.4rem',
+              fontWeight: 700,
+              color: '#f7f9fc',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            }}
+          >
+            {fmt(totals?.currentHobbs)}
+          </div>
         </div>
         <div>
-          <div style={{ fontSize: '0.8rem', color: '#555' }}>Tach</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 'bold' }}>{fmt(totals?.currentTach)}</div>
+          <div
+            style={{
+              fontSize: '0.68rem',
+              color: '#7a869a',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Tach
+          </div>
+          <div
+            style={{
+              fontSize: '1.4rem',
+              fontWeight: 700,
+              color: '#f7f9fc',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            }}
+          >
+            {fmt(totals?.currentTach)}
+          </div>
         </div>
         <div>
-          <div style={{ fontSize: '0.8rem', color: '#555' }}>Airframe</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 'bold' }}>
+          <div
+            style={{
+              fontSize: '0.68rem',
+              color: '#7a869a',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Airframe
+          </div>
+          <div
+            style={{
+              fontSize: '1.4rem',
+              fontWeight: 700,
+              color: '#f7f9fc',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            }}
+          >
             {fmt(totals?.currentAirframe)}
           </div>
         </div>

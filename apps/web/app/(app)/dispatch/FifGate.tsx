@@ -47,17 +47,18 @@ export function FifGate({ onAllAcked }: { onAllAcked: (acked: boolean) => void }
     cbRef.current(notices.length === 0);
   }, [notices.length]);
 
-  if (unackedQuery.isLoading) return <p>Loading FIF notices…</p>;
+  if (unackedQuery.isLoading)
+    return <p style={{ color: '#7a869a', fontSize: '0.85rem', margin: 0 }}>Loading FIF notices…</p>;
   if (notices.length === 0) {
     return (
-      <p style={{ color: '#16a34a', fontSize: '0.85rem' }}>
+      <p style={{ color: '#34d399', fontSize: '0.85rem', margin: 0 }}>
         ✓ All Flight Information File notices acknowledged
       </p>
     );
   }
   return (
     <div>
-      <p style={{ color: '#b91c1c', fontSize: '0.85rem' }}>
+      <p style={{ color: '#f87171', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
         You have {notices.length} unread Flight Information File notice
         {notices.length === 1 ? '' : 's'}. Read each one and acknowledge before dispatch.
       </p>
@@ -65,15 +66,22 @@ export function FifGate({ onAllAcked }: { onAllAcked: (acked: boolean) => void }
         <div
           key={n.id}
           style={{
-            padding: '0.5rem',
-            border: '1px solid #fbbf24',
-            background: '#fffbeb',
-            borderRadius: 4,
+            padding: '0.65rem 0.8rem',
+            border: '1px solid rgba(251, 191, 36, 0.4)',
+            background: 'rgba(251, 191, 36, 0.08)',
+            borderRadius: 8,
             marginBottom: '0.5rem',
           }}
         >
-          <strong>{n.title}</strong>
-          <p style={{ margin: '0.25rem 0', whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>
+          <strong style={{ color: '#fbbf24', fontSize: '0.88rem' }}>{n.title}</strong>
+          <p
+            style={{
+              margin: '0.35rem 0 0.5rem',
+              whiteSpace: 'pre-wrap',
+              fontSize: '0.82rem',
+              color: '#cbd5e1',
+            }}
+          >
             {n.body}
           </p>
           <button
@@ -81,12 +89,18 @@ export function FifGate({ onAllAcked }: { onAllAcked: (acked: boolean) => void }
             disabled={ack.isPending}
             onClick={() => ack.mutate({ noticeId: n.id })}
             style={{
-              padding: '0.25rem 0.5rem',
-              background: '#0070f3',
-              color: 'white',
-              border: 0,
-              borderRadius: 4,
-              cursor: 'pointer',
+              padding: '0.35rem 0.8rem',
+              background: 'rgba(52, 211, 153, 0.12)',
+              color: '#34d399',
+              border: '1px solid rgba(52, 211, 153, 0.35)',
+              borderRadius: 6,
+              fontSize: '0.7rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+              cursor: ack.isPending ? 'not-allowed' : 'pointer',
+              opacity: ack.isPending ? 0.5 : 1,
             }}
           >
             I have read and understand

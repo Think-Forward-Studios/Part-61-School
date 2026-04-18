@@ -33,6 +33,26 @@ interface Row {
 
 type Cursor = { rampOutAt: string | null; id: string } | null;
 
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+  whiteSpace: 'nowrap',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.65rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.78rem',
+  whiteSpace: 'nowrap',
+};
+
 function isoDaysAgo(days: number): string {
   return new Date(Date.now() - days * 864e5).toISOString();
 }
@@ -133,10 +153,10 @@ export function ActivityTrailClient({
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '0.5rem',
           margin: '1rem 0',
-          padding: '0.75rem',
-          background: '#f8fafc',
-          border: '1px solid #e5e7eb',
-          borderRadius: 6,
+          padding: '0.85rem',
+          background: '#121826',
+          border: '1px solid #1f2940',
+          borderRadius: 10,
         }}
       >
         <Field label="Student id (UUID)">
@@ -167,13 +187,17 @@ export function ActivityTrailClient({
             type="button"
             onClick={applyFilters}
             style={{
-              padding: '0.4rem 0.85rem',
-              background: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
+              padding: '0.45rem 0.9rem',
+              background: 'rgba(56, 189, 248, 0.12)',
+              color: '#38bdf8',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: 6,
               cursor: 'pointer',
-              fontWeight: 500,
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
             }}
           >
             Apply filters
@@ -182,54 +206,153 @@ export function ActivityTrailClient({
       </section>
 
       {firstPage.isLoading ? (
-        <p style={{ color: '#6b7280' }}>Loading activity trail...</p>
+        <div
+          style={{
+            padding: '3rem 1rem',
+            textAlign: 'center',
+            color: '#7a869a',
+            fontSize: '0.88rem',
+            background: '#0d1220',
+            border: '1px dashed #1f2940',
+            borderRadius: 12,
+          }}
+        >
+          Loading activity trail...
+        </div>
       ) : rows.length === 0 ? (
-        <p style={{ color: '#6b7280' }}>No reservations match the current filters.</p>
+        <div
+          style={{
+            padding: '3rem 1rem',
+            textAlign: 'center',
+            color: '#7a869a',
+            fontSize: '0.88rem',
+            background: '#0d1220',
+            border: '1px dashed #1f2940',
+            borderRadius: 12,
+          }}
+        >
+          No reservations match the current filters.
+        </div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+        <div
+          style={{
+            background: '#0d1220',
+            border: '1px solid #1f2940',
+            borderRadius: 12,
+            overflow: 'hidden',
+            overflowX: 'auto',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
             <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                <th style={thStyle}>Reservation</th>
-                <th style={thStyle}>Activity</th>
-                <th style={thStyle}>Student</th>
-                <th style={thStyle}>Instructor</th>
-                <th style={thStyle}>Scheduler</th>
-                <th style={thStyle}>Requested</th>
-                <th style={thStyle}>Authorizer</th>
-                <th style={thStyle}>Authorized</th>
-                <th style={thStyle}>Ramp-out</th>
-                <th style={thStyle}>Ramp-in</th>
-                <th style={thStyle}>Close-out</th>
-                <th style={thStyle}>Grade sheets</th>
-                <th style={thStyle}>Status</th>
+              <tr style={{ background: '#121826' }}>
+                <th style={TH}>Reservation</th>
+                <th style={TH}>Activity</th>
+                <th style={TH}>Student</th>
+                <th style={TH}>Instructor</th>
+                <th style={TH}>Scheduler</th>
+                <th style={TH}>Requested</th>
+                <th style={TH}>Authorizer</th>
+                <th style={TH}>Authorized</th>
+                <th style={TH}>Ramp-out</th>
+                <th style={TH}>Ramp-in</th>
+                <th style={TH}>Close-out</th>
+                <th style={TH}>Grade sheets</th>
+                <th style={TH}>Status</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.reservation_id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={tdStyle}>
-                    <Link href={`/schedule/${r.reservation_id}`}>
+                <tr key={r.reservation_id} style={{ borderBottom: '1px solid #161d30' }}>
+                  <td
+                    style={{
+                      ...TD,
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.74rem',
+                    }}
+                  >
+                    <Link
+                      href={`/schedule/${r.reservation_id}`}
+                      style={{ color: '#38bdf8', textDecoration: 'none' }}
+                    >
                       {r.reservation_id.slice(0, 8)}…
                     </Link>
                   </td>
-                  <td style={tdStyle}>{r.activity_type}</td>
-                  <td style={tdStyle}>{r.student_name ?? '—'}</td>
-                  <td style={tdStyle}>{r.instructor_name ?? '—'}</td>
-                  <td style={tdStyle}>{r.requester_email ?? '—'}</td>
-                  <td style={tdStyle}>{fmt(r.requested_at)}</td>
-                  <td style={tdStyle}>{r.authorizer_email ?? '—'}</td>
-                  <td style={tdStyle}>{fmt(r.approved_at)}</td>
-                  <td style={tdStyle}>{fmt(r.ramp_out_at)}</td>
-                  <td style={tdStyle}>{fmt(r.ramp_in_at)}</td>
-                  <td style={tdStyle}>
-                    {fmt(r.closed_at)}
+                  <td style={TD}>{r.activity_type}</td>
+                  <td style={TD}>
+                    {r.student_name ?? <span style={{ color: '#5b6784' }}>—</span>}
+                  </td>
+                  <td style={TD}>
+                    {r.instructor_name ?? <span style={{ color: '#5b6784' }}>—</span>}
+                  </td>
+                  <td style={TD}>
+                    {r.requester_email ?? <span style={{ color: '#5b6784' }}>—</span>}
+                  </td>
+                  <td
+                    style={{
+                      ...TD,
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.72rem',
+                    }}
+                  >
+                    {r.requested_at ? (
+                      fmt(r.requested_at)
+                    ) : (
+                      <span style={{ color: '#5b6784' }}>—</span>
+                    )}
+                  </td>
+                  <td style={TD}>
+                    {r.authorizer_email ?? <span style={{ color: '#5b6784' }}>—</span>}
+                  </td>
+                  <td
+                    style={{
+                      ...TD,
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.72rem',
+                    }}
+                  >
+                    {r.approved_at ? (
+                      fmt(r.approved_at)
+                    ) : (
+                      <span style={{ color: '#5b6784' }}>—</span>
+                    )}
+                  </td>
+                  <td
+                    style={{
+                      ...TD,
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.72rem',
+                    }}
+                  >
+                    {r.ramp_out_at ? (
+                      fmt(r.ramp_out_at)
+                    ) : (
+                      <span style={{ color: '#5b6784' }}>—</span>
+                    )}
+                  </td>
+                  <td
+                    style={{
+                      ...TD,
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.72rem',
+                    }}
+                  >
+                    {r.ramp_in_at ? fmt(r.ramp_in_at) : <span style={{ color: '#5b6784' }}>—</span>}
+                  </td>
+                  <td
+                    style={{
+                      ...TD,
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.72rem',
+                    }}
+                  >
+                    {r.closed_at ? fmt(r.closed_at) : <span style={{ color: '#5b6784' }}>—</span>}
                     {r.close_out_reason ? (
-                      <span style={{ color: '#6b7280' }}> · {r.close_out_reason}</span>
+                      <span style={{ color: '#7a869a' }}> · {r.close_out_reason}</span>
                     ) : null}
                   </td>
-                  <td style={tdStyle}>{r.grade_sheet_count}</td>
-                  <td style={tdStyle}>{statusLabel(r.status)}</td>
+                  <td style={TD}>{r.grade_sheet_count}</td>
+                  <td style={TD}>{statusLabel(r.status)}</td>
                 </tr>
               ))}
             </tbody>
@@ -243,18 +366,24 @@ export function ActivityTrailClient({
             type="button"
             onClick={onLoadMore}
             style={{
-              padding: '0.4rem 0.85rem',
-              background: 'white',
-              border: '1px solid #d1d5db',
-              borderRadius: 4,
+              padding: '0.45rem 0.9rem',
+              background: 'transparent',
+              color: '#cbd5e1',
+              border: '1px solid #293352',
+              borderRadius: 6,
               cursor: 'pointer',
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
             }}
           >
             {loadMore.isFetching ? 'Loading...' : 'Load more'}
           </button>
         </div>
       ) : rows.length > 0 ? (
-        <p style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '0.75rem' }}>
+        <p style={{ color: '#7a869a', fontSize: '0.8rem', marginTop: '0.75rem' }}>
           End of results.
         </p>
       ) : null}
@@ -264,28 +393,31 @@ export function ActivityTrailClient({
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.75rem' }}>
-      <span style={{ color: '#374151', fontWeight: 500 }}>{label}</span>
+    <label
+      style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.75rem' }}
+    >
+      <span
+        style={{
+          color: '#7a869a',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          fontSize: '0.66rem',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </span>
       {children}
     </label>
   );
 }
 
 const inputStyle: React.CSSProperties = {
-  padding: '0.35rem 0.5rem',
-  border: '1px solid #d1d5db',
-  borderRadius: 4,
-  fontSize: '0.85rem',
-};
-
-const thStyle: React.CSSProperties = {
-  padding: '0.4rem',
-  borderBottom: '2px solid #e5e7eb',
-  textAlign: 'left',
-  whiteSpace: 'nowrap',
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: '0.35rem',
-  whiteSpace: 'nowrap',
+  padding: '0.4rem 0.6rem',
+  background: '#0d1220',
+  color: '#f7f9fc',
+  border: '1px solid #293352',
+  borderRadius: 6,
+  fontSize: '0.82rem',
 };

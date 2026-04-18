@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { StudentDashboard } from './_components/StudentDashboard';
 import { InstructorDashboard } from './_components/InstructorDashboard';
 import { MechanicDashboard } from './_components/MechanicDashboard';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,9 +19,16 @@ export default async function DashboardPage() {
   const activeRole = cookieStore.get('part61.active_role')?.value;
   if (activeRole === 'admin') redirect('/admin/dashboard');
 
+  const subtitle =
+    activeRole === 'instructor'
+      ? 'Today\u2019s assignments, pending approvals, and student workload at a glance.'
+      : activeRole === 'mechanic'
+        ? 'Open squawks, work orders, and the fleet maintenance forecast.'
+        : 'Your next reservation, syllabus progress, and currency status.';
+
   return (
-    <main style={{ padding: '1rem', maxWidth: 1200 }}>
-      <h1 style={{ margin: '0 0 1rem' }}>Dashboard</h1>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader eyebrow="Home" title="Dashboard" subtitle={subtitle} />
       {activeRole === 'instructor' ? (
         <InstructorDashboard />
       ) : activeRole === 'mechanic' ? (

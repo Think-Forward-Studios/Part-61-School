@@ -3,6 +3,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db, users, reservation, aircraft, room } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { Calendar } from '../../schedule/Calendar';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,8 +43,12 @@ export default async function AdminSchedulePage() {
   const instRows = inst as unknown as Array<{ id: string; label: string }>;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1400 }}>
-      <h1>Base schedule</h1>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1600, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Scheduling"
+        title="Schedule Admin"
+        subtitle="Full-fleet view of reservations, instructor loading, and room occupancy."
+      />
       <Calendar
         mode="full"
         initialRows={rows.map((r) => ({

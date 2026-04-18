@@ -4,34 +4,61 @@ import { db, users, reservation } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ActivityChip } from '@/components/schedule/ActivityChip';
 import { StatusLabel } from '@/components/schedule/StatusLabel';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ id: string }>;
 
-export default async function ReservationDetailPage({
-  params,
-}: {
-  params: Params;
-}) {
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+};
+
+const DT: React.CSSProperties = {
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.7rem',
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: '#7a869a',
+  fontWeight: 500,
+};
+
+const DD: React.CSSProperties = {
+  color: '#f7f9fc',
+  fontSize: '0.9rem',
+  margin: 0,
+};
+
+export default async function ReservationDetailPage({ params }: { params: Params }) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
-  const me = (
-    await db.select().from(users).where(eq(users.id, user.id)).limit(1)
-  )[0];
+  const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
   if (!me) redirect('/login');
 
   const r = (
     await db
       .select()
       .from(reservation)
-      .where(
-        and(eq(reservation.id, id), eq(reservation.schoolId, me.schoolId)),
-      )
+      .where(and(eq(reservation.id, id), eq(reservation.schoolId, me.schoolId)))
       .limit(1)
   )[0];
   if (!r) notFound();
@@ -58,65 +85,123 @@ export default async function ReservationDetailPage({
     // best-effort
   }
 
+  const dash = <span style={{ color: '#5b6784' }}>—</span>;
+
   return (
-    <main style={{ padding: '1rem', maxWidth: 900 }}>
-      <h1>Reservation</h1>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Operations"
+        title="Reservation"
+        subtitle="Single-reservation detail with audit trail."
+      />
       <section
         style={{
           display: 'flex',
           gap: '0.5rem',
           alignItems: 'center',
-          marginBottom: '1rem',
+          marginBottom: '1.25rem',
         }}
       >
         <ActivityChip type={r.activityType} />
         <StatusLabel status={r.status} />
       </section>
-      <dl
+      <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '180px 1fr',
-          rowGap: '0.5rem',
+          background: '#0d1220',
+          border: '1px solid #1f2940',
+          borderRadius: 12,
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.5rem',
         }}
       >
-        <dt>When</dt>
-        <dd>{r.timeRange}</dd>
-        <dt>Aircraft</dt>
-        <dd>{r.aircraftId ?? '—'}</dd>
-        <dt>Instructor</dt>
-        <dd>{r.instructorId ?? '—'}</dd>
-        <dt>Student</dt>
-        <dd>{r.studentId ?? '—'}</dd>
-        <dt>Room</dt>
-        <dd>{r.roomId ?? '—'}</dd>
-        <dt>Route</dt>
-        <dd>{r.routeString ?? '—'}</dd>
-        <dt>Notes</dt>
-        <dd style={{ whiteSpace: 'pre-wrap' }}>{r.notes ?? '—'}</dd>
-      </dl>
+        <dl
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '180px 1fr',
+            rowGap: '0.85rem',
+            columnGap: '1rem',
+            margin: 0,
+          }}
+        >
+          <dt style={DT}>When</dt>
+          <dd
+            style={{
+              ...DD,
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              fontSize: '0.82rem',
+            }}
+          >
+            {r.timeRange}
+          </dd>
+          <dt style={DT}>Aircraft</dt>
+          <dd style={DD}>{r.aircraftId ?? dash}</dd>
+          <dt style={DT}>Instructor</dt>
+          <dd style={DD}>{r.instructorId ?? dash}</dd>
+          <dt style={DT}>Student</dt>
+          <dd style={DD}>{r.studentId ?? dash}</dd>
+          <dt style={DT}>Room</dt>
+          <dd style={DD}>{r.roomId ?? dash}</dd>
+          <dt style={DT}>Route</dt>
+          <dd style={DD}>{r.routeString ?? dash}</dd>
+          <dt style={DT}>Notes</dt>
+          <dd style={{ ...DD, whiteSpace: 'pre-wrap' }}>{r.notes ?? dash}</dd>
+        </dl>
+      </div>
 
-      <h2 style={{ marginTop: '2rem' }}>Audit trail</h2>
+      <h2
+        style={{
+          margin: '0 0 0.75rem',
+          fontFamily: '"Antonio", system-ui, sans-serif',
+          fontSize: '1.35rem',
+          fontWeight: 600,
+          color: '#f7f9fc',
+          letterSpacing: '-0.01em',
+        }}
+      >
+        Audit trail
+      </h2>
       {audit.length === 0 ? (
-        <p style={{ color: '#666' }}>No audit entries.</p>
+        <div
+          style={{
+            padding: '3rem 1rem',
+            textAlign: 'center',
+            color: '#7a869a',
+            fontSize: '0.88rem',
+            background: '#0d1220',
+            border: '1px dashed #1f2940',
+            borderRadius: 12,
+          }}
+        >
+          No audit entries.
+        </div>
       ) : (
-        <table style={{ width: '100%', fontSize: '0.85rem' }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left' }}>When</th>
-              <th style={{ textAlign: 'left' }}>Actor</th>
-              <th style={{ textAlign: 'left' }}>Op</th>
-            </tr>
-          </thead>
-          <tbody>
-            {audit.map((a, i) => (
-              <tr key={i}>
-                <td>{a.at}</td>
-                <td>{a.actor ?? '—'}</td>
-                <td>{a.op}</td>
+        <div
+          style={{
+            background: '#0d1220',
+            border: '1px solid #1f2940',
+            borderRadius: 12,
+            overflow: 'hidden',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#121826' }}>
+                <th style={TH}>When</th>
+                <th style={TH}>Actor</th>
+                <th style={TH}>Op</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {audit.map((a, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #161d30' }}>
+                  <td style={TD}>{a.at}</td>
+                  <td style={TD}>{a.actor ?? dash}</td>
+                  <td style={TD}>{a.op}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
   );

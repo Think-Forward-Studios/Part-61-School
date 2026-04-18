@@ -1,9 +1,11 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { and, eq, isNull, or, sql } from 'drizzle-orm';
 import { db, users, reservation, aircraft, room } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { Calendar, type CalendarMode } from './Calendar';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -95,46 +97,57 @@ export default async function SchedulePage() {
     };
   }
 
+  const showApprovals = activeRole === 'instructor' || activeRole === 'admin';
+
   return (
-    <main style={{ padding: '1rem', maxWidth: 1400 }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem',
-        }}
-      >
-        <h1>Schedule</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {activeRole === 'instructor' || activeRole === 'admin' ? (
-            <a
-              href="/schedule/approvals"
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1600, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Operations"
+        title="Schedule"
+        subtitle="Reservations, instructor availability, and aircraft utilization at a glance."
+        actions={
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {showApprovals ? (
+              <Link
+                href="/schedule/approvals"
+                style={{
+                  padding: '0.5rem 0.95rem',
+                  background: '#0d1220',
+                  border: '1px solid #1f2940',
+                  color: '#cbd5e1',
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  fontSize: '0.72rem',
+                  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                }}
+              >
+                Pending approvals
+              </Link>
+            ) : null}
+            <Link
+              href="/schedule/request"
               style={{
-                padding: '0.5rem 1rem',
-                background: '#f1f5f9',
-                borderRadius: 4,
+                padding: '0.55rem 0.95rem',
+                background: 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#0a0e1a',
+                borderRadius: 8,
                 textDecoration: 'none',
-                color: '#0f172a',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                boxShadow:
+                  '0 4px 14px rgba(251, 191, 36, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset',
               }}
             >
-              Pending approvals
-            </a>
-          ) : null}
-          <a
-            href="/schedule/request"
-            style={{
-              padding: '0.5rem 1rem',
-              background: '#0070f3',
-              color: 'white',
-              borderRadius: 4,
-              textDecoration: 'none',
-            }}
-          >
-            + New reservation
-          </a>
-        </div>
-      </header>
+              + New reservation
+            </Link>
+          </div>
+        }
+      />
       <Calendar mode={mode} initialRows={initialRows} resources={resources} />
     </main>
   );

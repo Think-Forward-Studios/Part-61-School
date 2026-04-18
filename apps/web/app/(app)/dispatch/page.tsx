@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { DispatchBoard } from './DispatchBoard';
 import { CueSubscriber } from '@/components/dispatch/CueSubscriber';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,18 +27,8 @@ export default async function DispatchPage() {
   }
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1600 }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '1rem',
-        }}
-      >
-        <h1 style={{ margin: 0 }}>Dispatch</h1>
-        <span style={{ color: '#666', fontSize: '0.85rem' }}>Live · refreshes every 15s</span>
-      </header>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1600, margin: '0 auto' }}>
+      <PageHeader eyebrow="Operations" title="Dispatch" subtitle="Live · refreshes every 15s" />
       <DispatchBoard />
       <CueSubscriber />
     </main>

@@ -20,31 +20,66 @@ import {
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { maintenanceKindLabel } from '@part61/domain';
 import { CompleteMaintenanceButton } from './CompleteMaintenanceButton';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ id: string }>;
 
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+};
+
+const MONO_TD: React.CSSProperties = {
+  ...TD,
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.76rem',
+};
+
+const SECTION: React.CSSProperties = {
+  padding: '1rem 1.25rem',
+  background: '#0d1220',
+  border: '1px solid #1f2940',
+  borderRadius: 12,
+  marginBottom: '1rem',
+};
+
+const STATUS_HUE: Record<string, { bg: string; fg: string }> = {
+  current: { bg: 'rgba(52, 211, 153, 0.12)', fg: '#34d399' },
+  due_soon: { bg: 'rgba(251, 191, 36, 0.12)', fg: '#fbbf24' },
+  overdue: { bg: 'rgba(248, 113, 113, 0.14)', fg: '#f87171' },
+  grounding: { bg: 'rgba(248, 113, 113, 0.2)', fg: '#fca5a5' },
+  not_applicable: { bg: 'rgba(122, 134, 154, 0.14)', fg: '#7a869a' },
+};
+
 function statusBadge(status: string | null | undefined) {
   const s = status ?? 'current';
-  const map: Record<string, { bg: string; fg: string }> = {
-    current: { bg: '#16a34a', fg: 'white' },
-    due_soon: { bg: '#eab308', fg: '#1f2937' },
-    overdue: { bg: '#dc2626', fg: 'white' },
-    grounding: { bg: '#7f1d1d', fg: 'white' },
-    not_applicable: { bg: '#6b7280', fg: 'white' },
-  };
-  const c = map[s] ?? { bg: '#6b7280', fg: 'white' };
+  const tone = STATUS_HUE[s] ?? STATUS_HUE.not_applicable ?? { bg: '#1a2238', fg: '#7a869a' };
   return (
     <span
       style={{
-        background: c.bg,
-        color: c.fg,
-        padding: '0.15rem 0.45rem',
-        borderRadius: 3,
-        fontSize: '0.7rem',
+        background: tone.bg,
+        color: tone.fg,
+        padding: '0.18rem 0.55rem',
+        borderRadius: 4,
+        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+        fontSize: '0.68rem',
         fontWeight: 600,
-        letterSpacing: '0.03em',
+        letterSpacing: '0.1em',
         textTransform: 'uppercase',
       }}
     >
@@ -53,11 +88,25 @@ function statusBadge(status: string | null | undefined) {
   );
 }
 
-export default async function AircraftMaintenancePage({
-  params,
-}: {
-  params: Params;
-}) {
+function emptyCell(text: string) {
+  return (
+    <div
+      style={{
+        padding: '1.5rem 0.5rem',
+        textAlign: 'center',
+        color: '#7a869a',
+        fontSize: '0.85rem',
+        background: '#0d1220',
+        border: '1px dashed #1f2940',
+        borderRadius: 8,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+export default async function AircraftMaintenancePage({ params }: { params: Params }) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
   const {
@@ -91,10 +140,7 @@ export default async function AircraftMaintenancePage({
     .select()
     .from(aircraftAdCompliance)
     .where(
-      and(
-        eq(aircraftAdCompliance.aircraftId, id),
-        eq(aircraftAdCompliance.schoolId, me.schoolId),
-      ),
+      and(eq(aircraftAdCompliance.aircraftId, id), eq(aircraftAdCompliance.schoolId, me.schoolId)),
     );
 
   const components = await db
@@ -109,154 +155,193 @@ export default async function AircraftMaintenancePage({
     );
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1200 }}>
-      <header style={{ marginBottom: '1rem' }}>
-        <Link href={`/admin/aircraft/${id}`}>← Back to {ac.tailNumber}</Link>
-        <h1 style={{ margin: '0.5rem 0 0 0' }}>{ac.tailNumber} — Maintenance</h1>
-      </header>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <div style={{ marginBottom: '0.5rem' }}>
+        <Link
+          href={`/admin/aircraft/${id}`}
+          style={{
+            color: '#38bdf8',
+            textDecoration: 'none',
+            fontSize: '0.78rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+          }}
+        >
+          ← Back to {ac.tailNumber}
+        </Link>
+      </div>
+      <PageHeader
+        eyebrow="Maintenance"
+        title={`${ac.tailNumber} — Maintenance`}
+        subtitle="Items, ADs, and serial-tracked components for this airframe."
+      />
 
-      <section
-        style={{
-          padding: '0.75rem',
-          border: '1px solid #e5e7eb',
-          borderRadius: 6,
-          marginBottom: '1rem',
-        }}
-      >
-        <h2 style={{ margin: '0 0 0.5rem 0' }}>Maintenance Items</h2>
+      <section style={SECTION}>
+        <h2 style={{ margin: '0 0 0.75rem 0', color: '#f7f9fc', fontSize: '1rem' }}>
+          Maintenance Items
+        </h2>
         {items.length === 0 ? (
-          <p style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-            No items yet. Apply a maintenance template to seed the standard set.
-          </p>
+          emptyCell('No items yet. Apply a maintenance template to seed the standard set.')
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                <th style={{ padding: '0.4rem' }}>Kind</th>
-                <th style={{ padding: '0.4rem' }}>Title</th>
-                <th style={{ padding: '0.4rem' }}>Status</th>
-                <th style={{ padding: '0.4rem' }}>Last completed</th>
-                <th style={{ padding: '0.4rem' }}>Next due</th>
-                <th style={{ padding: '0.4rem' }}>Next due (hrs)</th>
-                <th style={{ padding: '0.4rem' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((it) => (
-                <tr key={it.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.4rem' }}>
-                    {maintenanceKindLabel(it.kind)}
-                  </td>
-                  <td style={{ padding: '0.4rem' }}>{it.title}</td>
-                  <td style={{ padding: '0.4rem' }}>{statusBadge(it.status)}</td>
-                  <td style={{ padding: '0.4rem', fontSize: '0.8rem' }}>
-                    {it.lastCompletedAt
-                      ? new Date(it.lastCompletedAt).toLocaleDateString()
-                      : '—'}
-                  </td>
-                  <td style={{ padding: '0.4rem', fontSize: '0.8rem' }}>
-                    {it.nextDueAt
-                      ? new Date(it.nextDueAt).toLocaleDateString()
-                      : '—'}
-                  </td>
-                  <td style={{ padding: '0.4rem', fontSize: '0.8rem' }}>
-                    {it.nextDueHours != null
-                      ? Number(it.nextDueHours).toFixed(1)
-                      : '—'}
-                  </td>
-                  <td style={{ padding: '0.4rem' }}>
-                    <CompleteMaintenanceButton
-                      itemId={it.id}
-                      itemTitle={it.title}
-                    />
-                  </td>
+          <div
+            style={{
+              background: '#0d1220',
+              border: '1px solid #1f2940',
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#121826' }}>
+                  <th style={TH}>Kind</th>
+                  <th style={TH}>Title</th>
+                  <th style={TH}>Status</th>
+                  <th style={TH}>Last completed</th>
+                  <th style={TH}>Next due</th>
+                  <th style={TH}>Next due (hrs)</th>
+                  <th style={TH}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((it) => (
+                  <tr key={it.id} style={{ borderBottom: '1px solid #161d30' }}>
+                    <td style={TD}>{maintenanceKindLabel(it.kind)}</td>
+                    <td style={TD}>{it.title}</td>
+                    <td style={TD}>{statusBadge(it.status)}</td>
+                    <td style={MONO_TD}>
+                      {it.lastCompletedAt ? (
+                        new Date(it.lastCompletedAt).toLocaleDateString()
+                      ) : (
+                        <span style={{ color: '#5b6784' }}>—</span>
+                      )}
+                    </td>
+                    <td style={MONO_TD}>
+                      {it.nextDueAt ? (
+                        new Date(it.nextDueAt).toLocaleDateString()
+                      ) : (
+                        <span style={{ color: '#5b6784' }}>—</span>
+                      )}
+                    </td>
+                    <td style={MONO_TD}>
+                      {it.nextDueHours != null ? (
+                        Number(it.nextDueHours).toFixed(1)
+                      ) : (
+                        <span style={{ color: '#5b6784' }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '0.7rem 0.9rem' }}>
+                      <CompleteMaintenanceButton itemId={it.id} itemTitle={it.title} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      <section
-        style={{
-          padding: '0.75rem',
-          border: '1px solid #e5e7eb',
-          borderRadius: 6,
-          marginBottom: '1rem',
-        }}
-      >
-        <h2 style={{ margin: '0 0 0.5rem 0' }}>Airworthiness Directives</h2>
+      <section style={SECTION}>
+        <h2 style={{ margin: '0 0 0.75rem 0', color: '#f7f9fc', fontSize: '1rem' }}>
+          Airworthiness Directives
+        </h2>
         {adCompliance.length === 0 ? (
-          <p style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-            No AD compliance rows for this aircraft. Apply an AD from the catalog.
-          </p>
+          emptyCell('No AD compliance rows for this aircraft. Apply an AD from the catalog.')
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                <th style={{ padding: '0.4rem' }}>AD</th>
-                <th style={{ padding: '0.4rem' }}>Applicable</th>
-                <th style={{ padding: '0.4rem' }}>Status</th>
-                <th style={{ padding: '0.4rem' }}>First due</th>
-              </tr>
-            </thead>
-            <tbody>
-              {adCompliance.map((c) => (
-                <tr key={c.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.4rem' }}>
-                    <Link href={`/admin/ads/${c.adId}`}>{c.adId.slice(0, 8)}</Link>
-                  </td>
-                  <td style={{ padding: '0.4rem' }}>{c.applicable ? 'Yes' : 'No'}</td>
-                  <td style={{ padding: '0.4rem' }}>{statusBadge(c.status)}</td>
-                  <td style={{ padding: '0.4rem', fontSize: '0.8rem' }}>
-                    {c.firstDueAt
-                      ? new Date(c.firstDueAt).toLocaleDateString()
-                      : '—'}
-                  </td>
+          <div
+            style={{
+              background: '#0d1220',
+              border: '1px solid #1f2940',
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#121826' }}>
+                  <th style={TH}>AD</th>
+                  <th style={TH}>Applicable</th>
+                  <th style={TH}>Status</th>
+                  <th style={TH}>First due</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {adCompliance.map((c) => (
+                  <tr key={c.id} style={{ borderBottom: '1px solid #161d30' }}>
+                    <td style={TD}>
+                      <Link
+                        href={`/admin/ads/${c.adId}`}
+                        style={{ color: '#38bdf8', textDecoration: 'none' }}
+                      >
+                        {c.adId.slice(0, 8)}
+                      </Link>
+                    </td>
+                    <td style={TD}>{c.applicable ? 'Yes' : 'No'}</td>
+                    <td style={TD}>{statusBadge(c.status)}</td>
+                    <td style={MONO_TD}>
+                      {c.firstDueAt ? (
+                        new Date(c.firstDueAt).toLocaleDateString()
+                      ) : (
+                        <span style={{ color: '#5b6784' }}>—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      <section
-        style={{ padding: '0.75rem', border: '1px solid #e5e7eb', borderRadius: 6 }}
-      >
-        <h2 style={{ margin: '0 0 0.5rem 0' }}>Components</h2>
+      <section style={SECTION}>
+        <h2 style={{ margin: '0 0 0.75rem 0', color: '#f7f9fc', fontSize: '1rem' }}>Components</h2>
         {components.length === 0 ? (
-          <p style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-            No serial-tracked components installed.
-          </p>
+          emptyCell('No serial-tracked components installed.')
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                <th style={{ padding: '0.4rem' }}>Kind</th>
-                <th style={{ padding: '0.4rem' }}>Serial</th>
-                <th style={{ padding: '0.4rem' }}>Part #</th>
-                <th style={{ padding: '0.4rem' }}>Life limit (hrs)</th>
-                <th style={{ padding: '0.4rem' }}>Installed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {components.map((c) => (
-                <tr key={c.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.4rem' }}>{c.kind}</td>
-                  <td style={{ padding: '0.4rem' }}>{c.serialNumber ?? '—'}</td>
-                  <td style={{ padding: '0.4rem' }}>{c.partNumber ?? '—'}</td>
-                  <td style={{ padding: '0.4rem' }}>
-                    {c.lifeLimitHours != null
-                      ? Number(c.lifeLimitHours).toFixed(1)
-                      : '—'}
-                  </td>
-                  <td style={{ padding: '0.4rem', fontSize: '0.8rem' }}>
-                    {c.installedAtDate ?? '—'}
-                  </td>
+          <div
+            style={{
+              background: '#0d1220',
+              border: '1px solid #1f2940',
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#121826' }}>
+                  <th style={TH}>Kind</th>
+                  <th style={TH}>Serial</th>
+                  <th style={TH}>Part #</th>
+                  <th style={TH}>Life limit (hrs)</th>
+                  <th style={TH}>Installed</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {components.map((c) => (
+                  <tr key={c.id} style={{ borderBottom: '1px solid #161d30' }}>
+                    <td style={TD}>{c.kind}</td>
+                    <td style={MONO_TD}>
+                      {c.serialNumber ?? <span style={{ color: '#5b6784' }}>—</span>}
+                    </td>
+                    <td style={MONO_TD}>
+                      {c.partNumber ?? <span style={{ color: '#5b6784' }}>—</span>}
+                    </td>
+                    <td style={MONO_TD}>
+                      {c.lifeLimitHours != null ? (
+                        Number(c.lifeLimitHours).toFixed(1)
+                      ) : (
+                        <span style={{ color: '#5b6784' }}>—</span>
+                      )}
+                    </td>
+                    <td style={MONO_TD}>
+                      {c.installedAtDate ?? <span style={{ color: '#5b6784' }}>—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </main>

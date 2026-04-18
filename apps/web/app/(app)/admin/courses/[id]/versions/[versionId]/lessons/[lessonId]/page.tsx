@@ -5,10 +5,40 @@ import { db, users, course, courseVersion, lesson, lineItem } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { lessonKindLabels, type LessonKind } from '@part61/domain';
 import { LessonEditor } from './LessonEditor';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ id: string; versionId: string; lessonId: string }>;
+
+const BACK_LINK: React.CSSProperties = {
+  display: 'inline-block',
+  color: '#7a869a',
+  textDecoration: 'none',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.72rem',
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  marginBottom: '0.75rem',
+};
+
+const SUBHEADING: React.CSSProperties = {
+  margin: '0 0 0.35rem',
+  fontFamily: '"Barlow Condensed", system-ui, sans-serif',
+  fontSize: '0.95rem',
+  letterSpacing: '0.08em',
+  color: '#f7f9fc',
+  textTransform: 'uppercase',
+  fontWeight: 600,
+};
+
+const PANEL: React.CSSProperties = {
+  marginTop: '1rem',
+  background: '#0d1220',
+  border: '1px solid #1f2940',
+  borderRadius: 10,
+  padding: '1rem',
+};
 
 export default async function LessonEditorPage({ params }: { params: Params }) {
   const { id, versionId, lessonId } = await params;
@@ -38,45 +68,65 @@ export default async function LessonEditorPage({ params }: { params: Params }) {
   const canEdit = v.publishedAt === null && c.schoolId === me.schoolId;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 900 }}>
-      <p style={{ fontSize: '0.85rem' }}>
-        <Link href={`/admin/courses/${id}/versions/${versionId}`}>← {c.code} {v.versionLabel}</Link>
-      </p>
-      <h1>
-        Lesson {l.code}: {l.title}
-      </h1>
-      <p style={{ color: '#555', fontSize: '0.9rem' }}>
-        Kind: {lessonKindLabels[l.kind as LessonKind]}
-        {l.minHours ? ` · min ${Number(l.minHours).toFixed(1)}h` : ''}
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <Link href={`/admin/courses/${id}/versions/${versionId}`} style={BACK_LINK}>
+        ← {c.code} {v.versionLabel}
+      </Link>
+      <PageHeader
+        eyebrow="Training"
+        title={`Lesson ${l.code}: ${l.title}`}
+        subtitle={`Kind: ${lessonKindLabels[l.kind as LessonKind]}${
+          l.minHours ? ` · min ${Number(l.minHours).toFixed(1)}h` : ''
+        }`}
+      />
 
       {!canEdit ? (
         <div
           style={{
-            marginTop: '1rem',
-            padding: '0.75rem',
-            background: '#fef3c7',
-            border: '2px solid #b45309',
-            borderRadius: 4,
-            color: '#7c2d12',
+            marginTop: '0.5rem',
+            padding: '0.85rem 1rem',
+            background: 'rgba(251, 191, 36, 0.08)',
+            border: '1px solid rgba(251, 191, 36, 0.35)',
+            borderRadius: 8,
+            color: '#fbbf24',
+            fontSize: '0.85rem',
           }}
         >
-          <strong>Read-only.</strong> This lesson belongs to a published or template version.
+          <strong style={{ color: '#fbbf24' }}>Read-only.</strong>{' '}
+          <span style={{ color: '#cbd5e1' }}>
+            This lesson belongs to a published or template version.
+          </span>
         </div>
       ) : null}
 
       {l.objectives ? (
-        <section style={{ marginTop: '1rem' }}>
-          <h3 style={{ margin: '0 0 0.25rem' }}>Objectives</h3>
-          <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
+        <section style={PANEL}>
+          <h3 style={SUBHEADING}>Objectives</h3>
+          <pre
+            style={{
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'inherit',
+              margin: 0,
+              color: '#cbd5e1',
+              fontSize: '0.9rem',
+            }}
+          >
             {l.objectives}
           </pre>
         </section>
       ) : null}
       {l.completionStandards ? (
-        <section style={{ marginTop: '1rem' }}>
-          <h3 style={{ margin: '0 0 0.25rem' }}>Completion standards</h3>
-          <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
+        <section style={PANEL}>
+          <h3 style={SUBHEADING}>Completion standards</h3>
+          <pre
+            style={{
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'inherit',
+              margin: 0,
+              color: '#cbd5e1',
+              fontSize: '0.9rem',
+            }}
+          >
             {l.completionStandards}
           </pre>
         </section>

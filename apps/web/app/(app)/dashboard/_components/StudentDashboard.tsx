@@ -30,7 +30,7 @@ export function StudentDashboard() {
       {/* Tile 1: Next reservation */}
       <DashboardTile title="Next Reservation" href="/schedule">
         {schedule.isLoading ? (
-          <span style={{ color: '#999' }}>Loading...</span>
+          <span style={{ color: '#5b6784' }}>Loading...</span>
         ) : nextRes ? (
           <div>
             <strong>
@@ -40,14 +40,14 @@ export function StudentDashboard() {
             {nextRes.time_range ? formatRange(nextRes.time_range as string) : 'Scheduled'}
           </div>
         ) : (
-          <span style={{ color: '#999' }}>No upcoming reservations</span>
+          <span style={{ color: '#5b6784' }}>No upcoming reservations</span>
         )}
       </DashboardTile>
 
       {/* Tile 2: Syllabus progress */}
       <DashboardTile title="Syllabus Progress" href="/record">
         {record.isLoading ? (
-          <span style={{ color: '#999' }}>Loading...</span>
+          <span style={{ color: '#5b6784' }}>Loading...</span>
         ) : (record.data as Record<string, unknown> | undefined)?.enrollments ? (
           (
             (record.data as Record<string, unknown>).enrollments as Array<Record<string, unknown>>
@@ -57,13 +57,13 @@ export function StudentDashboard() {
             </div>
           ))
         ) : (
-          <span style={{ color: '#999' }}>No active enrollment</span>
+          <span style={{ color: '#5b6784' }}>No active enrollment</span>
         )}
       </DashboardTile>
 
       {/* Tile 3: Currency status */}
       <DashboardTile title="Currency Status" accent="info">
-        <span style={{ color: '#999' }}>Currency data on your record page</span>
+        <span style={{ color: '#7a869a' }}>Currency data on your record page</span>
       </DashboardTile>
 
       {/* Tile 4: Outstanding squawks on next aircraft */}
@@ -72,31 +72,34 @@ export function StudentDashboard() {
         accent={(squawks.data as unknown as unknown[] | undefined)?.length ? 'warn' : 'default'}
       >
         {!aircraftId ? (
-          <span style={{ color: '#999' }}>No aircraft scheduled</span>
+          <span style={{ color: '#5b6784' }}>No aircraft scheduled</span>
         ) : squawks.isLoading ? (
-          <span style={{ color: '#999' }}>Loading...</span>
+          <span style={{ color: '#5b6784' }}>Loading...</span>
         ) : (squawks.data as unknown as unknown[] | undefined)?.length ? (
           <div>
             {(squawks.data as unknown as Array<Record<string, unknown>>).slice(0, 3).map((s) => (
-              <div key={s.id as string} style={{ marginBottom: '0.25rem', color: '#dc2626' }}>
+              <div key={s.id as string} style={{ marginBottom: '0.25rem', color: '#f87171' }}>
                 {s.severity as string}: {s.title as string}
               </div>
             ))}
             {(squawks.data as unknown as unknown[]).length > 3 && (
-              <a href={`/admin/aircraft/${aircraftId}/squawks`} style={{ fontSize: '0.8rem' }}>
+              <a
+                href={`/admin/aircraft/${aircraftId}/squawks`}
+                style={{ fontSize: '0.8rem', color: '#38bdf8' }}
+              >
                 View all {(squawks.data as unknown as unknown[]).length}
               </a>
             )}
           </div>
         ) : (
-          <span style={{ color: '#16a34a' }}>No open squawks</span>
+          <span style={{ color: '#34d399' }}>No open squawks</span>
         )}
       </DashboardTile>
 
       {/* Tile 5: Expiring documents */}
       <DashboardTile title="Documents" href="/profile/documents">
         {docs.isLoading ? (
-          <span style={{ color: '#999' }}>Loading...</span>
+          <span style={{ color: '#5b6784' }}>Loading...</span>
         ) : (docs.data as unknown as unknown[] | undefined)?.length ? (
           (docs.data as unknown as Array<Record<string, unknown>>)
             .filter((d) => d.expiresAt || d.expires_at)
@@ -120,13 +123,13 @@ export function StudentDashboard() {
               </div>
             ))
         ) : (
-          <span style={{ color: '#999' }}>No documents uploaded</span>
+          <span style={{ color: '#5b6784' }}>No documents uploaded</span>
         )}
       </DashboardTile>
 
       {/* Tile 6: Upload document */}
       <DashboardTile title="Upload Document" href="/profile/documents">
-        <span style={{ color: '#999' }}>Upload medical, license, ID, or insurance &rarr;</span>
+        <span style={{ color: '#7a869a' }}>Upload medical, license, ID, or insurance &rarr;</span>
       </DashboardTile>
     </div>
   );

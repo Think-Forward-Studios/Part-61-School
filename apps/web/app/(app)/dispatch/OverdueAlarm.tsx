@@ -88,12 +88,17 @@ export function OverdueAlarm({ overdueIds }: { overdueIds: string[] }) {
           type="button"
           onClick={prime}
           style={{
-            padding: '0.4rem 0.75rem',
-            background: '#fde68a',
-            border: '1px solid #f59e0b',
-            borderRadius: 4,
+            padding: '0.4rem 0.85rem',
+            background: 'rgba(251, 191, 36, 0.12)',
+            color: '#fbbf24',
+            border: '1px solid rgba(251, 191, 36, 0.4)',
+            borderRadius: 6,
             cursor: 'pointer',
-            fontSize: '0.85rem',
+            fontSize: '0.72rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            fontWeight: 600,
           }}
         >
           Enable sound alerts
@@ -105,27 +110,41 @@ export function OverdueAlarm({ overdueIds }: { overdueIds: string[] }) {
           role="alert"
           style={{
             marginTop: '0.5rem',
-            padding: '0.5rem 0.75rem',
-            background: '#fee2e2',
-            border: '1px solid #b91c1c',
-            borderRadius: 4,
+            padding: '0.6rem 0.85rem',
+            background: 'rgba(248, 113, 113, 0.12)',
+            border: '1px solid rgba(248, 113, 113, 0.45)',
+            borderRadius: 8,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            color: '#7f1d1d',
+            color: '#f87171',
             fontSize: '0.85rem',
           }}
         >
-          <span>Overdue flight: reservation {id.slice(0, 8)}</span>
+          <span
+            style={{
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              fontSize: '0.78rem',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Overdue flight: reservation {id.slice(0, 8)}
+          </span>
           <button
             type="button"
             onClick={() => dismiss(id)}
             style={{
               background: 'transparent',
-              border: 0,
+              border: '1px solid rgba(248, 113, 113, 0.35)',
+              borderRadius: 6,
               cursor: 'pointer',
-              color: '#7f1d1d',
+              color: '#f87171',
               fontWeight: 600,
+              padding: '0.25rem 0.65rem',
+              fontSize: '0.7rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
             }}
           >
             Dismiss

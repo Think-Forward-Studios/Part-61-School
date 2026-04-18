@@ -16,6 +16,7 @@ import { db, documents } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { UploadForm } from './UploadForm';
 import { DocumentList } from './DocumentList';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,12 +45,12 @@ export default async function DocumentsPage() {
   }));
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 720 }}>
-      <h1>Your documents</h1>
-      <p>
-        Upload a medical, pilot license, government ID, or insurance document. Files are stored
-        privately and retrieved only through short-lived download links.
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Account"
+        title="Documents"
+        subtitle="Upload a medical, pilot license, government ID, or insurance document. Files are stored privately and retrieved only through short-lived download links."
+      />
       <UploadForm />
       <DocumentList initialDocuments={initialDocuments} />
     </main>

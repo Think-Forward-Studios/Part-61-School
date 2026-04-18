@@ -10,7 +10,17 @@ export function CostSummary({ studentId, enrollmentId }: Props) {
   const cost = trpc.cost.getForStudent.useQuery({ studentId, enrollmentId });
 
   if (cost.isLoading)
-    return <div style={{ color: '#999', padding: '0.5rem' }}>Loading cost data...</div>;
+    return (
+      <div
+        style={{
+          color: '#5b6784',
+          padding: '0.75rem',
+          fontSize: '0.82rem',
+        }}
+      >
+        Loading cost data...
+      </div>
+    );
   if (!cost.data) return null;
 
   const d = cost.data;
@@ -22,27 +32,46 @@ export function CostSummary({ studentId, enrollmentId }: Props) {
       style={{
         display: 'flex',
         gap: '1.5rem',
-        padding: '1rem',
-        border: '1px solid #e5e7eb',
-        borderRadius: 8,
-        background: '#fafafa',
+        padding: '1rem 1.25rem',
+        border: '1px solid #1f2940',
+        borderRadius: 12,
+        background: '#0d1220',
         marginBottom: '1rem',
+        flexWrap: 'wrap',
       }}
     >
       <div>
         <div
           style={{
-            fontSize: '0.75rem',
-            color: '#666',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.68rem',
+            color: '#7a869a',
             textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.15em',
           }}
         >
           To Date
         </div>
-        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{fmtCents(d.liveCents)}</div>
+        <div
+          style={{
+            fontSize: '1.6rem',
+            fontWeight: 700,
+            color: '#f7f9fc',
+            fontFamily: '"Antonio", system-ui, sans-serif',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {fmtCents(d.liveCents)}
+        </div>
         {d.breakdown && (
-          <div style={{ fontSize: '0.75rem', color: '#999', marginTop: '0.25rem' }}>
+          <div
+            style={{
+              fontSize: '0.75rem',
+              color: '#7a869a',
+              marginTop: '0.25rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            }}
+          >
             Aircraft: {fmtCents(d.breakdown.aircraftCents)} · Instructor:{' '}
             {fmtCents(d.breakdown.instructorCents)}
             {d.breakdown.groundCents > 0 && <> · Ground: {fmtCents(d.breakdown.groundCents)}</>}
@@ -52,28 +81,44 @@ export function CostSummary({ studentId, enrollmentId }: Props) {
           </div>
         )}
       </div>
-      <div style={{ borderLeft: '1px solid #e5e7eb', paddingLeft: '1.5rem' }}>
+      <div style={{ borderLeft: '1px solid #1f2940', paddingLeft: '1.5rem' }}>
         <div
           style={{
-            fontSize: '0.75rem',
-            color: '#666',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.68rem',
+            color: '#7a869a',
             textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.15em',
           }}
         >
           Projected Total
         </div>
-        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+        <div
+          style={{
+            fontSize: '1.6rem',
+            fontWeight: 700,
+            color: '#f7f9fc',
+            fontFamily: '"Antonio", system-ui, sans-serif',
+            letterSpacing: '-0.01em',
+          }}
+        >
           {d.projectedCents !== null ? fmtCents(d.projectedCents) : '\u2014'}
         </div>
         {d.projectedCents === null && (
-          <div style={{ fontSize: '0.75rem', color: '#999' }}>
+          <div style={{ fontSize: '0.75rem', color: '#5b6784' }}>
             Enroll in a course for an estimate
           </div>
         )}
       </div>
       {d.missingRates.length > 0 && (
-        <div style={{ fontSize: '0.75rem', color: '#f59e0b', alignSelf: 'center' }}>
+        <div
+          style={{
+            fontSize: '0.75rem',
+            color: '#fbbf24',
+            alignSelf: 'center',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          }}
+        >
           \u26A0 Rates not configured for: {d.missingRates.join(', ')}
         </div>
       )}

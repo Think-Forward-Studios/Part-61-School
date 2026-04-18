@@ -15,6 +15,7 @@ import { StudentProgressForecastPanel } from './_components/StudentProgressForec
 import { StudentMinimumsPanel } from './_components/StudentMinimumsPanel';
 import { StudentRolloverQueuePanel } from './_components/StudentRolloverQueuePanel';
 import { CostSummary } from './_components/CostSummary';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,6 +60,23 @@ type RolloverRow = {
   target_lesson_title: string;
   line_item_objective: string | null;
   line_item_classification: string;
+};
+
+const SECTION_HEADING: React.CSSProperties = {
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.72rem',
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase',
+  color: '#7a869a',
+  marginBottom: '0.5rem',
+  fontWeight: 500,
+};
+
+const CARD: React.CSSProperties = {
+  background: '#0d1220',
+  border: '1px solid #1f2940',
+  borderRadius: 12,
+  padding: '1rem 1.1rem',
 };
 
 export default async function RecordPage() {
@@ -146,8 +164,12 @@ export default async function RecordPage() {
   }
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 960 }}>
-      <h1>My Training Record</h1>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Training"
+        title="My Record"
+        subtitle="Enrollments, flight totals, sealed grade sheets, endorsements, and currencies."
+      />
 
       {/* Phase 8: Cost summary */}
       <CostSummary studentId={user.id} enrollmentId={active?.id} />
@@ -159,17 +181,17 @@ export default async function RecordPage() {
             <p
               style={{
                 marginTop: '0.75rem',
-                padding: '0.5rem 0.75rem',
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                borderRadius: 6,
+                padding: '0.6rem 0.85rem',
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                borderRadius: 8,
                 fontSize: '0.85rem',
-                color: '#1e40af',
+                color: '#38bdf8',
               }}
             >
               You have {activeEnrollments.length} active enrollments. Showing:{' '}
               <strong>{active.course_title ?? 'course'}</strong>.{' '}
-              <Link href="/admin/enrollments" style={{ color: '#1e40af' }}>
+              <Link href="/admin/enrollments" style={{ color: '#38bdf8' }}>
                 View all enrollments
               </Link>
             </p>
@@ -192,155 +214,233 @@ export default async function RecordPage() {
           <StudentRolloverQueuePanel rows={rolloverRows} />
         </>
       ) : (
-        <p
+        <div
           style={{
             marginTop: '0.75rem',
-            padding: '0.5rem 0.75rem',
-            background: '#f5f5f5',
-            border: '1px solid #e5e7eb',
-            borderRadius: 6,
-            fontSize: '0.85rem',
-            color: '#6b7280',
+            padding: '1rem 1.1rem',
+            background: '#0d1220',
+            border: '1px dashed #1f2940',
+            borderRadius: 12,
+            fontSize: '0.88rem',
+            color: '#7a869a',
           }}
         >
           You are not currently enrolled in a course. Contact your chief instructor to enroll.
-        </p>
+        </div>
       )}
 
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Enrollments</h2>
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Enrollments</h2>
         {enrollments.length === 0 ? (
-          <p style={{ color: '#888' }}>You are not enrolled in any course yet.</p>
+          <div
+            style={{
+              padding: '2rem 1rem',
+              textAlign: 'center',
+              color: '#7a869a',
+              fontSize: '0.88rem',
+              background: '#0d1220',
+              border: '1px dashed #1f2940',
+              borderRadius: 12,
+            }}
+          >
+            You are not enrolled in any course yet.
+          </div>
         ) : (
-          <ul style={{ lineHeight: 1.6 }}>
-            {enrollments.map((e) => {
-              const status = e.completed_at
-                ? `completed ${new Date(e.completed_at).toLocaleDateString()}`
-                : e.withdrawn_at
-                  ? 'withdrawn'
-                  : 'active';
-              return (
-                <li key={e.id}>
-                  <Link href={`/record/courses/${e.id}`}>
-                    {e.course_code ?? 'course'} — {e.course_title ?? '—'} ({e.version_label ?? '—'})
-                  </Link>{' '}
-                  <span style={{ color: '#888', fontSize: '0.85rem' }}>· {status}</span>
-                  {!e.withdrawn_at ? (
-                    <>
-                      {' '}
-                      <a
-                        href={`/record/courses/${e.id}/export.pdf`}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ fontSize: '0.8rem' }}
-                      >
-                        [Download 141.101 PDF]
-                      </a>
-                    </>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
+          <div style={CARD}>
+            <ul style={{ lineHeight: 1.7, margin: 0, paddingLeft: '1.1rem', color: '#cbd5e1' }}>
+              {enrollments.map((e) => {
+                const status = e.completed_at
+                  ? `completed ${new Date(e.completed_at).toLocaleDateString()}`
+                  : e.withdrawn_at
+                    ? 'withdrawn'
+                    : 'active';
+                return (
+                  <li key={e.id}>
+                    <Link href={`/record/courses/${e.id}`} style={{ color: '#38bdf8' }}>
+                      {e.course_code ?? 'course'} — {e.course_title ?? '—'} (
+                      {e.version_label ?? '—'})
+                    </Link>{' '}
+                    <span style={{ color: '#7a869a', fontSize: '0.85rem' }}>· {status}</span>
+                    {!e.withdrawn_at ? (
+                      <>
+                        {' '}
+                        <a
+                          href={`/record/courses/${e.id}/export.pdf`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ fontSize: '0.8rem', color: '#34d399' }}
+                        >
+                          [Download 141.101 PDF]
+                        </a>
+                      </>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </section>
 
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Flight log totals</h2>
-        <p>
-          Total time: <strong>{totalHours} h</strong> ·{' '}
-          <Link href="/flight-log">View full flight log →</Link>
-        </p>
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Flight log totals</h2>
+        <div style={CARD}>
+          <p style={{ margin: 0, color: '#cbd5e1' }}>
+            Total time: <strong style={{ color: '#f7f9fc' }}>{totalHours} h</strong> ·{' '}
+            <Link href="/flight-log" style={{ color: '#38bdf8' }}>
+              View full flight log →
+            </Link>
+          </p>
+        </div>
       </section>
 
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Recent sealed grade sheets</h2>
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Recent sealed grade sheets</h2>
         {recent.length === 0 ? (
-          <p style={{ color: '#888' }}>No sealed grade sheets yet.</p>
+          <div
+            style={{
+              padding: '2rem 1rem',
+              textAlign: 'center',
+              color: '#7a869a',
+              fontSize: '0.88rem',
+              background: '#0d1220',
+              border: '1px dashed #1f2940',
+              borderRadius: 12,
+            }}
+          >
+            No sealed grade sheets yet.
+          </div>
         ) : (
-          <ul style={{ fontSize: '0.9rem' }}>
-            {recent.map((r) => (
-              <li key={r.id}>
-                🔒 {r.lesson_code} — {r.lesson_title}{' '}
-                <span style={{ color: '#888' }}>
-                  {new Date(r.conducted_at).toLocaleDateString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Endorsements</h2>
-        {endorsements.length === 0 ? (
-          <p style={{ color: '#888' }}>No endorsements on file.</p>
-        ) : (
-          <ul style={{ fontSize: '0.9rem' }}>
-            {endorsements.map((e) => {
-              const expired = e.expires_at && new Date(e.expires_at).getTime() < now;
-              const revoked = e.revoked_at !== null;
-              return (
-                <li key={e.id}>
-                  {e.template_code ?? 'custom'} — {e.template_title ?? ''}{' '}
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      padding: '0.05rem 0.3rem',
-                      borderRadius: 3,
-                      background: revoked || expired ? '#fee2e2' : '#dcfce7',
-                      color: revoked || expired ? '#7f1d1d' : '#166534',
-                    }}
-                  >
-                    {revoked ? 'revoked' : expired ? 'expired' : 'current'}
+          <div style={CARD}>
+            <ul style={{ fontSize: '0.9rem', margin: 0, paddingLeft: '1.1rem', color: '#cbd5e1' }}>
+              {recent.map((r) => (
+                <li key={r.id}>
+                  🔒 {r.lesson_code} — {r.lesson_title}{' '}
+                  <span style={{ color: '#7a869a' }}>
+                    {new Date(r.conducted_at).toLocaleDateString()}
                   </span>
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Currencies</h2>
-        {currencies.length === 0 ? (
-          <p style={{ color: '#888' }}>No currencies on file.</p>
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Endorsements</h2>
+        {endorsements.length === 0 ? (
+          <div
+            style={{
+              padding: '2rem 1rem',
+              textAlign: 'center',
+              color: '#7a869a',
+              fontSize: '0.88rem',
+              background: '#0d1220',
+              border: '1px dashed #1f2940',
+              borderRadius: 12,
+            }}
+          >
+            No endorsements on file.
+          </div>
         ) : (
-          <ul style={{ fontSize: '0.9rem' }}>
-            {currencies.map((c) => {
-              const exp = c.expires_at ? new Date(c.expires_at).getTime() : null;
-              const state =
-                exp == null
-                  ? 'no-expiry'
-                  : exp < now
-                    ? 'expired'
-                    : exp < now + 30 * 864e5
-                      ? 'expiring'
-                      : 'current';
-              const color =
-                state === 'expired' ? '#fee2e2' : state === 'expiring' ? '#fef3c7' : '#dcfce7';
-              return (
-                <li key={c.id}>
-                  {c.kind}{' '}
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      padding: '0.05rem 0.3rem',
-                      background: color,
-                      borderRadius: 3,
-                    }}
-                  >
-                    {state}
-                  </span>{' '}
-                  {c.expires_at ? (
-                    <span style={{ color: '#888' }}>
-                      exp {new Date(c.expires_at).toLocaleDateString()}
+          <div style={CARD}>
+            <ul style={{ fontSize: '0.9rem', margin: 0, paddingLeft: '1.1rem', color: '#cbd5e1' }}>
+              {endorsements.map((e) => {
+                const expired = e.expires_at && new Date(e.expires_at).getTime() < now;
+                const revoked = e.revoked_at !== null;
+                const tone =
+                  revoked || expired
+                    ? { bg: 'rgba(248, 113, 113, 0.14)', fg: '#f87171' }
+                    : { bg: 'rgba(52, 211, 153, 0.12)', fg: '#34d399' };
+                return (
+                  <li key={e.id}>
+                    {e.template_code ?? 'custom'} — {e.template_title ?? ''}{' '}
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: 4,
+                        background: tone.bg,
+                        color: tone.fg,
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {revoked ? 'revoked' : expired ? 'expired' : 'current'}
                     </span>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Currencies</h2>
+        {currencies.length === 0 ? (
+          <div
+            style={{
+              padding: '2rem 1rem',
+              textAlign: 'center',
+              color: '#7a869a',
+              fontSize: '0.88rem',
+              background: '#0d1220',
+              border: '1px dashed #1f2940',
+              borderRadius: 12,
+            }}
+          >
+            No currencies on file.
+          </div>
+        ) : (
+          <div style={CARD}>
+            <ul style={{ fontSize: '0.9rem', margin: 0, paddingLeft: '1.1rem', color: '#cbd5e1' }}>
+              {currencies.map((c) => {
+                const exp = c.expires_at ? new Date(c.expires_at).getTime() : null;
+                const state =
+                  exp == null
+                    ? 'no-expiry'
+                    : exp < now
+                      ? 'expired'
+                      : exp < now + 30 * 864e5
+                        ? 'expiring'
+                        : 'current';
+                const tone =
+                  state === 'expired'
+                    ? { bg: 'rgba(248, 113, 113, 0.14)', fg: '#f87171' }
+                    : state === 'expiring'
+                      ? { bg: 'rgba(251, 191, 36, 0.12)', fg: '#fbbf24' }
+                      : { bg: 'rgba(52, 211, 153, 0.12)', fg: '#34d399' };
+                return (
+                  <li key={c.id}>
+                    {c.kind}{' '}
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        padding: '0.15rem 0.5rem',
+                        background: tone.bg,
+                        color: tone.fg,
+                        borderRadius: 4,
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {state}
+                    </span>{' '}
+                    {c.expires_at ? (
+                      <span style={{ color: '#7a869a' }}>
+                        exp {new Date(c.expires_at).toLocaleDateString()}
+                      </span>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </section>
 

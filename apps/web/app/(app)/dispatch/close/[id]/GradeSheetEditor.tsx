@@ -120,14 +120,51 @@ export function GradeSheetEditor({ gradeSheetId, gradingScale }: Props) {
     }
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: '#0d1220',
+    border: '1px solid #293352',
+    color: '#f7f9fc',
+    padding: '0.35rem 0.55rem',
+    borderRadius: 6,
+    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+    fontSize: '0.82rem',
+    marginTop: '0.2rem',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '0.7rem',
+    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: '#7a869a',
+    display: 'block',
+  };
+
+  const outlineBtn: React.CSSProperties = {
+    padding: '0.4rem 0.85rem',
+    background: 'rgba(56, 189, 248, 0.12)',
+    color: '#38bdf8',
+    border: '1px solid rgba(56, 189, 248, 0.35)',
+    borderRadius: 6,
+    fontSize: '0.72rem',
+    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    fontWeight: 600,
+    cursor: 'pointer',
+  };
+
   if (sealed) {
     return (
       <div
         style={{
           padding: '1rem',
-          background: '#dcfce7',
-          border: '2px solid #16a34a',
-          borderRadius: 4,
+          background: 'rgba(52, 211, 153, 0.1)',
+          border: '1px solid rgba(52, 211, 153, 0.45)',
+          borderRadius: 8,
+          color: '#34d399',
+          fontSize: '0.88rem',
         }}
       >
         🔒 <strong>Grade sheet sealed.</strong> This record is immutable.
@@ -137,39 +174,102 @@ export function GradeSheetEditor({ gradeSheetId, gradingScale }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
-        Grading scale: <strong>{gradingScale.replace('_', ' ')}</strong>. Grades saved to
-        the draft; seal to finalize. The server enforces the must-pass contract before
-        sealing.
+      <p style={{ fontSize: '0.82rem', color: '#7a869a', margin: 0 }}>
+        Grading scale:{' '}
+        <strong style={{ color: '#38bdf8' }}>{gradingScale.replace('_', ' ')}</strong>. Grades saved
+        to the draft; seal to finalize. The server enforces the must-pass contract before sealing.
       </p>
 
       {/* Summary of graded line items so far */}
       {Object.keys(localGrades).length > 0 ? (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #ddd', textAlign: 'left' }}>
-              <th style={{ padding: '0.25rem' }}>Line item</th>
-              <th style={{ padding: '0.25rem' }}>Grade</th>
-              <th style={{ padding: '0.25rem' }}>Remarks</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.values(localGrades).map((g) => (
-              <tr key={g.lineItemId} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '0.25rem', fontFamily: 'monospace' }}>{g.title}</td>
-                <td style={{ padding: '0.25rem' }}>{g.gradeValue}</td>
-                <td style={{ padding: '0.25rem' }}>{g.remarks}</td>
+        <div
+          style={{
+            background: '#0d1220',
+            border: '1px solid #1f2940',
+            borderRadius: 8,
+            overflow: 'hidden',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#121826' }}>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.5rem 0.7rem',
+                    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.15em',
+                    color: '#7a869a',
+                    textTransform: 'uppercase',
+                    fontWeight: 500,
+                    borderBottom: '1px solid #1f2940',
+                  }}
+                >
+                  Line item
+                </th>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.5rem 0.7rem',
+                    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.15em',
+                    color: '#7a869a',
+                    textTransform: 'uppercase',
+                    fontWeight: 500,
+                    borderBottom: '1px solid #1f2940',
+                  }}
+                >
+                  Grade
+                </th>
+                <th
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.5rem 0.7rem',
+                    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                    fontSize: '0.65rem',
+                    letterSpacing: '0.15em',
+                    color: '#7a869a',
+                    textTransform: 'uppercase',
+                    fontWeight: 500,
+                    borderBottom: '1px solid #1f2940',
+                  }}
+                >
+                  Remarks
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {Object.values(localGrades).map((g) => (
+                <tr key={g.lineItemId} style={{ borderBottom: '1px solid #161d30' }}>
+                  <td
+                    style={{
+                      padding: '0.45rem 0.7rem',
+                      color: '#cbd5e1',
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.78rem',
+                    }}
+                  >
+                    {g.title}
+                  </td>
+                  <td style={{ padding: '0.45rem 0.7rem', color: '#38bdf8', fontWeight: 600 }}>
+                    {g.gradeValue}
+                  </td>
+                  <td style={{ padding: '0.45rem 0.7rem', color: '#cbd5e1' }}>{g.remarks}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : null}
 
       <div
         style={{
-          padding: '0.5rem',
-          border: '1px solid #eee',
-          borderRadius: 4,
+          padding: '0.75rem',
+          background: '#0d1220',
+          border: '1px solid #1f2940',
+          borderRadius: 8,
           display: 'grid',
           gridTemplateColumns: '2fr 1fr 2fr auto',
           gap: '0.5rem',
@@ -177,22 +277,18 @@ export function GradeSheetEditor({ gradeSheetId, gradingScale }: Props) {
           fontSize: '0.85rem',
         }}
       >
-        <label>
+        <label style={labelStyle}>
           Line item ID
           <input
             value={newItemId}
             onChange={(e) => setNewItemId(e.target.value)}
             placeholder="line_item uuid"
-            style={{ width: '100%' }}
+            style={inputStyle}
           />
         </label>
-        <label>
+        <label style={labelStyle}>
           Grade
-          <select
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
-            style={{ width: '100%' }}
-          >
+          <select value={newValue} onChange={(e) => setNewValue(e.target.value)} style={inputStyle}>
             <option value="">—</option>
             {options.map((o) => (
               <option key={o.value} value={o.value}>
@@ -201,62 +297,70 @@ export function GradeSheetEditor({ gradeSheetId, gradingScale }: Props) {
             ))}
           </select>
         </label>
-        <label>
+        <label style={labelStyle}>
           Remarks
           <input
             value={newRemarks}
             onChange={(e) => setNewRemarks(e.target.value)}
             placeholder="optional"
-            style={{ width: '100%' }}
+            style={inputStyle}
           />
         </label>
-        <button type="button" onClick={onAddGrade} disabled={setGrade.isPending}>
+        <button
+          type="button"
+          onClick={onAddGrade}
+          disabled={setGrade.isPending}
+          style={{
+            ...outlineBtn,
+            opacity: setGrade.isPending ? 0.5 : 1,
+            cursor: setGrade.isPending ? 'not-allowed' : 'pointer',
+          }}
+        >
           Save
         </button>
       </div>
-      <p style={{ fontSize: '0.75rem', color: '#888', margin: 0 }}>
-        Line item IDs come from the course version tree editor. A richer picker is a
-        follow-up; for now the line items were pre-stubbed on the server when the
-        grade sheet was created.
+      <p style={{ fontSize: '0.75rem', color: '#5b6784', margin: 0 }}>
+        Line item IDs come from the course version tree editor. A richer picker is a follow-up; for
+        now the line items were pre-stubbed on the server when the grade sheet was created.
       </p>
 
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '0.5rem',
+          gap: '0.75rem',
           fontSize: '0.85rem',
         }}
       >
-        <label>
+        <label style={labelStyle}>
           Ground minutes
           <input
             type="number"
             min={0}
             value={groundMinutes}
             onChange={(e) => setGroundMinutes(Number(e.target.value))}
-            style={{ width: '100%' }}
+            style={inputStyle}
           />
         </label>
-        <label>
+        <label style={labelStyle}>
           Flight minutes
           <input
             type="number"
             min={0}
             value={flightMinutes}
             onChange={(e) => setFlightMinutes(Number(e.target.value))}
-            style={{ width: '100%' }}
+            style={inputStyle}
           />
         </label>
       </div>
 
-      <label style={{ fontSize: '0.85rem' }}>
+      <label style={labelStyle}>
         Overall remarks
         <textarea
           rows={3}
           value={overallRemarks}
           onChange={(e) => setOverallRemarksLocal(e.target.value)}
-          style={{ width: '100%' }}
+          style={{ ...inputStyle, resize: 'vertical' }}
         />
       </label>
 
@@ -265,47 +369,84 @@ export function GradeSheetEditor({ gradeSheetId, gradingScale }: Props) {
           type="button"
           onClick={onSaveOverall}
           disabled={setOverallRemarks.isPending || setGroundFlightMinutes.isPending}
+          style={{
+            ...outlineBtn,
+            opacity: setOverallRemarks.isPending || setGroundFlightMinutes.isPending ? 0.5 : 1,
+            cursor:
+              setOverallRemarks.isPending || setGroundFlightMinutes.isPending
+                ? 'not-allowed'
+                : 'pointer',
+          }}
         >
           Save draft
         </button>
       </div>
 
-      {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
+      {error ? (
+        <p
+          style={{
+            color: '#f87171',
+            background: 'rgba(248, 113, 113, 0.1)',
+            border: '1px solid rgba(248, 113, 113, 0.35)',
+            borderRadius: 6,
+            padding: '0.5rem 0.75rem',
+            fontSize: '0.82rem',
+            margin: 0,
+          }}
+        >
+          {error}
+        </p>
+      ) : null}
 
       <div
         style={{
           marginTop: '0.5rem',
-          padding: '0.75rem',
-          border: '3px solid #b91c1c',
-          borderRadius: 4,
-          background: '#fef2f2',
+          padding: '1rem',
+          border: '1px solid rgba(248, 113, 113, 0.45)',
+          borderRadius: 10,
+          background: 'rgba(248, 113, 113, 0.08)',
         }}
       >
-        <strong style={{ color: '#7f1d1d' }}>Sign and seal grade sheet</strong>
-        <p style={{ fontSize: '0.85rem', margin: '0.25rem 0' }}>
-          This is legally binding. Once sealed, the grade sheet cannot be edited —
-          corrections require a new grade sheet referencing this one.
+        <strong
+          style={{
+            color: '#f87171',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.78rem',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+          }}
+        >
+          Sign and seal grade sheet
+        </strong>
+        <p style={{ fontSize: '0.85rem', margin: '0.5rem 0', color: '#cbd5e1' }}>
+          This is legally binding. Once sealed, the grade sheet cannot be edited — corrections
+          require a new grade sheet referencing this one.
         </p>
-        <label style={{ fontSize: '0.85rem' }}>
+        <label style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>
           <input
             type="checkbox"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
+            style={{ accentColor: '#f87171' }}
           />{' '}
           I certify the grades recorded above are accurate.
         </label>
-        <div style={{ marginTop: '0.5rem' }}>
+        <div style={{ marginTop: '0.75rem' }}>
           <button
             type="button"
             disabled={!confirmed || seal.isPending}
             onClick={onSeal}
             style={{
-              padding: '0.5rem 1rem',
-              background: confirmed ? '#b91c1c' : '#9ca3af',
-              color: 'white',
-              border: 0,
-              borderRadius: 4,
-              fontWeight: 600,
+              padding: '0.5rem 1.1rem',
+              background: confirmed ? 'rgba(248, 113, 113, 0.18)' : 'rgba(122, 134, 154, 0.12)',
+              color: confirmed ? '#f87171' : '#5b6784',
+              border: `1px solid ${confirmed ? 'rgba(248, 113, 113, 0.55)' : '#1f2940'}`,
+              borderRadius: 6,
+              fontSize: '0.74rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              fontWeight: 700,
               cursor: confirmed ? 'pointer' : 'not-allowed',
             }}
           >

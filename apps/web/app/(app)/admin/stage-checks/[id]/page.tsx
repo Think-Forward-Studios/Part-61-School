@@ -4,15 +4,39 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db, users, stageCheck } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { RecordStageCheck } from './RecordStageCheck';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ id: string }>;
 
+const BACK_LINK: React.CSSProperties = {
+  display: 'inline-block',
+  color: '#7a869a',
+  textDecoration: 'none',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.72rem',
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  marginBottom: '0.75rem',
+};
+
+const SECTION_HEADING: React.CSSProperties = {
+  margin: '0 0 0.5rem',
+  fontFamily: '"Barlow Condensed", system-ui, sans-serif',
+  fontSize: '0.95rem',
+  letterSpacing: '0.08em',
+  color: '#f7f9fc',
+  textTransform: 'uppercase',
+  fontWeight: 600,
+};
+
 export default async function StageCheckDetail({ params }: { params: Params }) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect('/login');
   const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
   if (!me?.schoolId) redirect('/login');
@@ -34,22 +58,39 @@ export default async function StageCheckDetail({ params }: { params: Params }) {
 
   const isSealed = sc.sealedAt !== null;
 
+  const subtitleParts: string[] = [`status: ${sc.status}`];
+  if (sc.scheduledAt) subtitleParts.push(`scheduled ${new Date(sc.scheduledAt).toLocaleString()}`);
+  if (sc.conductedAt) subtitleParts.push(`conducted ${new Date(sc.conductedAt).toLocaleString()}`);
+
   return (
-    <main style={{ padding: '1rem', maxWidth: 800 }}>
-      <p style={{ fontSize: '0.85rem' }}>
-        <Link href="/admin/stage-checks">← Stage checks</Link>
-      </p>
-      <h1>Stage check</h1>
-      <p style={{ color: '#555' }}>
-        Status: <strong>{sc.status}</strong>
-        {sc.scheduledAt ? ` · scheduled ${new Date(sc.scheduledAt).toLocaleString()}` : ''}
-        {sc.conductedAt ? ` · conducted ${new Date(sc.conductedAt).toLocaleString()}` : ''}
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <Link href="/admin/stage-checks" style={BACK_LINK}>
+        ← Stage checks
+      </Link>
+      <PageHeader eyebrow="Training" title="Stage check" subtitle={subtitleParts.join(' · ')} />
 
       {sc.remarks ? (
-        <section style={{ marginTop: '1rem' }}>
-          <h3>Remarks</h3>
-          <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>{sc.remarks}</pre>
+        <section
+          style={{
+            marginTop: '0.5rem',
+            padding: '1rem',
+            background: '#0d1220',
+            border: '1px solid #1f2940',
+            borderRadius: 10,
+          }}
+        >
+          <h3 style={SECTION_HEADING}>Remarks</h3>
+          <pre
+            style={{
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'inherit',
+              margin: 0,
+              color: '#cbd5e1',
+              fontSize: '0.9rem',
+            }}
+          >
+            {sc.remarks}
+          </pre>
         </section>
       ) : null}
 
@@ -57,14 +98,18 @@ export default async function StageCheckDetail({ params }: { params: Params }) {
         <div
           style={{
             marginTop: '1rem',
-            padding: '0.75rem',
-            background: '#dcfce7',
-            border: '2px solid #16a34a',
-            borderRadius: 4,
+            padding: '0.85rem 1rem',
+            background: 'rgba(52, 211, 153, 0.10)',
+            border: '1px solid rgba(52, 211, 153, 0.35)',
+            borderRadius: 8,
+            color: '#34d399',
+            fontSize: '0.85rem',
           }}
         >
-          <strong>Sealed</strong> at {new Date(sc.sealedAt!).toLocaleString()}. This record
-          is immutable.
+          <strong style={{ color: '#34d399' }}>Sealed</strong>{' '}
+          <span style={{ color: '#cbd5e1' }}>
+            at {new Date(sc.sealedAt!).toLocaleString()}. This record is immutable.
+          </span>
         </div>
       ) : (
         <RecordStageCheck stageCheckId={id} />

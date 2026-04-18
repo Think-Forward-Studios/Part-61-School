@@ -3,6 +3,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db, users, aircraft, room } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { NewBlockForm } from './NewBlockForm';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,12 +37,12 @@ export default async function NewBlockPage() {
   const instRows = inst as unknown as Array<{ id: string; label: string }>;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 720 }}>
-      <h1>New schedule block</h1>
-      <p style={{ color: '#666' }}>
-        Define a recurring pattern (day-of-week + time range) and the server will materialize one
-        instance per occurrence within the date window.
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Scheduling"
+        title="New Block"
+        subtitle="Define a recurring pattern (day-of-week + time range) and the server will materialize one instance per occurrence within the date window."
+      />
       <NewBlockForm
         aircraftOptions={ac.map((a) => ({ id: a.id, label: a.tail }))}
         instructorOptions={instRows.map((i) => ({ id: i.id, label: i.label }))}

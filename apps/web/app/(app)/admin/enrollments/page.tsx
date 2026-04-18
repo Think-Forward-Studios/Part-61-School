@@ -3,8 +3,62 @@ import { redirect } from 'next/navigation';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db, users, studentCourseEnrollment } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
+
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+};
+
+const ACTION_LINK: React.CSSProperties = {
+  display: 'inline-block',
+  padding: '0.3rem 0.7rem',
+  border: '1px solid rgba(56, 189, 248, 0.35)',
+  background: 'rgba(56, 189, 248, 0.10)',
+  color: '#38bdf8',
+  borderRadius: 6,
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.7rem',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  fontWeight: 600,
+  textDecoration: 'none',
+};
+
+const SECTION_HEADING: React.CSSProperties = {
+  margin: '0 0 0.75rem',
+  fontFamily: '"Antonio", system-ui, sans-serif',
+  fontSize: '1.05rem',
+  letterSpacing: '0.02em',
+  color: '#f7f9fc',
+  textTransform: 'uppercase',
+  fontWeight: 600,
+};
+
+const EMPTY: React.CSSProperties = {
+  padding: '2.5rem 1rem',
+  textAlign: 'center',
+  color: '#7a869a',
+  fontSize: '0.88rem',
+  background: '#0d1220',
+  border: '1px dashed #1f2940',
+  borderRadius: 12,
+};
 
 export default async function EnrollmentsPage() {
   const supabase = await createSupabaseServerClient();
@@ -68,11 +122,12 @@ export default async function EnrollmentsPage() {
   const withdrawn = joined.filter((e) => e.withdrawn_at);
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1100 }}>
-      <h1>Enrollments</h1>
-      <p style={{ color: '#555', fontSize: '0.85rem' }}>
-        {enrollments.length} total · {active.length} active · {completed.length} completed
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Training"
+        title="Enrollments"
+        subtitle={`${enrollments.length} total · ${active.length} active · ${completed.length} completed`}
+      />
 
       <Section title="Active" rows={active} />
       <Section title="Completed" rows={completed} />
@@ -98,42 +153,70 @@ function Section({
 }) {
   return (
     <section style={{ marginTop: '1.5rem' }}>
-      <h2>{title}</h2>
+      <h2 style={SECTION_HEADING}>{title}</h2>
       {rows.length === 0 ? (
-        <p style={{ color: '#888' }}>None.</p>
+        <div style={EMPTY}>None.</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-              <th style={{ padding: '0.5rem' }}>Student</th>
-              <th style={{ padding: '0.5rem' }}>Course</th>
-              <th style={{ padding: '0.5rem' }}>Version</th>
-              <th style={{ padding: '0.5rem' }}>Enrolled</th>
-              <th style={{ padding: '0.5rem' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '0.5rem' }}>
-                  <Link href={`/admin/people/${r.student_id}`}>
-                    {r.student_name ?? 'Unknown'}
-                  </Link>
-                </td>
-                <td style={{ padding: '0.5rem' }}>
-                  {r.course_code ? `${r.course_code} — ${r.course_title ?? ''}` : '—'}
-                </td>
-                <td style={{ padding: '0.5rem' }}>{r.version_label ?? '—'}</td>
-                <td style={{ padding: '0.5rem' }}>
-                  {new Date(r.enrolled_at).toLocaleDateString()}
-                </td>
-                <td style={{ padding: '0.5rem' }}>
-                  <Link href={`/admin/enrollments/${r.id}`}>Open</Link>
-                </td>
+        <div
+          style={{
+            background: '#0d1220',
+            border: '1px solid #1f2940',
+            borderRadius: 12,
+            overflow: 'hidden',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#121826' }}>
+                <th style={TH}>Student</th>
+                <th style={TH}>Course</th>
+                <th style={TH}>Version</th>
+                <th style={TH}>Enrolled</th>
+                <th style={TH}></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} style={{ borderBottom: '1px solid #161d30' }}>
+                  <td style={TD}>
+                    <Link
+                      href={`/admin/people/${r.student_id}`}
+                      style={{ color: '#f7f9fc', textDecoration: 'none', fontWeight: 500 }}
+                    >
+                      {r.student_name ?? 'Unknown'}
+                    </Link>
+                  </td>
+                  <td style={TD}>
+                    {r.course_code ? (
+                      <>
+                        <span
+                          style={{
+                            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                            color: '#38bdf8',
+                          }}
+                        >
+                          {r.course_code}
+                        </span>{' '}
+                        — <span style={{ color: '#f7f9fc' }}>{r.course_title ?? ''}</span>
+                      </>
+                    ) : (
+                      <span style={{ color: '#5b6784' }}>—</span>
+                    )}
+                  </td>
+                  <td style={TD}>
+                    {r.version_label ?? <span style={{ color: '#5b6784' }}>—</span>}
+                  </td>
+                  <td style={TD}>{new Date(r.enrolled_at).toLocaleDateString()}</td>
+                  <td style={TD}>
+                    <Link href={`/admin/enrollments/${r.id}`} style={ACTION_LINK}>
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

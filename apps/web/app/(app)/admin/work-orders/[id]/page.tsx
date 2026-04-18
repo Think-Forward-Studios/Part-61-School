@@ -15,10 +15,35 @@ import {
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { WorkOrderTasks } from './WorkOrderTasks';
 import { SignOffCeremony } from './SignOffCeremony';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ id: string }>;
+
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+};
+
+const MONO_TD: React.CSSProperties = {
+  ...TD,
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.76rem',
+};
 
 export default async function WorkOrderDetailPage({ params }: { params: Params }) {
   const { id } = await params;
@@ -39,16 +64,12 @@ export default async function WorkOrderDetailPage({ params }: { params: Params }
   )[0];
   if (!wo) notFound();
 
-  const ac = (
-    await db.select().from(aircraft).where(eq(aircraft.id, wo.aircraftId)).limit(1)
-  )[0];
+  const ac = (await db.select().from(aircraft).where(eq(aircraft.id, wo.aircraftId)).limit(1))[0];
 
   const tasks = await db
     .select()
     .from(workOrderTask)
-    .where(
-      and(eq(workOrderTask.workOrderId, wo.id), isNull(workOrderTask.deletedAt)),
-    );
+    .where(and(eq(workOrderTask.workOrderId, wo.id), isNull(workOrderTask.deletedAt)));
 
   const consumption = await db
     .select()
@@ -70,62 +91,122 @@ export default async function WorkOrderDetailPage({ params }: { params: Params }
        and mechanic_authority in ('a_and_p','ia')
   `)) as unknown as Array<{ auth: string | null }>;
   const userAuth = (callerAuthRows[0]?.auth ?? null) as 'a_and_p' | 'ia' | null;
-  const userCanSign =
-    userAuth != null && (authOrder[userAuth] ?? 0) >= (authOrder[highest] ?? 0);
+  const userCanSign = userAuth != null && (authOrder[userAuth] ?? 0) >= (authOrder[highest] ?? 0);
   const allTasksDone = tasks.length > 0 && tasks.every((t) => t.completedAt != null);
   const alreadyClosed = wo.status === 'closed';
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1100 }}>
-      <Link href="/admin/work-orders">← Back to work orders</Link>
-      <h1 style={{ marginTop: '0.5rem' }}>{wo.title}</h1>
-      <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
-        Aircraft:{' '}
-        <Link href={`/admin/aircraft/${wo.aircraftId}`}>{ac?.tailNumber ?? '—'}</Link>
-        {' · '}Kind: <strong>{wo.kind}</strong>
-        {' · '}Status: <strong>{wo.status}</strong>
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <div style={{ marginBottom: '0.5rem' }}>
+        <Link
+          href="/admin/work-orders"
+          style={{
+            color: '#38bdf8',
+            textDecoration: 'none',
+            fontSize: '0.78rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+          }}
+        >
+          ← Back to work orders
+        </Link>
+      </div>
+      <PageHeader
+        eyebrow="Maintenance"
+        title={wo.title}
+        subtitle={
+          <>
+            Aircraft:{' '}
+            <Link
+              href={`/admin/aircraft/${wo.aircraftId}`}
+              style={{ color: '#38bdf8', textDecoration: 'none' }}
+            >
+              {ac?.tailNumber ?? '—'}
+            </Link>
+            {' · '}Kind: <strong style={{ color: '#f7f9fc' }}>{wo.kind}</strong>
+            {' · '}Status: <strong style={{ color: '#f7f9fc' }}>{wo.status}</strong>
+          </>
+        }
+      />
 
       <WorkOrderTasks workOrderId={wo.id} tasks={tasks.map(serializeTask)} />
 
       <section
         style={{
           marginTop: '1rem',
-          padding: '0.75rem',
-          border: '1px solid #e5e7eb',
-          borderRadius: 6,
+          padding: '1rem 1.25rem',
+          background: '#0d1220',
+          border: '1px solid #1f2940',
+          borderRadius: 12,
         }}
       >
-        <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Parts consumed</h2>
+        <h2 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', color: '#f7f9fc' }}>
+          Parts consumed
+        </h2>
         {consumption.length === 0 ? (
-          <p style={{ color: '#6b7280', fontSize: '0.85rem' }}>No parts consumed yet.</p>
+          <div
+            style={{
+              padding: '1.5rem 0.5rem',
+              textAlign: 'center',
+              color: '#7a869a',
+              fontSize: '0.85rem',
+              background: '#0d1220',
+              border: '1px dashed #1f2940',
+              borderRadius: 8,
+            }}
+          >
+            No parts consumed yet.
+          </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-                <th style={{ padding: '0.4rem' }}>Part</th>
-                <th style={{ padding: '0.4rem' }}>Lot</th>
-                <th style={{ padding: '0.4rem' }}>Qty</th>
-                <th style={{ padding: '0.4rem' }}>Consumed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {consumption.map((c) => (
-                <tr key={c.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.4rem' }}>
-                    <Link href={`/admin/parts/${c.partId}`}>{c.partId.slice(0, 8)}</Link>
-                  </td>
-                  <td style={{ padding: '0.4rem' }}>
-                    {c.partLotId ? c.partLotId.slice(0, 8) : '—'}
-                  </td>
-                  <td style={{ padding: '0.4rem' }}>{c.quantity}</td>
-                  <td style={{ padding: '0.4rem' }}>
-                    {c.consumedAt ? new Date(c.consumedAt).toLocaleString() : '—'}
-                  </td>
+          <div
+            style={{
+              background: '#0d1220',
+              border: '1px solid #1f2940',
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#121826' }}>
+                  <th style={TH}>Part</th>
+                  <th style={TH}>Lot</th>
+                  <th style={TH}>Qty</th>
+                  <th style={TH}>Consumed</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {consumption.map((c) => (
+                  <tr key={c.id} style={{ borderBottom: '1px solid #161d30' }}>
+                    <td style={TD}>
+                      <Link
+                        href={`/admin/parts/${c.partId}`}
+                        style={{ color: '#38bdf8', textDecoration: 'none' }}
+                      >
+                        {c.partId.slice(0, 8)}
+                      </Link>
+                    </td>
+                    <td style={MONO_TD}>
+                      {c.partLotId ? (
+                        c.partLotId.slice(0, 8)
+                      ) : (
+                        <span style={{ color: '#5b6784' }}>—</span>
+                      )}
+                    </td>
+                    <td style={MONO_TD}>{c.quantity}</td>
+                    <td style={MONO_TD}>
+                      {c.consumedAt ? (
+                        new Date(c.consumedAt).toLocaleString()
+                      ) : (
+                        <span style={{ color: '#5b6784' }}>—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 

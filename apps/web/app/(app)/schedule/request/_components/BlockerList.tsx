@@ -77,40 +77,58 @@ export function BlockerList({
 }) {
   if (blockers.length === 0) return null;
 
+  const amber = '#fbbf24';
+
   return (
     <div
       style={{
-        border: '1px solid #fde68a',
-        borderRadius: 6,
-        padding: '0.75rem',
-        background: '#fffbeb',
+        border: `1px solid ${amber}44`,
+        borderRadius: 10,
+        padding: '0.9rem 1rem',
+        background: 'rgba(251, 191, 36, 0.06)',
         marginTop: '0.75rem',
       }}
     >
-      <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem', color: '#92400e' }}>
+      <div
+        style={{
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          fontSize: '0.68rem',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          marginBottom: '0.6rem',
+          color: amber,
+          fontWeight: 600,
+        }}
+      >
         Eligibility blockers
       </div>
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.85rem' }}>
+      <ul
+        style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.86rem', color: '#cbd5e1' }}
+      >
         {blockers.map((b, i) => {
           const fix = blockerFixHint(b, studentId);
           return (
             <li
               key={`${b.kind}-${i}`}
               style={{
-                padding: '0.35rem 0',
-                borderBottom: i < blockers.length - 1 ? '1px solid #fde68a' : undefined,
+                padding: '0.45rem 0',
+                borderBottom: i < blockers.length - 1 ? `1px solid ${amber}22` : undefined,
                 display: 'flex',
                 alignItems: 'flex-start',
-                gap: '0.5rem',
+                gap: '0.55rem',
               }}
             >
-              <span style={{ flexShrink: 0 }}>&#9888;</span>
+              <span style={{ flexShrink: 0, color: amber }}>&#9888;</span>
               <div>
                 <div>{renderBlockerMessage(b)}</div>
                 {fix ? (
                   <a
                     href={fix.href}
-                    style={{ fontSize: '0.8rem', color: '#2563eb', textDecoration: 'underline' }}
+                    style={{
+                      fontSize: '0.78rem',
+                      color: '#38bdf8',
+                      textDecoration: 'underline',
+                    }}
                   >
                     {fix.label}
                   </a>
@@ -125,15 +143,20 @@ export function BlockerList({
           type="button"
           onClick={onGrantClick}
           style={{
-            marginTop: '0.75rem',
-            padding: '0.4rem 0.75rem',
-            background: '#b45309',
-            color: 'white',
+            marginTop: '0.85rem',
+            padding: '0.5rem 0.95rem',
+            background: 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)',
+            color: '#0a0e1a',
             border: 'none',
-            borderRadius: 4,
-            fontWeight: 600,
-            fontSize: '0.85rem',
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: '0.72rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
             cursor: 'pointer',
+            boxShadow:
+              '0 4px 14px rgba(251, 191, 36, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset',
           }}
         >
           Authorize out-of-sequence lesson

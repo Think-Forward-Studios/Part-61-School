@@ -22,9 +22,7 @@ export function MelBadge({ aircraftId }: { aircraftId: string | null }) {
   });
   if (!aircraftId) return null;
   const rows = (q.data as unknown as SquawkRow[] | undefined) ?? [];
-  const deferred = rows.filter(
-    (r) => r.aircraftId === aircraftId && r.status === 'deferred',
-  );
+  const deferred = rows.filter((r) => r.aircraftId === aircraftId && r.status === 'deferred');
   if (deferred.length === 0) return null;
 
   const titles = deferred.map((d) => d.title).join(', ');
@@ -34,14 +32,16 @@ export function MelBadge({ aircraftId }: { aircraftId: string | null }) {
       style={{
         display: 'inline-block',
         marginLeft: '0.4rem',
-        padding: '0.1rem 0.5rem',
-        borderRadius: 3,
-        background: '#fef3c7',
-        color: '#78350f',
-        border: '1px solid #eab308',
-        fontSize: '0.7rem',
+        padding: '0.15rem 0.5rem',
+        borderRadius: 999,
+        background: 'rgba(251, 191, 36, 0.14)',
+        color: '#fbbf24',
+        border: '1px solid rgba(251, 191, 36, 0.4)',
+        fontSize: '0.65rem',
+        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
         fontWeight: 700,
-        letterSpacing: '0.03em',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
         verticalAlign: 'middle',
       }}
     >

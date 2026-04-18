@@ -3,8 +3,62 @@ import { redirect } from 'next/navigation';
 import { and, asc, eq, isNull, or } from 'drizzle-orm';
 import { db, users, course } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
+
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+};
+
+const ACTION_LINK: React.CSSProperties = {
+  display: 'inline-block',
+  padding: '0.3rem 0.7rem',
+  border: '1px solid rgba(56, 189, 248, 0.35)',
+  background: 'rgba(56, 189, 248, 0.10)',
+  color: '#38bdf8',
+  borderRadius: 6,
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.7rem',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  fontWeight: 600,
+  textDecoration: 'none',
+};
+
+const SECTION_HEADING: React.CSSProperties = {
+  margin: '0 0 0.75rem',
+  fontFamily: '"Antonio", system-ui, sans-serif',
+  fontSize: '1.05rem',
+  letterSpacing: '0.02em',
+  color: '#f7f9fc',
+  textTransform: 'uppercase',
+  fontWeight: 600,
+};
+
+const EMPTY: React.CSSProperties = {
+  padding: '2.5rem 1rem',
+  textAlign: 'center',
+  color: '#7a869a',
+  fontSize: '0.88rem',
+  background: '#0d1220',
+  border: '1px dashed #1f2940',
+  borderRadius: 12,
+};
 
 /**
  * /admin/courses — course catalog (SYL-02/03).
@@ -20,19 +74,14 @@ export default async function AdminCoursesPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const me = (
-    await db.select().from(users).where(eq(users.id, user.id)).limit(1)
-  )[0];
+  const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
   if (!me?.schoolId) redirect('/login');
 
   const allCourses = await db
     .select()
     .from(course)
     .where(
-      and(
-        isNull(course.deletedAt),
-        or(isNull(course.schoolId), eq(course.schoolId, me.schoolId)),
-      ),
+      and(isNull(course.deletedAt), or(isNull(course.schoolId), eq(course.schoolId, me.schoolId))),
     )
     .orderBy(asc(course.code));
 
@@ -40,28 +89,28 @@ export default async function AdminCoursesPage() {
   const schoolCourses = allCourses.filter((c) => c.schoolId !== null);
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1100 }}>
-      <h1>Courses</h1>
-      <p style={{ color: '#555', fontSize: '0.85rem' }}>
-        System templates are read-only; fork one to create an editable school draft.
-        School-owned courses can be edited while drafts and sealed once published.
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Training"
+        title="Courses"
+        subtitle="System templates are read-only; fork one to create an editable school draft. School-owned courses can be edited while drafts and sealed once published."
+      />
 
-      <section style={{ marginTop: '1.5rem' }}>
-        <h2 style={{ margin: '0 0 0.5rem' }}>System templates</h2>
+      <section style={{ marginTop: '0.5rem' }}>
+        <h2 style={SECTION_HEADING}>System templates</h2>
         {systemTemplates.length === 0 ? (
-          <p style={{ color: '#888' }}>No system templates installed.</p>
+          <div style={EMPTY}>No system templates installed.</div>
         ) : (
           <CourseTable rows={systemTemplates} owned={false} />
         )}
       </section>
 
       <section style={{ marginTop: '2rem' }}>
-        <h2 style={{ margin: '0 0 0.5rem' }}>School courses</h2>
+        <h2 style={SECTION_HEADING}>School courses</h2>
         {schoolCourses.length === 0 ? (
-          <p style={{ color: '#888' }}>
+          <div style={EMPTY}>
             No school courses yet. Fork a template above or create a new course.
-          </p>
+          </div>
         ) : (
           <CourseTable rows={schoolCourses} owned={true} />
         )}
@@ -84,27 +133,47 @@ function CourseTable({
   owned: boolean;
 }) {
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-      <thead>
-        <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-          <th style={{ padding: '0.5rem' }}>Code</th>
-          <th style={{ padding: '0.5rem' }}>Title</th>
-          <th style={{ padding: '0.5rem' }}>Rating sought</th>
-          <th style={{ padding: '0.5rem' }}>{owned ? 'Edit' : 'Fork'}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-            <td style={{ padding: '0.5rem', fontFamily: 'monospace' }}>{r.code}</td>
-            <td style={{ padding: '0.5rem' }}>{r.title}</td>
-            <td style={{ padding: '0.5rem' }}>{r.ratingSought.replace(/_/g, ' ')}</td>
-            <td style={{ padding: '0.5rem' }}>
-              <Link href={`/admin/courses/${r.id}`}>{owned ? 'Open' : 'View / Fork'}</Link>
-            </td>
+    <div
+      style={{
+        background: '#0d1220',
+        border: '1px solid #1f2940',
+        borderRadius: 12,
+        overflow: 'hidden',
+      }}
+    >
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+        <thead>
+          <tr style={{ background: '#121826' }}>
+            <th style={TH}>Code</th>
+            <th style={TH}>Title</th>
+            <th style={TH}>Rating sought</th>
+            <th style={TH}>{owned ? 'Edit' : 'Fork'}</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id} style={{ borderBottom: '1px solid #161d30' }}>
+              <td
+                style={{
+                  ...TD,
+                  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                  color: '#f7f9fc',
+                  fontSize: '0.8rem',
+                }}
+              >
+                {r.code}
+              </td>
+              <td style={{ ...TD, color: '#f7f9fc' }}>{r.title}</td>
+              <td style={TD}>{r.ratingSought.replace(/_/g, ' ')}</td>
+              <td style={TD}>
+                <Link href={`/admin/courses/${r.id}`} style={ACTION_LINK}>
+                  {owned ? 'Open' : 'View / Fork'}
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -9,6 +9,7 @@
  */
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui';
 import { AuditLogsClient } from './AuditLogsClient';
 
 export const dynamic = 'force-dynamic';
@@ -27,11 +28,12 @@ export default async function AuditLogsPage({ searchParams }: { searchParams: Se
     Array.isArray(v) ? v[0] : v;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1200 }}>
-      <h1>Audit log</h1>
-      <p style={{ color: '#4b5563', fontSize: '0.85rem' }}>
-        Filter changes across every safety-relevant table by actor, table, record, or date.
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Audit"
+        title="Audit log"
+        subtitle="Filter changes across every safety-relevant table by actor, table, record, or date."
+      />
       <AuditLogsClient
         initialUserId={one(params.user)}
         initialTable={one(params.table)}

@@ -11,6 +11,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db, users } from '@part61/db';
 import { auditExceptionKindLabel, auditExceptionSeverityLabel } from '@part61/domain';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui';
 import { AuditActions } from './AuditActions';
 
 export const dynamic = 'force-dynamic';
@@ -27,14 +28,46 @@ type ExceptionRow = {
   last_detected_at: string;
 };
 
-function severityBadge(severity: string): { bg: string; fg: string } {
-  if (severity === 'critical') return { bg: '#dc2626', fg: 'white' };
-  if (severity === 'warn') return { bg: '#eab308', fg: '#1f2937' };
-  return { bg: '#e5e7eb', fg: '#374151' };
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+};
+
+function severityBadge(severity: string): { bg: string; fg: string; border: string } {
+  if (severity === 'critical')
+    return {
+      bg: 'rgba(248, 113, 113, 0.14)',
+      fg: '#f87171',
+      border: 'rgba(248, 113, 113, 0.35)',
+    };
+  if (severity === 'warn')
+    return {
+      bg: 'rgba(251, 191, 36, 0.12)',
+      fg: '#fbbf24',
+      border: 'rgba(251, 191, 36, 0.35)',
+    };
+  return {
+    bg: 'rgba(122, 134, 154, 0.14)',
+    fg: '#7a869a',
+    border: 'rgba(122, 134, 154, 0.35)',
+  };
 }
 
 function fmtDate(s: string | null): string {
-  if (!s) return '--';
+  if (!s) return '—';
   return new Date(s).toLocaleDateString();
 }
 
@@ -78,86 +111,153 @@ export default async function AuditTrainingRecordsPage() {
   const infoCount = rows.filter((r) => r.severity === 'info').length;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1200 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Training record audit</h1>
-        <AuditActions />
-      </header>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Audit"
+        title="Training record audit"
+        subtitle="Open training-record exceptions from the nightly 07:00 UTC audit run."
+        actions={<AuditActions />}
+      />
 
-      <div style={{ display: 'flex', gap: '1rem', margin: '0.75rem 0', fontSize: '0.85rem' }}>
-        <span>
-          All: <strong>{rows.length}</strong>
-        </span>
-        <span style={{ color: '#dc2626' }}>
-          Critical: <strong>{criticalCount}</strong>
-        </span>
-        <span style={{ color: '#b45309' }}>
-          Warning: <strong>{warnCount}</strong>
-        </span>
-        <span style={{ color: '#6b7280' }}>
-          Info: <strong>{infoCount}</strong>
-        </span>
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.75rem',
+          margin: '0 0 1rem',
+          fontSize: '0.78rem',
+          flexWrap: 'wrap',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+        }}
+      >
+        <MetricChip label="All" value={rows.length} hue="#7a869a" />
+        <MetricChip label="Critical" value={criticalCount} hue="#f87171" />
+        <MetricChip label="Warning" value={warnCount} hue="#fbbf24" />
+        <MetricChip label="Info" value={infoCount} hue="#7a869a" />
       </div>
 
       {rows.length === 0 ? (
-        <p style={{ color: '#16a34a', fontSize: '1rem', marginTop: '2rem' }}>
-          No open training record exceptions. Nightly audit runs daily at 07:00 UTC.
-        </p>
-      ) : (
-        <table
-          style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}
+        <div
+          style={{
+            padding: '3rem 1rem',
+            textAlign: 'center',
+            color: '#34d399',
+            fontSize: '0.95rem',
+            background: '#0d1220',
+            border: '1px dashed rgba(52, 211, 153, 0.35)',
+            borderRadius: 12,
+          }}
         >
-          <thead>
-            <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-              <th style={{ padding: '0.4rem' }}>Severity</th>
-              <th style={{ padding: '0.4rem' }}>Student</th>
-              <th style={{ padding: '0.4rem' }}>Kind</th>
-              <th style={{ padding: '0.4rem' }}>First detected</th>
-              <th style={{ padding: '0.4rem' }}>Last detected</th>
-              <th style={{ padding: '0.4rem' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => {
-              const badge = severityBadge(r.severity);
-              return (
-                <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.4rem' }}>
-                    <span
+          No open training record exceptions. Nightly audit runs daily at 07:00 UTC.
+        </div>
+      ) : (
+        <div
+          style={{
+            background: '#0d1220',
+            border: '1px solid #1f2940',
+            borderRadius: 12,
+            overflow: 'hidden',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#121826' }}>
+                <th style={TH}>Severity</th>
+                <th style={TH}>Student</th>
+                <th style={TH}>Kind</th>
+                <th style={TH}>First detected</th>
+                <th style={TH}>Last detected</th>
+                <th style={TH}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const badge = severityBadge(r.severity);
+                return (
+                  <tr key={r.id} style={{ borderBottom: '1px solid #161d30' }}>
+                    <td style={TD}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          padding: '0.18rem 0.55rem',
+                          borderRadius: 999,
+                          background: badge.bg,
+                          color: badge.fg,
+                          border: `1px solid ${badge.border}`,
+                          fontSize: '0.68rem',
+                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {auditExceptionSeverityLabel(r.severity).toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={TD}>
+                      {r.student_user_id ? (
+                        <Link
+                          href={`/admin/people/${r.student_user_id}`}
+                          style={{ color: '#f7f9fc', textDecoration: 'none', fontWeight: 500 }}
+                        >
+                          {r.student_name ?? 'Unknown'}
+                        </Link>
+                      ) : (
+                        (r.student_name ?? 'Unknown')
+                      )}
+                    </td>
+                    <td style={TD}>{auditExceptionKindLabel(r.kind)}</td>
+                    <td
                       style={{
-                        background: badge.bg,
-                        color: badge.fg,
-                        padding: '0.1rem 0.4rem',
-                        borderRadius: 3,
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        letterSpacing: '0.03em',
+                        ...TD,
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                        fontSize: '0.76rem',
                       }}
                     >
-                      {auditExceptionSeverityLabel(r.severity).toUpperCase()}
-                    </span>
-                  </td>
-                  <td style={{ padding: '0.4rem' }}>
-                    {r.student_user_id ? (
-                      <Link href={`/admin/people/${r.student_user_id}`}>
-                        {r.student_name ?? 'Unknown'}
-                      </Link>
-                    ) : (
-                      r.student_name ?? 'Unknown'
-                    )}
-                  </td>
-                  <td style={{ padding: '0.4rem' }}>{auditExceptionKindLabel(r.kind)}</td>
-                  <td style={{ padding: '0.4rem' }}>{fmtDate(r.first_detected_at)}</td>
-                  <td style={{ padding: '0.4rem' }}>{fmtDate(r.last_detected_at)}</td>
-                  <td style={{ padding: '0.4rem' }}>
-                    <AuditActions exceptionId={r.id} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      {fmtDate(r.first_detected_at)}
+                    </td>
+                    <td
+                      style={{
+                        ...TD,
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                        fontSize: '0.76rem',
+                      }}
+                    >
+                      {fmtDate(r.last_detected_at)}
+                    </td>
+                    <td style={TD}>
+                      <AuditActions exceptionId={r.id} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
+  );
+}
+
+function MetricChip({ label, value, hue }: { label: string; value: number; hue: string }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.4rem',
+        padding: '0.3rem 0.7rem',
+        borderRadius: 6,
+        background: `${hue}14`,
+        color: hue,
+        border: `1px solid ${hue}44`,
+        fontSize: '0.72rem',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        fontWeight: 500,
+      }}
+    >
+      <span>{label}</span>
+      <strong style={{ color: hue, fontWeight: 700 }}>{value}</strong>
+    </span>
   );
 }

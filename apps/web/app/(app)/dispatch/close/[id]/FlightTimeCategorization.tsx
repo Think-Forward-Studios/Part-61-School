@@ -55,9 +55,7 @@ export function FlightTimeCategorization({
   hobbsDeltaMinutes,
 }: Props) {
   const categorize = trpc.flightLog.categorize.useMutation();
-  const [studentSplit, setStudentSplit] = useState<Split>(() =>
-    defaultSplit(hobbsDeltaMinutes),
-  );
+  const [studentSplit, setStudentSplit] = useState<Split>(() => defaultSplit(hobbsDeltaMinutes));
   const [instructorSplit, setInstructorSplit] = useState<Split>(() =>
     defaultSplit(hobbsDeltaMinutes),
   );
@@ -130,16 +128,27 @@ export function FlightTimeCategorization({
       onSubmit={onSubmit}
       style={{
         marginTop: '1.5rem',
-        padding: '1rem',
-        border: '1px solid #ddd',
-        borderRadius: 6,
+        padding: '1.1rem',
+        background: '#0d1220',
+        border: '1px solid #1f2940',
+        borderRadius: 12,
+        color: '#cbd5e1',
       }}
     >
-      <h2 style={{ marginTop: 0 }}>Flight time categorization</h2>
-      <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>
+      <h2
+        style={{
+          marginTop: 0,
+          marginBottom: '0.4rem',
+          fontSize: '1rem',
+          color: '#f7f9fc',
+        }}
+      >
+        Flight time categorization
+      </h2>
+      <p style={{ fontSize: '0.82rem', color: '#7a869a', margin: 0 }}>
         14 CFR 61.51(e) buckets. Hobbs delta:{' '}
-        <strong>{hobbsDeltaMinutes ?? '—'} min</strong>. Day + night must match within
-        ±6 minutes unless the row is a simulator.
+        <strong style={{ color: '#38bdf8' }}>{hobbsDeltaMinutes ?? '—'} min</strong>. Day + night
+        must match within ±6 minutes unless the row is a simulator.
       </p>
 
       <div
@@ -147,7 +156,7 @@ export function FlightTimeCategorization({
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '1rem',
-          marginTop: '0.75rem',
+          marginTop: '0.9rem',
         }}
       >
         <SplitRow title="Student (dual received)" split={studentSplit} onChange={setStudentSplit} />
@@ -158,22 +167,44 @@ export function FlightTimeCategorization({
         />
       </div>
 
-      {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
+      {error ? (
+        <p
+          style={{
+            color: '#f87171',
+            background: 'rgba(248, 113, 113, 0.1)',
+            border: '1px solid rgba(248, 113, 113, 0.35)',
+            borderRadius: 6,
+            padding: '0.5rem 0.75rem',
+            fontSize: '0.82rem',
+            marginTop: '0.75rem',
+          }}
+        >
+          {error}
+        </p>
+      ) : null}
       {saved ? (
-        <p style={{ color: '#16a34a' }}>Flight time categorized and logged.</p>
+        <p style={{ color: '#34d399', fontSize: '0.85rem', marginTop: '0.75rem' }}>
+          Flight time categorized and logged.
+        </p>
       ) : null}
 
-      <div style={{ marginTop: '0.75rem' }}>
+      <div style={{ marginTop: '0.9rem' }}>
         <button
           type="submit"
           disabled={categorize.isPending}
           style={{
             padding: '0.5rem 1rem',
-            background: '#2563eb',
-            color: 'white',
-            border: 0,
-            borderRadius: 4,
+            background: 'rgba(56, 189, 248, 0.12)',
+            color: '#38bdf8',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
+            borderRadius: 6,
+            fontSize: '0.72rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
             fontWeight: 600,
+            cursor: categorize.isPending ? 'not-allowed' : 'pointer',
+            opacity: categorize.isPending ? 0.5 : 1,
           }}
         >
           {categorize.isPending ? 'Saving…' : 'Save flight time categorization'}
@@ -197,27 +228,53 @@ function SplitRow({
   }
 
   const num = (k: keyof Split, label: string) => (
-    <label style={{ display: 'block', fontSize: '0.8rem' }}>
+    <label
+      style={{
+        display: 'block',
+        fontSize: '0.72rem',
+        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: '#7a869a',
+      }}
+    >
       {label}
       <input
         type="number"
         min={0}
         value={split[k] as number}
         onChange={(e) => set(k, Number(e.target.value) as never)}
-        style={{ width: '100%' }}
+        style={{
+          width: '100%',
+          background: '#0d1220',
+          border: '1px solid #293352',
+          color: '#f7f9fc',
+          padding: '0.3rem 0.5rem',
+          borderRadius: 4,
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          fontSize: '0.82rem',
+          marginTop: '0.2rem',
+        }}
       />
     </label>
   );
 
   return (
-    <div style={{ border: '1px solid #eee', padding: '0.5rem', borderRadius: 4 }}>
-      <strong style={{ fontSize: '0.9rem' }}>{title}</strong>
+    <div
+      style={{
+        background: '#121826',
+        border: '1px solid #1f2940',
+        padding: '0.8rem',
+        borderRadius: 8,
+      }}
+    >
+      <strong style={{ fontSize: '0.85rem', color: '#f7f9fc' }}>{title}</strong>
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '0.25rem',
-          marginTop: '0.25rem',
+          gap: '0.5rem',
+          marginTop: '0.5rem',
         }}
       >
         {num('dayMinutes', 'Day min')}
@@ -229,11 +286,19 @@ function SplitRow({
         {num('nightLandings', 'Night ldg')}
         {num('instrumentApproaches', 'Approaches')}
       </div>
-      <label style={{ fontSize: '0.8rem', marginTop: '0.25rem', display: 'block' }}>
+      <label
+        style={{
+          fontSize: '0.78rem',
+          marginTop: '0.6rem',
+          display: 'block',
+          color: '#cbd5e1',
+        }}
+      >
         <input
           type="checkbox"
           checked={split.isSimulator}
           onChange={(e) => set('isSimulator', e.target.checked)}
+          style={{ accentColor: '#38bdf8' }}
         />{' '}
         Simulator (skips hobbs gate)
       </label>

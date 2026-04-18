@@ -35,6 +35,27 @@ const KIND_OPTIONS: Array<{ value: LessonOverrideKind; label: string }> = [
   { value: 'currency_waiver', label: 'Currency waiver' },
 ];
 
+const LABEL: React.CSSProperties = {
+  fontSize: '0.7rem',
+  fontWeight: 600,
+  marginBottom: '0.35rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  letterSpacing: '0.12em',
+  textTransform: 'uppercase',
+  color: '#7a869a',
+};
+
+const INPUT: React.CSSProperties = {
+  width: '100%',
+  padding: '0.5rem 0.65rem',
+  background: '#0a0f1d',
+  border: '1px solid #1f2940',
+  borderRadius: 6,
+  color: '#f7f9fc',
+  fontSize: '0.85rem',
+  fontFamily: 'inherit',
+};
+
 export function GrantOverrideDialog({
   open,
   onOpenChange,
@@ -91,48 +112,72 @@ export function GrantOverrideDialog({
     }
   }
 
+  const amber = '#fbbf24';
+
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(3, 6, 15, 0.78)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 50,
+        backdropFilter: 'blur(4px)',
       }}
     >
       <div
         style={{
-          background: 'white',
+          background: '#0d1220',
           padding: '1.5rem',
-          borderRadius: 8,
-          maxWidth: 520,
+          borderRadius: 12,
+          maxWidth: 540,
           width: '100%',
-          border: '2px solid #b45309',
+          border: `1px solid ${amber}55`,
+          boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+          color: '#cbd5e1',
         }}
       >
-        <h2 style={{ margin: '0 0 0.25rem', color: '#b45309' }}>
+        <div
+          style={{
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.68rem',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            color: amber,
+            marginBottom: '0.35rem',
+          }}
+        >
+          Chief instructor override
+        </div>
+        <h2
+          style={{
+            margin: '0 0 0.35rem',
+            color: '#f7f9fc',
+            fontFamily: '"Antonio", system-ui, sans-serif',
+            fontSize: '1.35rem',
+            fontWeight: 600,
+            letterSpacing: '-0.01em',
+          }}
+        >
           Authorize out-of-sequence lesson
         </h2>
-        <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '0 0 1rem' }}>
-          This override is legally significant. A record of this authorization will be
-          permanently attached to the student&apos;s training record.
+        <p style={{ fontSize: '0.85rem', color: '#7a869a', margin: '0 0 1rem' }}>
+          This override is legally significant. A record of this authorization will be permanently
+          attached to the student&apos;s training record.
         </p>
 
         {error ? (
-          <p style={{ color: 'crimson', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>{error}</p>
+          <p style={{ color: '#f87171', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>{error}</p>
         ) : null}
 
-        <label style={{ display: 'block', marginBottom: '0.75rem' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-            Override kind
-          </div>
+        <label style={{ display: 'block', marginBottom: '0.85rem' }}>
+          <div style={LABEL}>Override kind</div>
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value as LessonOverrideKind)}
-            style={{ width: '100%', padding: '0.4rem' }}
+            style={INPUT}
           >
             {KIND_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -142,22 +187,20 @@ export function GrantOverrideDialog({
           </select>
         </label>
 
-        <label style={{ display: 'block', marginBottom: '0.75rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.85rem' }}>
           <div
             style={{
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              marginBottom: '0.25rem',
+              ...LABEL,
               display: 'flex',
               justifyContent: 'space-between',
+              marginBottom: '0.35rem',
             }}
           >
             <span>Justification</span>
             <span
               style={{
-                fontWeight: 400,
-                color: justificationValid ? '#16a34a' : '#dc2626',
-                fontSize: '0.8rem',
+                color: justificationValid ? '#34d399' : '#f87171',
+                fontSize: '0.68rem',
               }}
             >
               {justification.trim().length} / 20 min
@@ -168,41 +211,41 @@ export function GrantOverrideDialog({
             value={justification}
             onChange={(e) => setJustification(e.target.value)}
             placeholder="Describe the circumstances requiring this override (minimum 20 characters)"
-            style={{ width: '100%', padding: '0.5rem' }}
+            style={{ ...INPUT, resize: 'vertical' }}
           />
         </label>
 
-        <label style={{ display: 'block', marginBottom: '0.75rem' }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-            Expires at
-          </div>
+        <label style={{ display: 'block', marginBottom: '0.85rem' }}>
+          <div style={LABEL}>Expires at</div>
           <input
             type="date"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
-            style={{ padding: '0.4rem' }}
+            style={{ ...INPUT, width: 'auto' }}
           />
         </label>
 
         <div
           style={{
-            padding: '0.75rem',
-            background: '#fefce8',
-            border: '1px solid #fde68a',
-            borderRadius: 4,
-            marginBottom: '0.75rem',
+            padding: '0.8rem',
+            background: 'rgba(251, 191, 36, 0.08)',
+            border: `1px solid ${amber}44`,
+            borderRadius: 8,
+            marginBottom: '0.9rem',
           }}
         >
-          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', cursor: 'pointer' }}>
+          <label
+            style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', cursor: 'pointer' }}
+          >
             <input
               type="checkbox"
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
               style={{ marginTop: '0.2rem' }}
             />
-            <span style={{ fontSize: '0.85rem' }}>
-              I confirm I am authorized to grant this override as a chief instructor or admin.
-              This authorization will be permanently recorded with my identity.
+            <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>
+              I confirm I am authorized to grant this override as a chief instructor or admin. This
+              authorization will be permanently recorded with my identity.
             </span>
           </label>
         </div>
@@ -212,11 +255,17 @@ export function GrantOverrideDialog({
             type="button"
             onClick={() => onOpenChange(false)}
             style={{
-              padding: '0.4rem 0.75rem',
-              border: '1px solid #d1d5db',
-              borderRadius: 4,
-              background: 'white',
+              padding: '0.45rem 0.9rem',
+              border: '1px solid #1f2940',
+              borderRadius: 6,
+              background: '#0d1220',
+              color: '#cbd5e1',
               cursor: 'pointer',
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
             }}
           >
             Cancel
@@ -226,13 +275,22 @@ export function GrantOverrideDialog({
             disabled={!canSubmit}
             onClick={() => void handleSubmit()}
             style={{
-              padding: '0.4rem 0.75rem',
+              padding: '0.45rem 0.95rem',
               border: 'none',
-              borderRadius: 4,
-              background: canSubmit ? '#b45309' : '#d1d5db',
-              color: 'white',
+              borderRadius: 6,
+              background: canSubmit
+                ? 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)'
+                : '#293352',
+              color: canSubmit ? '#0a0e1a' : '#5b6784',
               cursor: canSubmit ? 'pointer' : 'not-allowed',
-              fontWeight: 600,
+              fontWeight: 700,
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              boxShadow: canSubmit
+                ? '0 4px 14px rgba(251, 191, 36, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset'
+                : 'none',
             }}
           >
             {grantMut.isPending ? 'Authorizing...' : 'Authorize override'}

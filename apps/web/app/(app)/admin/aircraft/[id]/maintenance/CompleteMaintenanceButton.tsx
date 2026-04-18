@@ -10,6 +10,10 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 
+const MONO: React.CSSProperties = {
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+};
+
 export function CompleteMaintenanceButton({
   itemId,
   itemTitle,
@@ -45,13 +49,17 @@ export function CompleteMaintenanceButton({
         type="button"
         onClick={() => setOpen(true)}
         style={{
-          padding: '0.25rem 0.6rem',
-          background: '#0070f3',
-          color: 'white',
-          border: 0,
-          borderRadius: 3,
+          padding: '0.3rem 0.7rem',
+          background: 'rgba(52, 211, 153, 0.12)',
+          color: '#34d399',
+          border: '1px solid rgba(52, 211, 153, 0.35)',
+          borderRadius: 6,
           cursor: 'pointer',
-          fontSize: '0.8rem',
+          fontSize: '0.7rem',
+          ...MONO,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          fontWeight: 600,
         }}
       >
         Complete
@@ -61,7 +69,7 @@ export function CompleteMaintenanceButton({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.5)',
+            background: 'rgba(0,0,0,0.6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -71,19 +79,21 @@ export function CompleteMaintenanceButton({
           <form
             onSubmit={onSubmit}
             style={{
-              background: 'white',
+              background: '#0d1220',
               padding: '1.25rem',
-              borderRadius: 6,
+              borderRadius: 12,
               maxWidth: 480,
               width: '90%',
+              border: '1px solid #1f2940',
+              color: '#cbd5e1',
             }}
           >
-            <h3 style={{ margin: 0 }}>Complete: {itemTitle}</h3>
-            <p style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-              Records compliance now with your mechanic certificate snapshot. Requires at
-              least A&amp;P authority; annual inspections require IA.
+            <h3 style={{ margin: 0, color: '#f7f9fc' }}>Complete: {itemTitle}</h3>
+            <p style={{ fontSize: '0.85rem', color: '#7a869a' }}>
+              Records compliance now with your mechanic certificate snapshot. Requires at least
+              A&amp;P authority; annual inspections require IA.
             </p>
-            <label style={{ display: 'block', fontSize: '0.85rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', color: '#7a869a' }}>
               Completed at (defaults to now)
               <input
                 name="completedAt"
@@ -91,9 +101,7 @@ export function CompleteMaintenanceButton({
                 style={{ width: '100%', marginTop: '0.25rem' }}
               />
             </label>
-            {error ? (
-              <p style={{ color: 'crimson', fontSize: '0.85rem' }}>{error}</p>
-            ) : null}
+            {error ? <p style={{ color: '#f87171', fontSize: '0.85rem' }}>{error}</p> : null}
             <div
               style={{
                 display: 'flex',
@@ -102,18 +110,39 @@ export function CompleteMaintenanceButton({
                 marginTop: '1rem',
               }}
             >
-              <button type="button" onClick={() => setOpen(false)}>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                style={{
+                  padding: '0.35rem 0.8rem',
+                  background: 'transparent',
+                  color: '#cbd5e1',
+                  border: '1px solid #293352',
+                  borderRadius: 6,
+                  fontSize: '0.72rem',
+                  ...MONO,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={complete.isPending}
                 style={{
-                  padding: '0.4rem 0.9rem',
-                  background: '#16a34a',
-                  color: 'white',
-                  border: 0,
-                  borderRadius: 4,
+                  padding: '0.45rem 0.95rem',
+                  background: 'rgba(52, 211, 153, 0.15)',
+                  color: '#34d399',
+                  border: '1px solid rgba(52, 211, 153, 0.45)',
+                  borderRadius: 6,
+                  fontSize: '0.72rem',
+                  ...MONO,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
                   cursor: complete.isPending ? 'wait' : 'pointer',
                 }}
               >

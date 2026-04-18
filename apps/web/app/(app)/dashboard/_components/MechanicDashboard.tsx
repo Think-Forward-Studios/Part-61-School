@@ -21,18 +21,18 @@ export function MechanicDashboard() {
         accent={(squawks.data as unknown as unknown[] | undefined)?.length ? 'warn' : 'default'}
       >
         {squawks.isLoading ? (
-          <span style={{ color: '#999' }}>Loading...</span>
+          <span style={{ color: '#5b6784' }}>Loading...</span>
         ) : (squawks.data as unknown as unknown[] | undefined)?.length ? (
           (squawks.data as unknown as Array<Record<string, unknown>>).slice(0, 5).map((s) => (
             <div key={(s.id ?? s.squawk_id) as string} style={{ marginBottom: '0.25rem' }}>
               <span style={{ fontWeight: 600 }}>{s.title as string}</span>
-              <span style={{ color: '#999', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
+              <span style={{ color: '#7a869a', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
                 {s.status as string}
               </span>
             </div>
           ))
         ) : (
-          <span style={{ color: '#16a34a' }}>No open squawks</span>
+          <span style={{ color: '#34d399' }}>No open squawks</span>
         )}
       </DashboardTile>
 
@@ -42,24 +42,24 @@ export function MechanicDashboard() {
         accent={(workOrders.data as unknown as unknown[] | undefined)?.length ? 'info' : 'default'}
       >
         {workOrders.isLoading ? (
-          <span style={{ color: '#999' }}>Loading...</span>
+          <span style={{ color: '#5b6784' }}>Loading...</span>
         ) : (workOrders.data as unknown as unknown[] | undefined)?.length ? (
           (workOrders.data as unknown as Array<Record<string, unknown>>).slice(0, 5).map((wo) => (
             <div key={wo.id as string} style={{ marginBottom: '0.25rem' }}>
               <span style={{ fontWeight: 600 }}>{(wo.kind ?? wo.work_order_kind) as string}</span>
-              <span style={{ color: '#999', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
+              <span style={{ color: '#7a869a', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
                 {wo.status as string}
               </span>
             </div>
           ))
         ) : (
-          <span style={{ color: '#16a34a' }}>No open work orders</span>
+          <span style={{ color: '#34d399' }}>No open work orders</span>
         )}
       </DashboardTile>
 
       {/* Upcoming maintenance */}
       <DashboardTile title="Maintenance Forecast" href="/admin/dashboard">
-        <span style={{ color: '#999' }}>View fleet maintenance forecast &rarr;</span>
+        <span style={{ color: '#7a869a' }}>View fleet maintenance forecast &rarr;</span>
       </DashboardTile>
     </div>
   );

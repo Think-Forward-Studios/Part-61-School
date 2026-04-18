@@ -55,6 +55,24 @@ const KIND_LABELS: Record<string, string> = {
   duty_hour_warning: 'Duty-hour warning',
 };
 
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+};
+
 export function NotificationPrefsMatrix() {
   const utils = trpc.useUtils();
   const listQ = trpc.notifications.listPrefs.useQuery();
@@ -62,7 +80,7 @@ export function NotificationPrefsMatrix() {
     onSuccess: () => void utils.notifications.listPrefs.invalidate(),
   });
 
-  if (listQ.isLoading) return <p>Loading…</p>;
+  if (listQ.isLoading) return <p style={{ color: '#5b6784' }}>Loading…</p>;
   const rows = (listQ.data ?? []) as unknown as PrefRow[];
 
   function findRow(kind: string, channel: string): PrefRow | undefined {
@@ -70,82 +88,120 @@ export function NotificationPrefsMatrix() {
   }
 
   return (
-    <div style={{ marginTop: '1rem' }}>
+    <div style={{ marginTop: '0.5rem' }}>
       {KIND_GROUPS.map((grp) => (
-        <section key={grp.label} style={{ marginBottom: '1.25rem' }}>
-          <h2 style={{ fontSize: '0.95rem', marginBottom: '0.5rem' }}>{grp.label}</h2>
-          <table
+        <section key={grp.label} style={{ marginBottom: '1.5rem' }}>
+          <h2
             style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '0.85rem',
-              background: 'white',
-              border: '1px solid #e5e7eb',
-              borderRadius: 6,
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              fontSize: '0.72rem',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: '#7a869a',
+              marginBottom: '0.6rem',
+              fontWeight: 500,
             }}
           >
-            <thead>
-              <tr style={{ background: '#f9fafb', textAlign: 'left' }}>
-                <th style={{ padding: '0.5rem 0.75rem' }}>Event</th>
-                <th style={{ padding: '0.5rem 0.75rem', width: 120 }}>In-app</th>
-                <th style={{ padding: '0.5rem 0.75rem', width: 120 }}>Email</th>
-              </tr>
-            </thead>
-            <tbody>
-              {grp.kinds.map((kind) => {
-                const inApp = findRow(kind, 'in_app');
-                const email = findRow(kind, 'email');
-                const safety = !!(inApp?.is_safety_critical || email?.is_safety_critical);
-                return (
-                  <tr key={kind} style={{ borderTop: '1px solid #f3f4f6' }}>
-                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                      {KIND_LABELS[kind] ?? kind}
-                      {safety ? (
+            {grp.label}
+          </h2>
+          <div
+            style={{
+              background: '#0d1220',
+              border: '1px solid #1f2940',
+              borderRadius: 12,
+              overflow: 'hidden',
+            }}
+          >
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '0.85rem',
+              }}
+            >
+              <thead>
+                <tr style={{ background: '#121826' }}>
+                  <th style={TH}>Event</th>
+                  <th style={{ ...TH, width: 120, textAlign: 'center' }}>In-app</th>
+                  <th style={{ ...TH, width: 120, textAlign: 'center' }}>Email</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grp.kinds.map((kind) => {
+                  const inApp = findRow(kind, 'in_app');
+                  const email = findRow(kind, 'email');
+                  const safety = !!(inApp?.is_safety_critical || email?.is_safety_critical);
+                  return (
+                    <tr key={kind} style={{ borderBottom: '1px solid #161d30' }}>
+                      <td style={TD}>
                         <span
                           style={{
-                            marginLeft: '0.4rem',
-                            fontSize: '0.7rem',
-                            color: '#b91c1c',
-                            fontWeight: 600,
+                            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                            fontSize: '0.8rem',
+                            color: '#cbd5e1',
                           }}
                         >
-                          Safety
+                          {KIND_LABELS[kind] ?? kind}
                         </span>
-                      ) : null}
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={!!inApp?.enabled}
-                        disabled={safety}
-                        title={safety ? 'always delivered for safety' : undefined}
-                        onChange={(e) =>
-                          update.mutate({
-                            kind: kind as never,
-                            channel: 'in_app',
-                            enabled: e.target.checked,
-                          })
-                        }
-                      />
-                    </td>
-                    <td style={{ padding: '0.5rem 0.75rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={!!email?.enabled}
-                        onChange={(e) =>
-                          update.mutate({
-                            kind: kind as never,
-                            channel: 'email',
-                            enabled: e.target.checked,
-                          })
-                        }
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        {safety ? (
+                          <span
+                            style={{
+                              marginLeft: '0.5rem',
+                              padding: '0.12rem 0.45rem',
+                              borderRadius: 999,
+                              background: 'rgba(248, 113, 113, 0.14)',
+                              color: '#f87171',
+                              border: '1px solid rgba(248, 113, 113, 0.35)',
+                              fontSize: '0.62rem',
+                              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                              letterSpacing: '0.12em',
+                              textTransform: 'uppercase',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Safety
+                          </span>
+                        ) : null}
+                      </td>
+                      <td style={{ ...TD, textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!inApp?.enabled}
+                          disabled={safety}
+                          title={safety ? 'always delivered for safety' : undefined}
+                          onChange={(e) =>
+                            update.mutate({
+                              kind: kind as never,
+                              channel: 'in_app',
+                              enabled: e.target.checked,
+                            })
+                          }
+                          style={{
+                            accentColor: '#fbbf24',
+                            cursor: safety ? 'not-allowed' : 'pointer',
+                          }}
+                        />
+                      </td>
+                      <td style={{ ...TD, textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!email?.enabled}
+                          onChange={(e) =>
+                            update.mutate({
+                              kind: kind as never,
+                              channel: 'email',
+                              enabled: e.target.checked,
+                            })
+                          }
+                          style={{ accentColor: '#fbbf24', cursor: 'pointer' }}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </section>
       ))}
     </div>

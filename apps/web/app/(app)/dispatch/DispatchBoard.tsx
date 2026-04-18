@@ -62,18 +62,33 @@ function isRowOverdue(r: Row): { overdue: boolean; minutes: number } {
 
 function rowColor(r: Row): string {
   const { overdue } = isRowOverdue(r);
-  if (overdue) return '#fee2e2';
+  if (overdue) return 'rgba(248, 113, 113, 0.12)';
   if (r.status === 'dispatched') {
     const range = getStr(r, 'time_range', 'timeRange');
     const bounds = parseRangeBounds(range);
     if (bounds) {
       const remaining = bounds.end.getTime() - Date.now();
-      if (remaining < 10 * 60_000) return '#fef3c7';
+      if (remaining < 10 * 60_000) return 'rgba(251, 191, 36, 0.10)';
     }
-    return '#dcfce7';
+    return 'rgba(52, 211, 153, 0.10)';
   }
-  if (r.status === 'closed' || r.status === 'flown') return '#f3f4f6';
-  return 'white';
+  if (r.status === 'closed' || r.status === 'flown') return '#121826';
+  return '#0d1220';
+}
+
+function rowBorder(r: Row): string {
+  const { overdue } = isRowOverdue(r);
+  if (overdue) return 'rgba(248, 113, 113, 0.45)';
+  if (r.status === 'dispatched') {
+    const range = getStr(r, 'time_range', 'timeRange');
+    const bounds = parseRangeBounds(range);
+    if (bounds) {
+      const remaining = bounds.end.getTime() - Date.now();
+      if (remaining < 10 * 60_000) return 'rgba(251, 191, 36, 0.35)';
+    }
+    return 'rgba(52, 211, 153, 0.35)';
+  }
+  return '#1f2940';
 }
 
 function RowCard({
@@ -97,15 +112,27 @@ function RowCard({
     <div
       style={{
         padding: '0.75rem',
-        border: '1px solid #e5e7eb',
-        borderRadius: 6,
+        border: `1px solid ${rowBorder(r)}`,
+        borderRadius: 8,
         background: rowColor(r),
         marginBottom: '0.5rem',
         fontSize: '0.85rem',
+        color: '#cbd5e1',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-        <strong style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <strong
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            color: '#f7f9fc',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.78rem',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+          }}
+        >
           {activity}
           <MelBadge aircraftId={aircraftId} />
           {showMapLink && (
@@ -119,8 +146,9 @@ function RowCard({
                 width: 22,
                 height: 22,
                 borderRadius: 4,
-                background: '#3b82f6',
-                color: '#fff',
+                background: 'rgba(56, 189, 248, 0.18)',
+                color: '#38bdf8',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
                 fontSize: 12,
                 textDecoration: 'none',
                 lineHeight: 1,
@@ -131,31 +159,63 @@ function RowCard({
             </Link>
           )}
         </strong>
-        <span>{reservationStatusLabel(r.status)}</span>
+        <span
+          style={{
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.7rem',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#7a869a',
+          }}
+        >
+          {reservationStatusLabel(r.status)}
+        </span>
       </div>
       {bounds ? (
-        <div style={{ color: '#555', marginTop: '0.25rem' }}>
+        <div
+          style={{
+            color: '#7a869a',
+            marginTop: '0.3rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.78rem',
+          }}
+        >
           {bounds.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           {' → '}
           {bounds.end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
       ) : null}
       {overdue ? (
-        <div style={{ color: '#b91c1c', fontWeight: 600, marginTop: '0.25rem' }}>
+        <div
+          style={{
+            color: '#f87171',
+            fontWeight: 700,
+            marginTop: '0.35rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.75rem',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          }}
+        >
           OVERDUE by {minutes}m
         </div>
       ) : null}
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
         {onDispatchClick ? (
           <button
             type="button"
             onClick={onDispatchClick}
             style={{
-              padding: '0.25rem 0.75rem',
-              background: '#0070f3',
-              color: 'white',
-              border: 0,
-              borderRadius: 4,
+              padding: '0.35rem 0.8rem',
+              background: 'rgba(56, 189, 248, 0.12)',
+              color: '#38bdf8',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: 6,
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
               cursor: 'pointer',
             }}
           >
@@ -167,11 +227,16 @@ function RowCard({
             type="button"
             onClick={onCloseClick}
             style={{
-              padding: '0.25rem 0.75rem',
-              background: '#16a34a',
-              color: 'white',
-              border: 0,
-              borderRadius: 4,
+              padding: '0.35rem 0.8rem',
+              background: 'rgba(52, 211, 153, 0.12)',
+              color: '#34d399',
+              border: '1px solid rgba(52, 211, 153, 0.35)',
+              borderRadius: 6,
+              fontSize: '0.72rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
               cursor: 'pointer',
             }}
           >
@@ -189,13 +254,25 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
       style={{
         flex: 1,
         minWidth: 280,
-        background: '#fafafa',
-        border: '1px solid #e5e7eb',
-        borderRadius: 8,
-        padding: '0.75rem',
+        background: '#0d1220',
+        border: '1px solid #1f2940',
+        borderRadius: 12,
+        padding: '0.9rem',
       }}
     >
-      <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>{title}</h2>
+      <h2
+        style={{
+          margin: '0 0 0.75rem 0',
+          fontSize: '0.72rem',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#7a869a',
+          fontWeight: 500,
+        }}
+      >
+        {title}
+      </h2>
       {children}
     </section>
   );
@@ -232,7 +309,7 @@ export function DispatchBoard() {
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <Panel title={`Currently flying (${flying.length})`}>
           {flying.length === 0 ? (
-            <p style={{ color: '#888' }}>No active flights.</p>
+            <p style={{ color: '#7a869a', fontSize: '0.82rem', margin: 0 }}>No active flights.</p>
           ) : (
             flying.map((r) => (
               <RowCard
@@ -246,7 +323,9 @@ export function DispatchBoard() {
         </Panel>
         <Panel title={`About to fly (${upcoming.length})`}>
           {upcoming.length === 0 ? (
-            <p style={{ color: '#888' }}>Nothing in the next 60 minutes.</p>
+            <p style={{ color: '#7a869a', fontSize: '0.82rem', margin: 0 }}>
+              Nothing in the next 60 minutes.
+            </p>
           ) : (
             upcoming.map((r) => (
               <RowCard key={r.id} r={r} showMapLink onDispatchClick={() => setDispatchTarget(r)} />
@@ -255,7 +334,9 @@ export function DispatchBoard() {
         </Panel>
         <Panel title={`Recently closed (${closed.length})`}>
           {closed.length === 0 ? (
-            <p style={{ color: '#888' }}>No flights closed in the last 2h.</p>
+            <p style={{ color: '#7a869a', fontSize: '0.82rem', margin: 0 }}>
+              No flights closed in the last 2h.
+            </p>
           ) : (
             closed.map((r) => <RowCard key={r.id} r={r} />)
           )}

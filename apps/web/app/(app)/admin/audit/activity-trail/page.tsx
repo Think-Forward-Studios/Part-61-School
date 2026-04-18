@@ -9,6 +9,7 @@
  */
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui';
 import { ActivityTrailClient } from './ActivityTrailClient';
 
 export const dynamic = 'force-dynamic';
@@ -27,11 +28,12 @@ export default async function ActivityTrailPage({ searchParams }: { searchParams
     Array.isArray(v) ? v[0] : v;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1400 }}>
-      <h1>Training activity trail</h1>
-      <p style={{ color: '#4b5563', fontSize: '0.85rem' }}>
-        Scheduler, authorizer, ramp-out, ramp-in, and close-out for every reservation.
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1600, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Audit"
+        title="Training activity trail"
+        subtitle="Scheduler, authorizer, ramp-out, ramp-in, and close-out for every reservation."
+      />
       <ActivityTrailClient
         initialStudent={one(params.student)}
         initialInstructor={one(params.instructor)}

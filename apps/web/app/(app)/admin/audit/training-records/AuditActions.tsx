@@ -33,12 +33,18 @@ export function AuditActions({ exceptionId }: { exceptionId?: string }) {
           }
         }}
         style={{
-          fontSize: '0.8rem',
-          padding: '0.2rem 0.5rem',
-          border: '1px solid #d1d5db',
-          borderRadius: 4,
-          background: 'white',
-          cursor: 'pointer',
+          padding: '0.3rem 0.7rem',
+          background: 'rgba(52, 211, 153, 0.12)',
+          color: '#34d399',
+          border: '1px solid rgba(52, 211, 153, 0.35)',
+          borderRadius: 6,
+          fontSize: '0.7rem',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          fontWeight: 600,
+          cursor: busy ? 'not-allowed' : 'pointer',
+          opacity: busy ? 0.5 : 1,
         }}
       >
         {busy ? 'Resolving...' : 'Mark resolved'}
@@ -61,14 +67,18 @@ export function AuditActions({ exceptionId }: { exceptionId?: string }) {
         }
       }}
       style={{
-        fontSize: '0.85rem',
-        padding: '0.35rem 0.75rem',
-        border: '1px solid #2563eb',
-        borderRadius: 4,
-        background: '#2563eb',
-        color: 'white',
-        cursor: 'pointer',
-        fontWeight: 500,
+        padding: '0.55rem 0.95rem',
+        background: 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)',
+        color: '#0a0e1a',
+        border: 'none',
+        borderRadius: 8,
+        fontSize: '0.78rem',
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        cursor: busy ? 'not-allowed' : 'pointer',
+        opacity: busy ? 0.6 : 1,
+        boxShadow: '0 4px 14px rgba(251, 191, 36, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset',
       }}
     >
       {busy ? 'Running...' : 'Run audit now'}

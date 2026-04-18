@@ -13,6 +13,7 @@ import { StudentNextActivityChip } from '../../_components/StudentNextActivityCh
 import { StudentProgressForecastPanel } from '../../_components/StudentProgressForecastPanel';
 import { StudentMinimumsPanel } from '../../_components/StudentMinimumsPanel';
 import { StudentRolloverQueuePanel } from '../../_components/StudentRolloverQueuePanel';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,33 @@ type RolloverRow = {
   target_lesson_title: string;
   line_item_objective: string | null;
   line_item_classification: string;
+};
+
+const SECTION_HEADING: React.CSSProperties = {
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.72rem',
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase',
+  color: '#7a869a',
+  marginBottom: '0.5rem',
+  fontWeight: 500,
+};
+
+const CARD: React.CSSProperties = {
+  background: '#0d1220',
+  border: '1px solid #1f2940',
+  borderRadius: 12,
+  padding: '1rem 1.1rem',
+};
+
+const EMPTY: React.CSSProperties = {
+  padding: '2rem 1rem',
+  textAlign: 'center',
+  color: '#7a869a',
+  fontSize: '0.88rem',
+  background: '#0d1220',
+  border: '1px dashed #1f2940',
+  borderRadius: 12,
 };
 
 export default async function StudentEnrollmentPage({ params }: { params: Params }) {
@@ -67,39 +95,48 @@ export default async function StudentEnrollmentPage({ params }: { params: Params
   // Check if enrollment is active (not completed or withdrawn)
   const isActive = !course.completedAt;
 
-  return (
-    <main style={{ padding: '1rem', maxWidth: 960 }}>
-      <p>
-        <Link href="/record">← Back to My Training Record</Link>
-      </p>
-      <h1>
-        {course.courseCode ?? 'course'} — {course.courseTitle ?? '—'}
-      </h1>
-      <p style={{ color: '#555' }}>
-        Version {course.versionLabel ?? '—'} · enrolled{' '}
-        {new Date(course.enrolledAt).toLocaleDateString()}
-        {course.completedAt
-          ? ` · completed ${new Date(course.completedAt).toLocaleDateString()}`
-          : ''}
-      </p>
+  const courseCodeTitle = `${course.courseCode ?? 'course'} — ${course.courseTitle ?? '\u2014'}`;
+  const subtitle = `Version ${course.versionLabel ?? '\u2014'} · enrolled ${new Date(
+    course.enrolledAt,
+  ).toLocaleDateString()}${
+    course.completedAt ? ` · completed ${new Date(course.completedAt).toLocaleDateString()}` : ''
+  }`;
 
-      <p>
-        <a
-          href={`/record/courses/${enrollmentId}/export.pdf`}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: 'inline-block',
-            padding: '0.5rem 0.75rem',
-            background: '#2563eb',
-            color: '#fff',
-            borderRadius: 4,
-            textDecoration: 'none',
-          }}
-        >
-          Download 141.101 Training Record PDF
-        </a>
+  return (
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <p style={{ marginBottom: '0.5rem' }}>
+        <Link href="/record" style={{ color: '#38bdf8', fontSize: '0.85rem' }}>
+          ← Back to My Training Record
+        </Link>
       </p>
+      <PageHeader
+        eyebrow="Training"
+        title={courseCodeTitle}
+        subtitle={subtitle}
+        actions={
+          <a
+            href={`/record/courses/${enrollmentId}/export.pdf`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: 'inline-block',
+              padding: '0.55rem 0.95rem',
+              background: 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)',
+              color: '#0a0e1a',
+              borderRadius: 8,
+              textDecoration: 'none',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              boxShadow:
+                '0 4px 14px rgba(251, 191, 36, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset',
+            }}
+          >
+            Download 141.101 PDF
+          </a>
+        }
+      />
 
       {/* Phase 6: Progress surfaces scoped to this enrollment */}
       {isActive ? (
@@ -122,78 +159,101 @@ export default async function StudentEnrollmentPage({ params }: { params: Params
         </>
       ) : null}
 
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Grade sheets (sealed)</h2>
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Grade sheets (sealed)</h2>
         {gradeSheets.length === 0 ? (
-          <p style={{ color: '#888' }}>No sealed grade sheets yet.</p>
+          <div style={EMPTY}>No sealed grade sheets yet.</div>
         ) : (
-          <ul style={{ fontSize: '0.9rem', lineHeight: 1.6 }}>
-            {gradeSheets.map((g) => (
-              <li key={g.id}>
-                🔒 {new Date(g.conductedAt).toLocaleDateString()} · {g.lessonCode} —{' '}
-                {g.lessonTitle} (gnd {g.groundMinutes}m / flt {g.flightMinutes}m)
-                {g.signer ? (
-                  <span style={{ color: '#888' }}> · {g.signer.fullName}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <div style={CARD}>
+            <ul
+              style={{
+                fontSize: '0.9rem',
+                lineHeight: 1.7,
+                margin: 0,
+                paddingLeft: '1.1rem',
+                color: '#cbd5e1',
+              }}
+            >
+              {gradeSheets.map((g) => (
+                <li key={g.id}>
+                  🔒 {new Date(g.conductedAt).toLocaleDateString()} · {g.lessonCode} —{' '}
+                  {g.lessonTitle} (gnd {g.groundMinutes}m / flt {g.flightMinutes}m)
+                  {g.signer ? (
+                    <span style={{ color: '#7a869a' }}> · {g.signer.fullName}</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Stage checks</h2>
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Stage checks</h2>
         {stageChecks.length === 0 ? (
-          <p style={{ color: '#888' }}>No stage checks yet.</p>
+          <div style={EMPTY}>No stage checks yet.</div>
         ) : (
-          <ul style={{ fontSize: '0.9rem' }}>
-            {stageChecks.map((s) => (
-              <li key={s.id}>
-                🔒 {s.stageCode} — {s.stageTitle} · <strong>{s.status}</strong>
-                {s.conductedAt
-                  ? ` · ${new Date(s.conductedAt).toLocaleDateString()}`
-                  : ''}
-              </li>
-            ))}
-          </ul>
+          <div style={CARD}>
+            <ul style={{ fontSize: '0.9rem', margin: 0, paddingLeft: '1.1rem', color: '#cbd5e1' }}>
+              {stageChecks.map((s) => (
+                <li key={s.id}>
+                  🔒 {s.stageCode} — {s.stageTitle} ·{' '}
+                  <strong style={{ color: '#f7f9fc' }}>{s.status}</strong>
+                  {s.conductedAt ? ` · ${new Date(s.conductedAt).toLocaleDateString()}` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Endorsements</h2>
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Endorsements</h2>
         {endorsements.length === 0 ? (
-          <p style={{ color: '#888' }}>No endorsements on file.</p>
+          <div style={EMPTY}>No endorsements on file.</div>
         ) : (
-          <ul style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
-            {endorsements.map((e) => (
-              <li key={e.id} style={{ marginBottom: '0.5rem' }}>
-                🔒 <strong>{e.templateCode ?? 'custom'}</strong> — {e.templateTitle ?? ''}{' '}
-                <span style={{ color: '#888' }}>
-                  {new Date(e.issuedAt).toLocaleDateString()}
-                </span>
-                <div style={{ fontSize: '0.85rem', color: '#444', marginTop: 2 }}>
-                  {e.renderedText}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div style={CARD}>
+            <ul
+              style={{
+                fontSize: '0.9rem',
+                lineHeight: 1.55,
+                margin: 0,
+                paddingLeft: '1.1rem',
+                color: '#cbd5e1',
+              }}
+            >
+              {endorsements.map((e) => (
+                <li key={e.id} style={{ marginBottom: '0.5rem' }}>
+                  🔒 <strong style={{ color: '#f7f9fc' }}>{e.templateCode ?? 'custom'}</strong> —{' '}
+                  {e.templateTitle ?? ''}{' '}
+                  <span style={{ color: '#7a869a' }}>
+                    {new Date(e.issuedAt).toLocaleDateString()}
+                  </span>
+                  <div style={{ fontSize: '0.85rem', color: '#a3acc2', marginTop: 2 }}>
+                    {e.renderedText}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
 
-      <section style={{ marginTop: '1rem' }}>
-        <h2>Test grades</h2>
+      <section style={{ marginTop: '1.5rem' }}>
+        <h2 style={SECTION_HEADING}>Test grades</h2>
         {testGrades.length === 0 ? (
-          <p style={{ color: '#888' }}>No test grades on file.</p>
+          <div style={EMPTY}>No test grades on file.</div>
         ) : (
-          <ul style={{ fontSize: '0.9rem' }}>
-            {testGrades.map((t) => (
-              <li key={t.id}>
-                🔒 {new Date(t.recordedAt).toLocaleDateString()} · {t.testKind} (
-                {t.componentKind})
-                {t.score != null ? ` · ${t.score}/${t.maxScore ?? '—'}` : ''}
-              </li>
-            ))}
-          </ul>
+          <div style={CARD}>
+            <ul style={{ fontSize: '0.9rem', margin: 0, paddingLeft: '1.1rem', color: '#cbd5e1' }}>
+              {testGrades.map((t) => (
+                <li key={t.id}>
+                  🔒 {new Date(t.recordedAt).toLocaleDateString()} · {t.testKind} ({t.componentKind}
+                  ){t.score != null ? ` · ${t.score}/${t.maxScore ?? '—'}` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
     </main>
