@@ -9,11 +9,21 @@
 
 import { trpc } from '@/lib/trpc/client';
 
+const H2: React.CSSProperties = {
+  fontSize: '0.72rem',
+  margin: '0 0 0.6rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  letterSpacing: '0.15em',
+  fontWeight: 500,
+};
+
 function chipStyle(weeks: number): { bg: string; fg: string } {
-  if (weeks > 0) return { bg: '#dcfce7', fg: '#166534' };
-  if (weeks >= -1) return { bg: '#f5f5f5', fg: '#374151' };
-  if (weeks >= -2) return { bg: '#fef3c7', fg: '#92400e' };
-  return { bg: '#fee2e2', fg: '#991b1b' };
+  if (weeks > 0) return { bg: 'rgba(52, 211, 153, 0.12)', fg: '#34d399' };
+  if (weeks >= -1) return { bg: 'rgba(122, 134, 154, 0.14)', fg: '#cbd5e1' };
+  if (weeks >= -2) return { bg: 'rgba(251, 191, 36, 0.14)', fg: '#fbbf24' };
+  return { bg: 'rgba(248, 113, 113, 0.14)', fg: '#f87171' };
 }
 
 function chipText(weeks: number): string {
@@ -36,8 +46,8 @@ export function ProgressForecastPanel({ enrollmentId }: { enrollmentId: string }
   if (query.isLoading) {
     return (
       <section style={{ marginTop: '1.5rem' }}>
-        <h2 style={{ fontSize: '1rem' }}>Progress forecast</h2>
-        <p style={{ color: '#888' }}>Loading forecast...</p>
+        <h2 style={H2}>Progress forecast</h2>
+        <p style={{ color: '#5b6784', fontSize: '0.85rem', margin: 0 }}>Loading forecast...</p>
       </section>
     );
   }
@@ -45,8 +55,10 @@ export function ProgressForecastPanel({ enrollmentId }: { enrollmentId: string }
   if (!query.data) {
     return (
       <section style={{ marginTop: '1.5rem' }}>
-        <h2 style={{ fontSize: '1rem' }}>Progress forecast</h2>
-        <p style={{ color: '#888' }}>No forecast data available.</p>
+        <h2 style={H2}>Progress forecast</h2>
+        <p style={{ color: '#7a869a', fontSize: '0.85rem', margin: 0 }}>
+          No forecast data available.
+        </p>
       </section>
     );
   }
@@ -62,32 +74,53 @@ export function ProgressForecastPanel({ enrollmentId }: { enrollmentId: string }
 
   return (
     <section style={{ marginTop: '1.5rem' }}>
-      <h2 style={{ fontSize: '1rem' }}>Progress forecast</h2>
+      <h2 style={H2}>Progress forecast</h2>
 
       <div
         style={{
           display: 'inline-block',
-          padding: '0.35rem 0.75rem',
+          padding: '0.4rem 0.9rem',
           borderRadius: 6,
           background: chip.bg,
           color: chip.fg,
           fontWeight: 600,
-          fontSize: '0.95rem',
+          fontSize: '0.78rem',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
         }}
       >
         {chipText(aheadBehindWeeks)}
       </div>
 
-      <div style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
+      <div
+        style={{
+          marginTop: '0.75rem',
+          fontSize: '0.88rem',
+          color: '#cbd5e1',
+          display: 'grid',
+          gap: '0.35rem',
+        }}
+      >
         <div>
-          Projected checkride: <strong>{fmtDate(projectedCheckride)}</strong>
+          Projected checkride:{' '}
+          <strong
+            style={{ color: '#f7f9fc', fontFamily: '"JetBrains Mono", ui-monospace, monospace' }}
+          >
+            {fmtDate(projectedCheckride)}
+          </strong>
         </div>
         <div>
-          Projected course completion: <strong>{fmtDate(projectedCompletion)}</strong>
+          Projected course completion:{' '}
+          <strong
+            style={{ color: '#f7f9fc', fontFamily: '"JetBrains Mono", ui-monospace, monospace' }}
+          >
+            {fmtDate(projectedCompletion)}
+          </strong>
         </div>
       </div>
 
-      <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#6b7280' }}>
+      <div style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: '#7a869a' }}>
         Confidence: {confidence} ({weeksEnrolled.toFixed(0)} weeks enrolled)
       </div>
 
@@ -97,13 +130,18 @@ export function ProgressForecastPanel({ enrollmentId }: { enrollmentId: string }
           void utils.admin.enrollments.getProgressForecast.invalidate({ enrollmentId });
         }}
         style={{
-          marginTop: '0.5rem',
-          fontSize: '0.8rem',
-          padding: '0.25rem 0.5rem',
-          border: '1px solid #d1d5db',
-          borderRadius: 4,
-          background: 'white',
+          marginTop: '0.6rem',
+          fontSize: '0.68rem',
+          padding: '0.35rem 0.8rem',
+          border: '1px solid #1f2940',
+          borderRadius: 6,
+          background: 'transparent',
+          color: '#cbd5e1',
           cursor: 'pointer',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          fontWeight: 600,
         }}
       >
         Refresh forecast

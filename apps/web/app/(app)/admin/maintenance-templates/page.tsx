@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { sql, eq } from 'drizzle-orm';
 import { db, users } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,24 @@ type Row = {
   aircraft_model_pattern: string | null;
   description: string | null;
   line_count: number;
+};
+
+const TH: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0.65rem 0.9rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  fontSize: '0.68rem',
+  letterSpacing: '0.15em',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  fontWeight: 500,
+  borderBottom: '1px solid #1f2940',
+};
+
+const TD: React.CSSProperties = {
+  padding: '0.7rem 0.9rem',
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
 };
 
 export default async function MaintenanceTemplatesPage() {
@@ -46,50 +65,118 @@ export default async function MaintenanceTemplatesPage() {
   `)) as unknown as Row[];
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1100 }}>
-      <h1>Maintenance Templates</h1>
-      <p style={{ color: '#6b7280', fontSize: '0.85rem' }}>
-        Reusable item bundles that can be applied to a new aircraft. System templates
-        (unscoped) cover common airframes; school-scoped templates are yours.
-      </p>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-        <thead>
-          <tr style={{ background: '#f8fafc', textAlign: 'left' }}>
-            <th style={{ padding: '0.4rem' }}>Name</th>
-            <th style={{ padding: '0.4rem' }}>Scope</th>
-            <th style={{ padding: '0.4rem' }}>Applicable to</th>
-            <th style={{ padding: '0.4rem' }}>Items</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-              <td style={{ padding: '0.4rem' }}>{r.name}</td>
-              <td style={{ padding: '0.4rem' }}>
-                {r.school_id == null ? (
-                  <span style={{ color: '#6b7280' }}>System</span>
-                ) : (
-                  <span style={{ color: '#0369a1' }}>School</span>
-                )}
-              </td>
-              <td style={{ padding: '0.4rem', fontSize: '0.8rem' }}>
-                {[r.aircraft_make, r.aircraft_model_pattern].filter(Boolean).join(' / ') ||
-                  'Any'}
-              </td>
-              <td style={{ padding: '0.4rem' }}>{r.line_count}</td>
-            </tr>
-          ))}
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={4} style={{ padding: '0.75rem', color: '#6b7280' }}>
-                No templates available.
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-      <p style={{ color: '#6b7280', fontSize: '0.8rem', marginTop: '1rem' }}>
-        <Link href="/admin/aircraft">Apply a template to an aircraft →</Link>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Maintenance"
+        title="Templates"
+        subtitle="Reusable item bundles that can be applied to a new aircraft. System templates (unscoped) cover common airframes; school-scoped templates are yours."
+      />
+
+      {rows.length === 0 ? (
+        <div
+          style={{
+            padding: '3rem 1rem',
+            textAlign: 'center',
+            color: '#7a869a',
+            fontSize: '0.88rem',
+            background: '#0d1220',
+            border: '1px dashed #1f2940',
+            borderRadius: 12,
+          }}
+        >
+          No templates available.
+        </div>
+      ) : (
+        <div
+          style={{
+            background: '#0d1220',
+            border: '1px solid #1f2940',
+            borderRadius: 12,
+            overflow: 'hidden',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#121826' }}>
+                <th style={TH}>Name</th>
+                <th style={TH}>Scope</th>
+                <th style={TH}>Applicable to</th>
+                <th style={TH}>Items</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} style={{ borderBottom: '1px solid #161d30' }}>
+                  <td style={{ ...TD, color: '#f7f9fc', fontWeight: 500 }}>{r.name}</td>
+                  <td style={TD}>
+                    {r.school_id == null ? (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: 999,
+                          background: 'rgba(122, 134, 154, 0.14)',
+                          color: '#7a869a',
+                          fontSize: '0.68rem',
+                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 600,
+                        }}
+                      >
+                        System
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          padding: '0.15rem 0.55rem',
+                          borderRadius: 999,
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          color: '#38bdf8',
+                          fontSize: '0.68rem',
+                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 600,
+                        }}
+                      >
+                        School
+                      </span>
+                    )}
+                  </td>
+                  <td
+                    style={{
+                      ...TD,
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.76rem',
+                    }}
+                  >
+                    {[r.aircraft_make, r.aircraft_model_pattern].filter(Boolean).join(' / ') || (
+                      <span style={{ color: '#5b6784' }}>Any</span>
+                    )}
+                  </td>
+                  <td
+                    style={{
+                      ...TD,
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.78rem',
+                      color: '#f7f9fc',
+                    }}
+                  >
+                    {r.line_count}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p style={{ color: '#7a869a', fontSize: '0.78rem', marginTop: '1rem' }}>
+        <Link href="/admin/aircraft" style={{ color: '#38bdf8', textDecoration: 'none' }}>
+          Apply a template to an aircraft →
+        </Link>
       </p>
     </main>
   );

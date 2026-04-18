@@ -3,6 +3,7 @@ import { db, users } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { PendingApprovalList } from './PendingApprovalList';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,9 +38,12 @@ export default async function PendingPage() {
   void and;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1000 }}>
-      <h1>Pending Registrations</h1>
-      <p>Review and decision each self-registered applicant below.</p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1100, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Directory"
+        title="Pending Registrations"
+        subtitle={`${rows.length} ${rows.length === 1 ? 'applicant' : 'applicants'} awaiting decision. Review and accept or reject each self-registered account below.`}
+      />
       <PendingApprovalList rows={rows} />
     </main>
   );

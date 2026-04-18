@@ -75,80 +75,139 @@ export async function TrainingRecordPanel({
 
   const active = enrollments.find((e) => !e.completed_at && !e.withdrawn_at);
 
+  const CHIP_LINK: React.CSSProperties = {
+    display: 'inline-flex',
+    padding: '0.35rem 0.75rem',
+    borderRadius: 6,
+    fontSize: '0.7rem',
+    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    fontWeight: 600,
+    background: 'rgba(56, 189, 248, 0.12)',
+    color: '#38bdf8',
+    border: '1px solid rgba(56, 189, 248, 0.3)',
+    textDecoration: 'none',
+    marginRight: '0.4rem',
+  };
+  const H3: React.CSSProperties = {
+    margin: 0,
+    fontSize: '0.72rem',
+    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+    color: '#7a869a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.15em',
+    fontWeight: 500,
+  };
+
   return (
     <section
-      style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: 6 }}
+      style={{
+        marginTop: '1rem',
+        padding: '1rem 1.1rem',
+        background: '#0d1220',
+        border: '1px solid #1f2940',
+        borderRadius: 12,
+      }}
     >
-      <h2>Training Record</h2>
-      <div style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+      <h2
+        style={{
+          margin: '0 0 0.75rem',
+          fontSize: '0.75rem',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          color: '#7a869a',
+          textTransform: 'uppercase',
+          letterSpacing: '0.15em',
+          fontWeight: 500,
+        }}
+      >
+        Training Record
+      </h2>
+      <div style={{ marginBottom: '0.9rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
         <a
           href={`/admin/students/${studentUserId}/iacra.pdf`}
           target="_blank"
           rel="noreferrer"
-          style={{ marginRight: '0.75rem' }}
+          style={CHIP_LINK}
         >
-          Download IACRA PDF
+          IACRA PDF
         </a>
-        <a
-          href={`/admin/students/${studentUserId}/iacra.csv`}
-          style={{ marginRight: '0.75rem' }}
-        >
-          Download IACRA CSV
+        <a href={`/admin/students/${studentUserId}/iacra.csv`} style={CHIP_LINK}>
+          IACRA CSV
         </a>
         {active ? (
           <a
             href={`/admin/students/${studentUserId}/courses/${active.id}/record.pdf`}
             target="_blank"
             rel="noreferrer"
+            style={CHIP_LINK}
           >
-            Download 141.101 Training Record PDF
+            141.101 Training Record
           </a>
         ) : null}
       </div>
       {enrollments.length === 0 ? (
-        <p style={{ color: '#888' }}>Not enrolled in any course.</p>
+        <p style={{ color: '#7a869a', fontSize: '0.85rem', margin: 0 }}>
+          Not enrolled in any course.
+        </p>
       ) : (
         <>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <strong>Current enrollment:</strong>{' '}
+          <div style={{ marginBottom: '0.75rem', fontSize: '0.88rem', color: '#cbd5e1' }}>
+            <span style={H3}>Current enrollment</span>
+            <br />
             {active ? (
-              <>
-                <Link href={`/admin/enrollments/${active.id}`}>
-                  {active.course_code} — {active.course_title} · {active.version_label}
-                </Link>
-              </>
+              <Link
+                href={`/admin/enrollments/${active.id}`}
+                style={{ color: '#38bdf8', textDecoration: 'none' }}
+              >
+                {active.course_code} — {active.course_title} · {active.version_label}
+              </Link>
             ) : (
-              <span style={{ color: '#888' }}>none (last was inactive)</span>
+              <span style={{ color: '#5b6784' }}>none (last was inactive)</span>
             )}
           </div>
           {enrollments.length > 1 ? (
-            <p style={{ fontSize: '0.8rem', color: '#666' }}>
+            <p style={{ fontSize: '0.78rem', color: '#7a869a', margin: 0 }}>
               {enrollments.length} enrollment(s) total on file.
             </p>
           ) : null}
         </>
       )}
 
-      <div style={{ marginTop: '0.75rem' }}>
-        <strong>Recent grade sheets:</strong>
+      <div style={{ marginTop: '0.9rem' }}>
+        <span style={H3}>Recent grade sheets</span>
         {sheets.length === 0 ? (
-          <span style={{ color: '#888' }}> none</span>
+          <p style={{ color: '#5b6784', fontSize: '0.82rem', margin: '0.25rem 0 0' }}>none</p>
         ) : (
-          <ul style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
+          <ul
+            style={{
+              fontSize: '0.85rem',
+              margin: '0.4rem 0 0',
+              paddingLeft: '1.1rem',
+              color: '#cbd5e1',
+            }}
+          >
             {sheets.map((s) => (
-              <li key={s.id}>
+              <li key={s.id} style={{ marginBottom: '0.3rem' }}>
                 {s.lesson_code} — {s.lesson_title}{' '}
                 <span
                   style={{
-                    fontSize: '0.75rem',
-                    padding: '0.05rem 0.3rem',
-                    background: s.sealed_at ? '#dcfce7' : '#fef3c7',
-                    borderRadius: 3,
+                    fontSize: '0.65rem',
+                    padding: '0.1rem 0.45rem',
+                    borderRadius: 4,
+                    background: s.sealed_at
+                      ? 'rgba(52, 211, 153, 0.12)'
+                      : 'rgba(251, 191, 36, 0.14)',
+                    color: s.sealed_at ? '#34d399' : '#fbbf24',
+                    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
                   }}
                 >
                   {s.sealed_at ? 'sealed' : s.status}
                 </span>{' '}
-                <span style={{ color: '#888' }}>
+                <span style={{ color: '#5b6784', fontSize: '0.78rem' }}>
                   {new Date(s.conducted_at).toLocaleDateString()}
                 </span>
               </li>
@@ -157,26 +216,39 @@ export async function TrainingRecordPanel({
         )}
       </div>
 
-      <div style={{ marginTop: '0.75rem' }}>
-        <strong>Endorsements:</strong>
+      <div style={{ marginTop: '0.9rem' }}>
+        <span style={H3}>Endorsements</span>
         {endorsements.length === 0 ? (
-          <span style={{ color: '#888' }}> none</span>
+          <p style={{ color: '#5b6784', fontSize: '0.82rem', margin: '0.25rem 0 0' }}>none</p>
         ) : (
-          <ul style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
+          <ul
+            style={{
+              fontSize: '0.85rem',
+              margin: '0.4rem 0 0',
+              paddingLeft: '1.1rem',
+              color: '#cbd5e1',
+            }}
+          >
             {endorsements.map((e) => {
               const expired = e.expires_at && new Date(e.expires_at).getTime() < Date.now();
               const revoked = e.revoked_at !== null;
               const activeStatus = !expired && !revoked;
               return (
-                <li key={e.id}>
+                <li key={e.id} style={{ marginBottom: '0.3rem' }}>
                   {e.template_code ?? 'custom'} — {e.template_title ?? ''}{' '}
                   <span
                     style={{
-                      fontSize: '0.75rem',
-                      padding: '0.05rem 0.3rem',
-                      borderRadius: 3,
-                      background: activeStatus ? '#dcfce7' : '#fee2e2',
-                      color: activeStatus ? '#166534' : '#7f1d1d',
+                      fontSize: '0.65rem',
+                      padding: '0.1rem 0.45rem',
+                      borderRadius: 4,
+                      background: activeStatus
+                        ? 'rgba(52, 211, 153, 0.12)'
+                        : 'rgba(248, 113, 113, 0.14)',
+                      color: activeStatus ? '#34d399' : '#f87171',
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
                     }}
                   >
                     {revoked ? 'revoked' : expired ? 'expired' : 'current'}

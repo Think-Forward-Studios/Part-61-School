@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { db, users, schools } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { SchoolSettingsForm } from './SchoolSettingsForm';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +23,12 @@ export default async function SchoolSettingsPage() {
   if (!school) redirect('/login');
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 720 }}>
-      <h1>School Settings</h1>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 800, margin: '0 auto' }}>
+      <PageHeader
+        eyebrow="Administration"
+        title="School Settings"
+        subtitle={`${school.name} · ${school.timezone}`}
+      />
       <SchoolSettingsForm initial={{ name: school.name, timezone: school.timezone }} />
     </main>
   );

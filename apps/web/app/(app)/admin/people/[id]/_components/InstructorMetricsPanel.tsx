@@ -12,23 +12,39 @@ export function InstructorMetricsPanel({ personId }: Props) {
   });
   const duty = trpc.instructorMetrics.dutyHoursInWindow.useQuery({ instructorId: personId });
 
-  const cardStyle = {
-    padding: '0.75rem',
-    border: '1px solid #e5e7eb',
-    borderRadius: 8,
-    background: 'white',
+  const cardStyle: React.CSSProperties = {
+    padding: '1rem 1.1rem',
+    border: '1px solid #1f2940',
+    borderRadius: 12,
+    background: '#0d1220',
     flex: '1 1 0',
     minWidth: 180,
   };
 
-  const labelStyle = {
-    fontSize: '0.7rem',
-    color: '#666',
+  const labelStyle: React.CSSProperties = {
+    fontSize: '0.68rem',
+    color: '#7a869a',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
+    letterSpacing: '0.15em',
+    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+    fontWeight: 500,
   };
-  const bigStyle = { fontSize: '1.4rem', fontWeight: 700, margin: '0.25rem 0' };
-  const subStyle = { fontSize: '0.8rem', color: '#999' };
+  const bigStyle: React.CSSProperties = {
+    fontSize: '1.6rem',
+    fontWeight: 600,
+    margin: '0.35rem 0',
+    color: '#f7f9fc',
+    fontFamily: '"Antonio", system-ui, sans-serif',
+    letterSpacing: '-0.01em',
+  };
+  const subStyle: React.CSSProperties = { fontSize: '0.78rem', color: '#7a869a' };
+
+  const dutyBorder =
+    duty.data && duty.data.minutes >= 420
+      ? 'rgba(248, 113, 113, 0.35)'
+      : duty.data && duty.data.minutes >= 360
+        ? 'rgba(251, 191, 36, 0.35)'
+        : '#1f2940';
 
   return (
     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
@@ -65,12 +81,7 @@ export function InstructorMetricsPanel({ personId }: Props) {
       <div
         style={{
           ...cardStyle,
-          borderColor:
-            duty.data && duty.data.minutes >= 420
-              ? '#fecaca'
-              : duty.data && duty.data.minutes >= 360
-                ? '#fde68a'
-                : '#e5e7eb',
+          borderColor: dutyBorder,
         }}
       >
         <div style={labelStyle}>24h Duty Window</div>
@@ -79,7 +90,15 @@ export function InstructorMetricsPanel({ personId }: Props) {
           {duty.data ? `of ${duty.data.maxMinutes}min allowed` : 'Loading...'}
         </div>
         {duty.data && duty.data.minutes >= 420 && (
-          <div style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>
+          <div
+            style={{
+              fontSize: '0.72rem',
+              color: '#f87171',
+              marginTop: '0.35rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              letterSpacing: '0.05em',
+            }}
+          >
             \u26A0 Approaching duty limit
           </div>
         )}

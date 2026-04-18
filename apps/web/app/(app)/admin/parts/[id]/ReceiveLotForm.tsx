@@ -4,6 +4,29 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 
+const CHIP_BASE: React.CSSProperties = {
+  padding: '0.4rem 0.9rem',
+  borderRadius: 6,
+  fontSize: '0.72rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  fontWeight: 600,
+  cursor: 'pointer',
+  border: '1px solid',
+};
+
+const LABEL: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.25rem',
+  fontSize: '0.7rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  letterSpacing: '0.1em',
+};
+
 export function ReceiveLotForm({ partId }: { partId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -41,16 +64,13 @@ export function ReceiveLotForm({ partId }: { partId: string }) {
         type="button"
         onClick={() => setOpen(true)}
         style={{
-          padding: '0.35rem 0.8rem',
-          background: '#0070f3',
-          color: 'white',
-          border: 0,
-          borderRadius: 3,
-          cursor: 'pointer',
-          fontSize: '0.85rem',
+          ...CHIP_BASE,
+          background: 'rgba(56, 189, 248, 0.12)',
+          color: '#38bdf8',
+          borderColor: 'rgba(56, 189, 248, 0.35)',
         }}
       >
-        Receive new lot
+        + Receive new lot
       </button>
     );
   }
@@ -59,51 +79,83 @@ export function ReceiveLotForm({ partId }: { partId: string }) {
     <form
       onSubmit={onSubmit}
       style={{
-        padding: '0.75rem',
-        background: '#f8fafc',
-        border: '1px solid #e5e7eb',
-        borderRadius: 4,
+        padding: '1rem 1.1rem',
+        background: '#05070e',
+        border: '1px solid #1f2940',
+        borderRadius: 8,
         display: 'grid',
-        gap: '0.5rem',
-        maxWidth: 520,
+        gap: '0.7rem',
+        maxWidth: 560,
       }}
     >
-      <h3 style={{ margin: 0, fontSize: '0.9rem' }}>Receive lot</h3>
-      <label style={{ fontSize: '0.8rem' }}>
+      <h3
+        style={{
+          margin: 0,
+          fontSize: '0.75rem',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          color: '#7a869a',
+          textTransform: 'uppercase',
+          letterSpacing: '0.15em',
+          fontWeight: 500,
+        }}
+      >
+        Receive lot
+      </h3>
+      <label style={LABEL}>
         Quantity received
-        <input name="receivedQty" type="number" step="any" required style={{ width: '100%' }} />
+        <input name="receivedQty" type="number" step="any" required />
       </label>
-      <label style={{ fontSize: '0.8rem' }}>
+      <label style={LABEL}>
         Lot # (optional)
-        <input name="lotNumber" style={{ width: '100%' }} />
+        <input name="lotNumber" />
       </label>
-      <label style={{ fontSize: '0.8rem' }}>
+      <label style={LABEL}>
         Serial # (optional)
-        <input name="serialNumber" style={{ width: '100%' }} />
+        <input name="serialNumber" />
       </label>
-      <label style={{ fontSize: '0.8rem' }}>
+      <label style={LABEL}>
         Supplier
-        <input name="supplier" style={{ width: '100%' }} />
+        <input name="supplier" />
       </label>
-      <label style={{ fontSize: '0.8rem' }}>
+      <label style={LABEL}>
         Invoice ref
-        <input name="invoiceRef" style={{ width: '100%' }} />
+        <input name="invoiceRef" />
       </label>
-      {error ? <p style={{ color: 'crimson', fontSize: '0.8rem' }}>{error}</p> : null}
+      {error ? (
+        <p
+          style={{
+            color: '#f87171',
+            fontSize: '0.75rem',
+            margin: 0,
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          }}
+        >
+          {error}
+        </p>
+      ) : null}
       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-        <button type="button" onClick={() => setOpen(false)}>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          style={{
+            ...CHIP_BASE,
+            background: 'transparent',
+            color: '#7a869a',
+            borderColor: '#1f2940',
+          }}
+        >
           Cancel
         </button>
         <button
           type="submit"
           disabled={receive.isPending}
           style={{
-            padding: '0.3rem 0.8rem',
-            background: '#16a34a',
-            color: 'white',
-            border: 0,
-            borderRadius: 3,
+            ...CHIP_BASE,
+            background: 'rgba(52, 211, 153, 0.12)',
+            color: '#34d399',
+            borderColor: 'rgba(52, 211, 153, 0.35)',
             cursor: receive.isPending ? 'wait' : 'pointer',
+            opacity: receive.isPending ? 0.6 : 1,
           }}
         >
           {receive.isPending ? 'Saving…' : 'Save'}

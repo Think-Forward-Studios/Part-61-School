@@ -29,6 +29,7 @@ import { ProgressForecastPanel } from './_panels/ProgressForecastPanel';
 import { RolloverQueuePanel } from './_panels/RolloverQueuePanel';
 import { NextActivityChip } from './_panels/NextActivityChip';
 import { InstructorMetricsPanel } from './_components/InstructorMetricsPanel';
+import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -126,27 +127,60 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
     [profile?.firstName, profile?.lastName].filter(Boolean).join(' ') || targetUser.email;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: 1000 }}>
-      <h1>{displayName}</h1>
-      <p style={{ color: '#555' }}>
-        {targetUser.email} · status: {targetUser.status}
-      </p>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ marginBottom: '0.75rem' }}>
+        <Link
+          href="/admin/people"
+          style={{
+            color: '#7a869a',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.72rem',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            textDecoration: 'none',
+          }}
+        >
+          ← Directory
+        </Link>
+      </div>
+      <PageHeader
+        eyebrow="Directory"
+        title={displayName}
+        subtitle={
+          <span
+            style={{ fontFamily: '"JetBrains Mono", ui-monospace, monospace', fontSize: '0.78rem' }}
+          >
+            {targetUser.email} · status:{' '}
+            <span style={{ color: '#f7f9fc' }}>{targetUser.status}</span>
+          </span>
+        }
+      />
 
       {activeHold ? (
         <div
           style={{
-            background: '#ffe6e6',
-            border: '2px solid #c00',
-            borderRadius: 6,
-            padding: '1rem',
+            background: 'rgba(248, 113, 113, 0.08)',
+            border: '1px solid rgba(248, 113, 113, 0.35)',
+            borderRadius: 8,
+            padding: '1rem 1.1rem',
             margin: '1rem 0',
           }}
         >
-          <strong style={{ color: '#c00' }}>
-            Active {activeHold.kind === 'grounding' ? 'GROUNDING' : 'HOLD'}
-          </strong>
-          <div>Reason: {activeHold.reason}</div>
-          <div style={{ fontSize: '0.85rem', color: '#555' }}>
+          <div
+            style={{
+              color: '#f87171',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              marginBottom: '0.35rem',
+            }}
+          >
+            ⚠ Active {activeHold.kind === 'grounding' ? 'grounding' : 'hold'}
+          </div>
+          <div style={{ color: '#f7f9fc', fontSize: '0.88rem' }}>Reason: {activeHold.reason}</div>
+          <div style={{ fontSize: '0.78rem', color: '#7a869a', marginTop: '0.25rem' }}>
             Placed by {activeHold.createdBy} on {new Date(activeHold.createdAt).toLocaleString()}
           </div>
         </div>
@@ -178,14 +212,35 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
       <TrainingRecordPanel studentUserId={id} schoolId={schoolId} />
 
       {primaryEnrollment ? (
-        <section style={{ marginTop: '2rem', borderTop: '2px solid #e5e7eb', paddingTop: '1rem' }}>
-          <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.5rem' }}>Course progress</h2>
+        <section
+          style={{ marginTop: '2rem', borderTop: '1px solid #1f2940', paddingTop: '1.25rem' }}
+        >
+          <h2
+            style={{
+              fontSize: '0.75rem',
+              margin: '0 0 0.75rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              color: '#7a869a',
+              textTransform: 'uppercase',
+              letterSpacing: '0.15em',
+              fontWeight: 500,
+            }}
+          >
+            Course progress
+          </h2>
           {activeEnrollments.length > 1 ? (
-            <p style={{ fontSize: '0.85rem', color: '#6b7280', margin: '0 0 0.75rem' }}>
+            <p style={{ fontSize: '0.82rem', color: '#7a869a', margin: '0 0 0.75rem' }}>
               Student has {activeEnrollments.length} active enrollments. Showing:{' '}
-              {primaryEnrollment.course_title ?? primaryEnrollment.course_code ?? 'Untitled course'}
+              <span style={{ color: '#f7f9fc' }}>
+                {primaryEnrollment.course_title ??
+                  primaryEnrollment.course_code ??
+                  'Untitled course'}
+              </span>
               .{' '}
-              <Link href={`/admin/enrollments?studentId=${id}`}>
+              <Link
+                href={`/admin/enrollments?studentId=${id}`}
+                style={{ color: '#38bdf8', textDecoration: 'none' }}
+              >
                 Open enrollments to view others
               </Link>
               .

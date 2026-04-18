@@ -25,13 +25,13 @@ const WARNING_DAYS: Record<string, number> = {
 };
 
 function status(expiresAt: string | null, kind: string): { label: string; color: string } {
-  if (!expiresAt) return { label: 'unknown', color: '#888' };
+  if (!expiresAt) return { label: 'unknown', color: '#7a869a' };
   const now = Date.now();
   const exp = new Date(expiresAt).getTime();
-  if (exp < now) return { label: 'expired', color: 'crimson' };
+  if (exp < now) return { label: 'expired', color: '#f87171' };
   const days = (exp - now) / (1000 * 60 * 60 * 24);
-  if (days <= (WARNING_DAYS[kind] ?? 30)) return { label: 'due soon', color: '#b58900' };
-  return { label: 'current', color: '#0a7' };
+  if (days <= (WARNING_DAYS[kind] ?? 30)) return { label: 'due soon', color: '#fbbf24' };
+  return { label: 'current', color: '#34d399' };
 }
 
 export function StudentCurrenciesPanel({ studentUserId }: { studentUserId: string }) {
@@ -44,7 +44,8 @@ export function StudentCurrenciesPanel({ studentUserId }: { studentUserId: strin
   const rows: CurrencyRow[] = (listQ.data ?? []).map((c) => ({
     id: c.id,
     kind: c.kind,
-    effectiveAt: c.effectiveAt instanceof Date ? c.effectiveAt.toISOString() : String(c.effectiveAt),
+    effectiveAt:
+      c.effectiveAt instanceof Date ? c.effectiveAt.toISOString() : String(c.effectiveAt),
     expiresAt: c.expiresAt
       ? c.expiresAt instanceof Date
         ? c.expiresAt.toISOString()
@@ -81,14 +82,39 @@ export function StudentCurrenciesPanel({ studentUserId }: { studentUserId: strin
   }
 
   return (
-    <section style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: 6 }}>
-      <h2>Student Currencies</h2>
-      <p style={{ fontSize: '0.8rem', color: '#666' }}>
-        Medical, flight review, instrument proficiency check — required for dispatch
-        when a lesson declares them.
+    <section
+      style={{
+        marginTop: '1rem',
+        padding: '1rem 1.1rem',
+        background: '#0d1220',
+        border: '1px solid #1f2940',
+        borderRadius: 12,
+      }}
+    >
+      <h2
+        style={{
+          margin: '0 0 0.35rem',
+          fontSize: '0.75rem',
+          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+          color: '#7a869a',
+          textTransform: 'uppercase',
+          letterSpacing: '0.15em',
+          fontWeight: 500,
+        }}
+      >
+        Student Currencies
+      </h2>
+      <p style={{ fontSize: '0.8rem', color: '#7a869a', margin: '0 0 0.85rem' }}>
+        Medical, flight review, instrument proficiency check — required for dispatch when a lesson
+        declares them.
       </p>
-      {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
-      <form onSubmit={onCreate} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      {error ? (
+        <p style={{ color: '#f87171', fontSize: '0.8rem', margin: '0 0 0.5rem' }}>{error}</p>
+      ) : null}
+      <form
+        onSubmit={onCreate}
+        style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}
+      >
         <select name="kind" defaultValue="medical">
           {KINDS.map((k) => (
             <option key={k} value={k}>
@@ -99,21 +125,91 @@ export function StudentCurrenciesPanel({ studentUserId }: { studentUserId: strin
         <input name="effectiveAt" type="date" required />
         <input name="expiresAt" type="date" />
         <input name="notes" placeholder="Notes" />
-        <button type="submit">Add</button>
+        <button
+          type="submit"
+          style={{
+            padding: '0.4rem 0.9rem',
+            background: 'rgba(52, 211, 153, 0.12)',
+            color: '#34d399',
+            border: '1px solid rgba(52, 211, 153, 0.35)',
+            borderRadius: 6,
+            fontSize: '0.7rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          + Add
+        </button>
       </form>
       {rows.length === 0 ? (
-        <p style={{ color: '#888' }}>No student currencies on record.</p>
+        <p style={{ color: '#5b6784', fontSize: '0.85rem', margin: 0 }}>
+          No student currencies on record.
+        </p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {rows.map((c) => {
             const s = status(c.expiresAt, c.kind);
             return (
-              <li key={c.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
-                <strong>{c.kind.toUpperCase()}</strong>{' '}
-                <span style={{ color: s.color, fontWeight: 'bold' }}>[{s.label}]</span>
-                {c.expiresAt ? ` · expires ${new Date(c.expiresAt).toLocaleDateString()}` : ''}
-                {' '}
-                <button type="button" onClick={() => onDelete(c.id)}>
+              <li
+                key={c.id}
+                style={{
+                  padding: '0.55rem 0',
+                  borderBottom: '1px solid #161d30',
+                  color: '#cbd5e1',
+                  fontSize: '0.87rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.6rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <strong
+                  style={{
+                    color: '#f7f9fc',
+                    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  {c.kind.toUpperCase()}
+                </strong>
+                <span
+                  style={{
+                    color: s.color,
+                    fontWeight: 600,
+                    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                    fontSize: '0.7rem',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  [{s.label}]
+                </span>
+                {c.expiresAt ? (
+                  <span style={{ color: '#7a869a', fontSize: '0.8rem' }}>
+                    · expires {new Date(c.expiresAt).toLocaleDateString()}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => onDelete(c.id)}
+                  style={{
+                    marginLeft: 'auto',
+                    padding: '0.25rem 0.65rem',
+                    background: 'transparent',
+                    color: '#f87171',
+                    border: '1px solid rgba(248, 113, 113, 0.3)',
+                    borderRadius: 6,
+                    fontSize: '0.68rem',
+                    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
                   Remove
                 </button>
               </li>
