@@ -194,6 +194,8 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
           lastName: profile?.lastName ?? '',
           phone: profile?.phone ?? '',
           notes: profile?.notes ?? '',
+          citizenshipStatus: profile?.citizenshipStatus ?? null,
+          tsaAfspStatus: profile?.tsaAfspStatus ?? null,
         }}
       />
 

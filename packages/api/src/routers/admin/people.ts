@@ -13,12 +13,7 @@
  */
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
-import {
-  personProfile,
-  users,
-  userRoles,
-  personHold,
-} from '@part61/db';
+import { personProfile, users, userRoles, personHold } from '@part61/db';
 import {
   createPersonInput,
   updatePersonInput,
@@ -104,9 +99,7 @@ export const adminPeopleRouter = router({
     const rows = await tx
       .select()
       .from(users)
-      .where(
-        and(eq(users.id, input.userId), eq(users.schoolId, ctx.session!.schoolId)),
-      )
+      .where(and(eq(users.id, input.userId), eq(users.schoolId, ctx.session!.schoolId)))
       .limit(1);
     const user = rows[0];
     if (!user) {
@@ -117,10 +110,7 @@ export const adminPeopleRouter = router({
       .from(personProfile)
       .where(eq(personProfile.userId, input.userId))
       .limit(1);
-    const roleRows = await tx
-      .select()
-      .from(userRoles)
-      .where(eq(userRoles.userId, input.userId));
+    const roleRows = await tx.select().from(userRoles).where(eq(userRoles.userId, input.userId));
     return { user, profile: profileRows[0] ?? null, roles: roleRows };
   }),
 
@@ -138,54 +128,48 @@ export const adminPeopleRouter = router({
     return rows;
   }),
 
-  create: adminProcedure
-    .input(createPersonInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const schoolId = ctx.session!.schoolId;
-      // Generate a new uuid for this admin-created user. Because admins
-      // skip the self-registration queue entirely, we create the auth
-      // user right away so the email invite lands immediately.
-      // Delegation: mirror auth.inviteUser — this admin.people.create
-      // path is the explicit "create + invite" flow.
-      const newId = crypto.randomUUID();
+  create: adminProcedure.input(createPersonInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+    // Generate a new uuid for this admin-created user. Because admins
+    // skip the self-registration queue entirely, we create the auth
+    // user right away so the email invite lands immediately.
+    // Delegation: mirror auth.inviteUser — this admin.people.create
+    // path is the explicit "create + invite" flow.
+    const newId = crypto.randomUUID();
 
-      // Use the supabase service role client lazily.
-      const url =
-        process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-      if (!url || !serviceKey) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Supabase admin credentials are not configured',
-        });
-      }
-      const { createClient } = await import('@supabase/supabase-js');
-      const admin = createClient(url, serviceKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
+    // Use the supabase service role client lazily.
+    const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+    if (!url || !serviceKey) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Supabase admin credentials are not configured',
       });
+    }
+    const { createClient } = await import('@supabase/supabase-js');
+    const admin = createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-      const { data, error } = await admin.auth.admin.inviteUserByEmail(
-        input.email,
-        {
-          redirectTo: `${siteUrl}/invite/accept`,
-          data: {
-            invited_role: input.role,
-            invited_school_id: schoolId,
-            user_id: newId,
-          },
-        },
-      );
-      if (error || !data.user) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: error?.message ?? 'Invite failed',
-        });
-      }
-      const authUserId = data.user.id;
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(input.email, {
+      redirectTo: `${siteUrl}/invite/accept`,
+      data: {
+        invited_role: input.role,
+        invited_school_id: schoolId,
+        user_id: newId,
+      },
+    });
+    if (error || !data.user) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: error?.message ?? 'Invite failed',
+      });
+    }
+    const authUserId = data.user.id;
 
-      await tx.execute(sql`
+    await tx.execute(sql`
         insert into public.users (id, school_id, email, full_name, status)
         values (
           ${authUserId},
@@ -195,7 +179,7 @@ export const adminPeopleRouter = router({
           'active'
         )
       `);
-      await tx.execute(sql`
+    await tx.execute(sql`
         insert into public.user_roles (user_id, role, mechanic_authority, is_default)
         values (
           ${authUserId},
@@ -204,7 +188,7 @@ export const adminPeopleRouter = router({
           true
         )
       `);
-      await tx.execute(sql`
+    await tx.execute(sql`
         insert into public.person_profile (
           user_id, school_id, first_name, last_name, date_of_birth,
           address_line1, address_line2, city, state, postal_code, country,
@@ -230,80 +214,69 @@ export const adminPeopleRouter = router({
           ${input.notes ?? null}
         )
       `);
-      return { userId: authUserId };
-    }),
+    return { userId: authUserId };
+  }),
 
-  update: adminProcedure
-    .input(updatePersonInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      // Only update fields that were provided. Using raw SQL with COALESCE
-      // would be cleaner for sparse updates; here we do two narrowly
-      // scoped updates (users.email, person_profile fields).
-      if (input.email !== undefined) {
-        await tx
-          .update(users)
-          .set({ email: input.email })
-          .where(
-            and(
-              eq(users.id, input.userId),
-              eq(users.schoolId, ctx.session!.schoolId),
-            ),
-          );
-      }
-      // Upsert person_profile fields.
-      await tx.execute(sql`
+  update: adminProcedure.input(updatePersonInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    // Only update fields that were provided. Using raw SQL with COALESCE
+    // would be cleaner for sparse updates; here we do two narrowly
+    // scoped updates (users.email, person_profile fields).
+    if (input.email !== undefined) {
+      await tx
+        .update(users)
+        .set({ email: input.email })
+        .where(and(eq(users.id, input.userId), eq(users.schoolId, ctx.session!.schoolId)));
+    }
+    // Upsert person_profile fields. citizenshipStatus / tsaAfspStatus
+    // are admin-managed legal-status fields (PER-01); only this
+    // endpoint can set them — see me.updateProfile which
+    // deliberately does NOT accept them.
+    await tx.execute(sql`
         update public.person_profile
-           set first_name  = coalesce(${input.firstName ?? null}::text,  first_name),
-               last_name   = coalesce(${input.lastName ?? null}::text,   last_name),
-               phone       = coalesce(${input.phone ?? null}::text,      phone),
-               notes       = coalesce(${input.notes ?? null}::text,      notes),
-               updated_at  = now()
+           set first_name         = coalesce(${input.firstName ?? null}::text, first_name),
+               last_name          = coalesce(${input.lastName ?? null}::text,  last_name),
+               phone              = coalesce(${input.phone ?? null}::text,     phone),
+               notes              = coalesce(${input.notes ?? null}::text,     notes),
+               citizenship_status = coalesce(${(input.citizenshipStatus ?? null) as string | null}::public.citizenship_status, citizenship_status),
+               tsa_afsp_status    = coalesce(${(input.tsaAfspStatus ?? null) as string | null}::public.tsa_afsp_status, tsa_afsp_status),
+               updated_at         = now()
          where user_id = ${input.userId}
       `);
-      return { ok: true };
-    }),
+    return { ok: true };
+  }),
 
-  softDelete: adminProcedure
-    .input(userIdInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const rows = await tx
-        .update(users)
-        .set({ deletedAt: new Date(), status: 'inactive' })
-        .where(
-          and(
-            eq(users.id, input.userId),
-            eq(users.schoolId, ctx.session!.schoolId),
-            isNull(users.deletedAt),
-          ),
-        )
-        .returning({ id: users.id });
-      if (rows.length === 0) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
-      }
-      return { ok: true };
-    }),
+  softDelete: adminProcedure.input(userIdInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const rows = await tx
+      .update(users)
+      .set({ deletedAt: new Date(), status: 'inactive' })
+      .where(
+        and(
+          eq(users.id, input.userId),
+          eq(users.schoolId, ctx.session!.schoolId),
+          isNull(users.deletedAt),
+        ),
+      )
+      .returning({ id: users.id });
+    if (rows.length === 0) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+    }
+    return { ok: true };
+  }),
 
-  assignRole: adminProcedure
-    .input(assignRoleInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      // Verify the target user belongs to this school.
-      const targetRows = await tx
-        .select({ id: users.id })
-        .from(users)
-        .where(
-          and(
-            eq(users.id, input.userId),
-            eq(users.schoolId, ctx.session!.schoolId),
-          ),
-        )
-        .limit(1);
-      if (targetRows.length === 0) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
-      }
-      await tx.execute(sql`
+  assignRole: adminProcedure.input(assignRoleInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    // Verify the target user belongs to this school.
+    const targetRows = await tx
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, input.userId), eq(users.schoolId, ctx.session!.schoolId)))
+      .limit(1);
+    if (targetRows.length === 0) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+    }
+    await tx.execute(sql`
         insert into public.user_roles (user_id, role, mechanic_authority, is_default)
         values (
           ${input.userId},
@@ -314,14 +287,12 @@ export const adminPeopleRouter = router({
         on conflict (user_id, role) do update
           set mechanic_authority = excluded.mechanic_authority
       `);
-      return { ok: true };
-    }),
+    return { ok: true };
+  }),
 
-  removeRole: adminProcedure
-    .input(removeRoleInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      await tx.execute(sql`
+  removeRole: adminProcedure.input(removeRoleInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    await tx.execute(sql`
         delete from public.user_roles ur
          using public.users u
          where ur.user_id = u.id
@@ -329,8 +300,8 @@ export const adminPeopleRouter = router({
            and ur.role = ${input.role}::public.role
            and u.school_id = ${ctx.session!.schoolId}
       `);
-      return { ok: true };
-    }),
+    return { ok: true };
+  }),
 
   /**
    * Approve a pending self-registration. The public.users row already
@@ -338,79 +309,68 @@ export const adminPeopleRouter = router({
    * procedure calls supabase.auth.admin.createUser with that same id,
    * then flips status to 'active' and sends an invite link.
    */
-  approveRegistration: adminProcedure
-    .input(userIdInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const schoolId = ctx.session!.schoolId;
-      // Fetch the pending row.
-      const rows = await tx
-        .select()
-        .from(users)
-        .where(
-          and(
-            eq(users.id, input.userId),
-            eq(users.schoolId, schoolId),
-            eq(users.status, 'pending'),
-          ),
-        )
-        .limit(1);
-      const pending = rows[0];
-      if (!pending) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Pending registration not found',
-        });
-      }
-      const url =
-        process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
-      if (!url || !serviceKey) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Supabase admin credentials are not configured',
-        });
-      }
-      const { createClient } = await import('@supabase/supabase-js');
-      const admin = createClient(url, serviceKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
+  approveRegistration: adminProcedure.input(userIdInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+    // Fetch the pending row.
+    const rows = await tx
+      .select()
+      .from(users)
+      .where(
+        and(eq(users.id, input.userId), eq(users.schoolId, schoolId), eq(users.status, 'pending')),
+      )
+      .limit(1);
+    const pending = rows[0];
+    if (!pending) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Pending registration not found',
       });
-      // Create the auth user with the pre-assigned id so auth.users.id
-      // matches public.users.id (Research Open Question 1 — resolved
-      // YES: supabase-js AdminUserAttributes.id is string | undefined).
-      const { data: created, error: createErr } =
-        await admin.auth.admin.createUser({
-          id: input.userId,
-          email: pending.email,
-          email_confirm: false,
-          user_metadata: {
-            invited_school_id: schoolId,
-            approved_by: ctx.session!.userId,
-          },
-        });
-      if (createErr || !created.user) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: createErr?.message ?? 'Failed to create auth user',
-        });
-      }
-      // Send the invite / set-password link.
-      const { error: linkErr } = await admin.auth.admin.generateLink({
-        type: 'invite',
-        email: pending.email,
-        options: { redirectTo: `${siteUrl}/invite/accept` },
+    }
+    const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+    if (!url || !serviceKey) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Supabase admin credentials are not configured',
       });
-      if (linkErr) {
-        // Non-fatal: the user can still use "forgot password" later.
-        // We intentionally do not throw.
-      }
-      await tx
-        .update(users)
-        .set({ status: 'active' })
-        .where(eq(users.id, input.userId));
-      return { ok: true, userId: input.userId };
-    }),
+    }
+    const { createClient } = await import('@supabase/supabase-js');
+    const admin = createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    // Create the auth user with the pre-assigned id so auth.users.id
+    // matches public.users.id (Research Open Question 1 — resolved
+    // YES: supabase-js AdminUserAttributes.id is string | undefined).
+    const { data: created, error: createErr } = await admin.auth.admin.createUser({
+      id: input.userId,
+      email: pending.email,
+      email_confirm: false,
+      user_metadata: {
+        invited_school_id: schoolId,
+        approved_by: ctx.session!.userId,
+      },
+    });
+    if (createErr || !created.user) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: createErr?.message ?? 'Failed to create auth user',
+      });
+    }
+    // Send the invite / set-password link.
+    const { error: linkErr } = await admin.auth.admin.generateLink({
+      type: 'invite',
+      email: pending.email,
+      options: { redirectTo: `${siteUrl}/invite/accept` },
+    });
+    if (linkErr) {
+      // Non-fatal: the user can still use "forgot password" later.
+      // We intentionally do not throw.
+    }
+    await tx.update(users).set({ status: 'active' }).where(eq(users.id, input.userId));
+    return { ok: true, userId: input.userId };
+  }),
 
   rejectRegistration: adminProcedure
     .input(rejectRegistrationInput)

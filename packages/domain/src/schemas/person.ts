@@ -8,23 +8,12 @@
  */
 import { z } from 'zod';
 
-export const roleSchema = z.enum([
-  'student',
-  'instructor',
-  'mechanic',
-  'admin',
-  'rental_customer',
-]);
+export const roleSchema = z.enum(['student', 'instructor', 'mechanic', 'admin', 'rental_customer']);
 export type Role = z.infer<typeof roleSchema>;
 
 export const mechanicAuthoritySchema = z.enum(['none', 'a_and_p', 'ia']);
 
-export const userStatusSchema = z.enum([
-  'pending',
-  'active',
-  'inactive',
-  'rejected',
-]);
+export const userStatusSchema = z.enum(['pending', 'active', 'inactive', 'rejected']);
 
 export const citizenshipStatusSchema = z.enum([
   'us_citizen',
@@ -33,22 +22,10 @@ export const citizenshipStatusSchema = z.enum([
   'unknown',
 ]);
 
-export const tsaAfspStatusSchema = z.enum([
-  'not_required',
-  'pending',
-  'approved',
-  'expired',
-]);
+export const tsaAfspStatusSchema = z.enum(['not_required', 'pending', 'approved', 'expired']);
 
 export const holdKindSchema = z.enum(['hold', 'grounding']);
-export const currencyKindSchema = z.enum([
-  'cfi',
-  'cfii',
-  'mei',
-  'medical',
-  'bfr',
-  'ipc',
-]);
+export const currencyKindSchema = z.enum(['cfi', 'cfii', 'mei', 'medical', 'bfr', 'ipc']);
 export const qualificationKindSchema = z.enum([
   'aircraft_type',
   'sim_authorization',
@@ -60,7 +37,11 @@ export const qualificationKindSchema = z.enum([
 const personProfileFields = {
   firstName: z.string().min(1).max(200),
   lastName: z.string().min(1).max(200),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .nullable(),
   addressLine1: z.string().max(500).optional().nullable(),
   addressLine2: z.string().max(500).optional().nullable(),
   city: z.string().max(200).optional().nullable(),
@@ -90,6 +71,11 @@ export const updatePersonInput = z.object({
   lastName: z.string().min(1).max(200).optional(),
   phone: z.string().max(50).optional().nullable(),
   notes: z.string().max(5000).optional().nullable(),
+  // Admin-managed legal-status fields (PER-01). These are intentionally
+  // NOT writable via self-profile (see me.updateProfile); only an admin
+  // can set/change them after verification of the underlying documents.
+  citizenshipStatus: citizenshipStatusSchema.optional().nullable(),
+  tsaAfspStatus: tsaAfspStatusSchema.optional().nullable(),
 });
 export type UpdatePersonInput = z.infer<typeof updatePersonInput>;
 
@@ -148,7 +134,11 @@ export const currencyCreateInput = z.object({
   effectiveAt: z.coerce.date(),
   expiresAt: z.coerce.date().optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
-  documentId: z.string().regex(/^[0-9a-fA-F-]{36}$/).optional().nullable(),
+  documentId: z
+    .string()
+    .regex(/^[0-9a-fA-F-]{36}$/)
+    .optional()
+    .nullable(),
 });
 
 export const currencyUpdateInput = currencyCreateInput.extend({
@@ -214,10 +204,7 @@ export const experienceCreateInput = z.object({
   multiEngineTime: z.number().nonnegative().optional().nullable(),
   instrumentTime: z.number().nonnegative().optional().nullable(),
   asOfDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  source: z
-    .enum(['self_reported', 'imported', 'derived'])
-    .optional()
-    .default('self_reported'),
+  source: z.enum(['self_reported', 'imported', 'derived']).optional().default('self_reported'),
   notes: z.string().max(2000).optional().nullable(),
 });
 
