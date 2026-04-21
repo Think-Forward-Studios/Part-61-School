@@ -4,6 +4,7 @@
  * Read-only. Scoped to caller. Groups rows by year-month with totals
  * header driven by user_flight_log_totals view.
  */
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { sql } from 'drizzle-orm';
 import { db } from '@part61/db';
@@ -58,6 +59,9 @@ export default async function FlightLogPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
+  const cookieStore = await cookies();
+  const activeRole = cookieStore.get('part61.active_role')?.value;
+
   const rows = (await db.execute(sql`
     select id, created_at, kind, day_minutes, night_minutes,
       cross_country_minutes, instrument_actual_minutes, instrument_simulated_minutes,
@@ -92,12 +96,19 @@ export default async function FlightLogPage() {
     { label: 'Night ldg', value: String(totals.nightLandings) },
   ];
 
+  const subtitle =
+    activeRole === 'admin'
+      ? 'Personal flight log for the signed-in account — RLS-scoped to you, not a school-wide view. For fleet or instructor utilization across the whole school, see Reports → Fleet Utilization and Reports → Instructor Utilization. The IACRA PDF/CSV exports here are formatted for an FAA 8710-1 (Airman Certificate and/or Rating Application) and are intended for rated pilots assembling their own application.'
+      : activeRole === 'instructor'
+        ? 'Your chronological flight time, grouped by month. Totals include dual given + PIC hours and match the FAA IACRA 8710-1 format — use the PDF or CSV export when preparing an application for a new rating (e.g. CFII, MEI).'
+        : 'Your chronological flight time, grouped by month. Totals match the FAA IACRA 8710-1 (Airman Certificate and/or Rating Application) format. Use the PDF or CSV export when preparing an application for a new certificate or rating.';
+
   return (
     <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
       <PageHeader
         eyebrow="Operations"
         title="Flight Log"
-        subtitle="Your chronological flight time, grouped by month. Totals match the FAA IACRA 8710-1 (Airman Certificate and/or Rating Application) format. Use the PDF or CSV export when preparing an application for a new certificate or rating."
+        subtitle={subtitle}
         actions={
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <a
