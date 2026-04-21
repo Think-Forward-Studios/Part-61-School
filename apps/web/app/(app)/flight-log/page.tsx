@@ -96,6 +96,11 @@ export default async function FlightLogPage() {
     { label: 'Night ldg', value: String(totals.nightLandings) },
   ];
 
+  // Eyebrow matches the dropdown group where each role finds this page
+  // in their sub-nav — keeps the breadcrumb mental model consistent.
+  const eyebrow =
+    activeRole === 'admin' || activeRole === 'mechanic' ? 'Fleet & Maintenance' : 'Training';
+
   const subtitle =
     activeRole === 'admin'
       ? 'Personal flight log for the signed-in account — RLS-scoped to you, not a school-wide view. For fleet or instructor utilization across the whole school, see Reports → Fleet Utilization and Reports → Instructor Utilization. The IACRA PDF/CSV exports here are formatted for an FAA 8710-1 (Airman Certificate and/or Rating Application) and are intended for rated pilots assembling their own application.'
@@ -106,7 +111,7 @@ export default async function FlightLogPage() {
   return (
     <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
       <PageHeader
-        eyebrow="Operations"
+        eyebrow={eyebrow}
         title="Flight Log"
         subtitle={subtitle}
         actions={
