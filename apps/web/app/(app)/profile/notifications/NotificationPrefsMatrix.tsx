@@ -312,43 +312,48 @@ export function NotificationPrefsMatrix() {
                     );
                   })}
 
-                  {/* Section bulk toggle row */}
-                  <tr style={{ background: '#0b0f1b', borderTop: '1px solid #1f2940' }}>
-                    <td
-                      style={{
-                        ...TD,
-                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-                        fontSize: '0.68rem',
-                        letterSpacing: '0.15em',
-                        color: '#f97316',
-                        textTransform: 'uppercase',
-                        fontWeight: 600,
-                      }}
-                    >
-                      ◆ Toggle all in this section
-                    </td>
-                    <td style={{ ...TD, textAlign: 'center' }}>
-                      <TriStateBox
-                        allOn={inAppState.allOn}
-                        anyOn={inAppState.anyOn}
-                        disabled={inAppFrozen || bulkBusy}
-                        title={
-                          inAppFrozen
-                            ? 'All events here are safety-critical'
-                            : 'Enable/disable all non-safety in-app in this section'
-                        }
-                        onChange={(next) => void setKindsChannel(grp.kinds, 'in_app', next)}
-                      />
-                    </td>
-                    <td style={{ ...TD, textAlign: 'center' }}>
-                      <TriStateBox
-                        allOn={emailState.allOn}
-                        anyOn={emailState.anyOn}
-                        disabled={bulkBusy}
-                        onChange={(next) => void setKindsChannel(grp.kinds, 'email', next)}
-                      />
-                    </td>
-                  </tr>
+                  {/* Section bulk toggle row — only renders when the section
+                      has more than one event. Single-row sections (Grading,
+                      Messaging) don't need it since it'd just duplicate the
+                      per-row toggle above. */}
+                  {grp.kinds.length > 1 ? (
+                    <tr style={{ background: '#0b0f1b', borderTop: '1px solid #1f2940' }}>
+                      <td
+                        style={{
+                          ...TD,
+                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                          fontSize: '0.68rem',
+                          letterSpacing: '0.15em',
+                          color: '#f97316',
+                          textTransform: 'uppercase',
+                          fontWeight: 600,
+                        }}
+                      >
+                        ◆ Toggle all in this section
+                      </td>
+                      <td style={{ ...TD, textAlign: 'center' }}>
+                        <TriStateBox
+                          allOn={inAppState.allOn}
+                          anyOn={inAppState.anyOn}
+                          disabled={inAppFrozen || bulkBusy}
+                          title={
+                            inAppFrozen
+                              ? 'All events here are safety-critical'
+                              : 'Enable/disable all non-safety in-app in this section'
+                          }
+                          onChange={(next) => void setKindsChannel(grp.kinds, 'in_app', next)}
+                        />
+                      </td>
+                      <td style={{ ...TD, textAlign: 'center' }}>
+                        <TriStateBox
+                          allOn={emailState.allOn}
+                          anyOn={emailState.anyOn}
+                          disabled={bulkBusy}
+                          onChange={(next) => void setKindsChannel(grp.kinds, 'email', next)}
+                        />
+                      </td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
