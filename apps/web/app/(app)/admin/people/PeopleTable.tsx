@@ -163,11 +163,11 @@ export function PeopleTable({
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ background: '#121826' }}>
-                {['Name', 'Email', 'Roles', 'Status', 'Holds'].map((h) => (
+                {['Name', 'Email', 'Roles', 'Status', 'Holds', ''].map((h, i) => (
                   <th
-                    key={h}
+                    key={h || `actions-${i}`}
                     style={{
-                      textAlign: 'left',
+                      textAlign: i === 5 ? 'right' : 'left',
                       padding: '0.65rem 0.9rem',
                       fontFamily: '"JetBrains Mono", ui-monospace, monospace',
                       fontSize: '0.68rem',
@@ -274,6 +274,28 @@ export function PeopleTable({
                       }}
                     >
                       {isFlagged ? `${r.active_hold_count} active` : '—'}
+                    </td>
+                    <td style={{ padding: '0.5rem 0.9rem', textAlign: 'right' }}>
+                      <Link
+                        href={`/admin/people/${r.id}`}
+                        style={{
+                          display: 'inline-flex',
+                          padding: '0.3rem 0.75rem',
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          color: '#38bdf8',
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                          borderRadius: 6,
+                          fontSize: '0.68rem',
+                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 );
