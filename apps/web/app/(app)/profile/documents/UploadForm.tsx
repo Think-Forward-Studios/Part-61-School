@@ -42,7 +42,7 @@ const LABEL: React.CSSProperties = {
 };
 
 const INPUT: React.CSSProperties = {
-  padding: '0.55rem 0.75rem',
+  padding: '0 0.75rem',
   background: '#05070e',
   border: '1px solid #1a2238',
   borderRadius: 6,
@@ -52,11 +52,13 @@ const INPUT: React.CSSProperties = {
   letterSpacing: 'normal',
   textTransform: 'none',
   outline: 'none',
-  // Safari doesn't stretch <select>/<input> in flex-column labels by
-  // default — they render at intrinsic content width. Force full
-  // column width so the field fills its grid cell.
+  // Safari renders <select>, <input type="date">, and <input type="file">
+  // at slightly different intrinsic heights. Force a uniform height
+  // (instead of relying on vertical padding) so every field lines up.
   width: '100%',
   boxSizing: 'border-box',
+  height: '2.5rem',
+  lineHeight: '2.5rem',
 };
 
 export function UploadForm({

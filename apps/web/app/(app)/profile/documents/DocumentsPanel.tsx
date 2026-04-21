@@ -92,13 +92,15 @@ export function DocumentsPanel({
               value={targetUserId}
               onChange={(e) => setTargetUserId(e.target.value)}
               style={{
-                padding: '0.55rem 0.75rem',
+                padding: '0 0.75rem',
                 background: '#05070e',
                 border: '1px solid #1a2238',
                 borderRadius: 6,
                 color: '#f7f9fc',
                 fontSize: '0.88rem',
                 width: '100%',
+                height: '2.5rem',
+                lineHeight: '2.5rem',
                 boxSizing: 'border-box',
                 fontFamily: 'inherit',
                 letterSpacing: 'normal',
@@ -129,7 +131,7 @@ export function DocumentsPanel({
               type="button"
               onClick={() => setTargetUserId(currentUserId)}
               style={{
-                padding: '0.55rem 0.95rem',
+                padding: '0 0.95rem',
                 background: 'transparent',
                 color: '#7a869a',
                 border: '1px solid #1f2940',
@@ -141,7 +143,7 @@ export function DocumentsPanel({
                 fontWeight: 600,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                height: 'fit-content',
+                height: '2.5rem',
               }}
             >
               ← Back to myself
