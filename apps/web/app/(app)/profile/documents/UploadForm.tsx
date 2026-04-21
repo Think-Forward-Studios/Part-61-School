@@ -52,6 +52,11 @@ const INPUT: React.CSSProperties = {
   letterSpacing: 'normal',
   textTransform: 'none',
   outline: 'none',
+  // Safari doesn't stretch <select>/<input> in flex-column labels by
+  // default — they render at intrinsic content width. Force full
+  // column width so the field fills its grid cell.
+  width: '100%',
+  boxSizing: 'border-box',
 };
 
 export function UploadForm({

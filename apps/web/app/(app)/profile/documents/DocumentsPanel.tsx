@@ -99,6 +99,7 @@ export function DocumentsPanel({
                 color: '#f7f9fc',
                 fontSize: '0.88rem',
                 width: '100%',
+                boxSizing: 'border-box',
                 fontFamily: 'inherit',
                 letterSpacing: 'normal',
                 textTransform: 'none',

@@ -197,6 +197,8 @@ export function ProfileForm() {
     letterSpacing: 'normal',
     textTransform: 'none',
     outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box',
   };
 
   const gridTwo: React.CSSProperties = {
