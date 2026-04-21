@@ -199,4 +199,50 @@ export const notificationsRouter = router({
         });
       return { ok: true };
     }),
+
+  /**
+   * Bulk upsert of notification prefs — powers the "enable/disable all
+   * in this section" and "enable/disable everything" toggles on
+   * /profile/notifications. One statement per row inside the same
+   * tenant transaction; atomically commits or rolls back the whole
+   * batch.
+   */
+  updatePrefs: protectedProcedure
+    .input(
+      z.object({
+        items: z
+          .array(
+            z.object({
+              kind: z.enum(NOTIFICATION_KINDS),
+              channel: z.enum(NOTIFICATION_CHANNELS),
+              enabled: z.boolean(),
+            }),
+          )
+          .min(1)
+          .max(100),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const userId = ctx.session!.userId;
+      for (const item of input.items) {
+        await tx
+          .insert(userNotificationPref)
+          .values({
+            userId,
+            kind: item.kind,
+            channel: item.channel,
+            enabled: item.enabled,
+          })
+          .onConflictDoUpdate({
+            target: [
+              userNotificationPref.userId,
+              userNotificationPref.kind,
+              userNotificationPref.channel,
+            ],
+            set: { enabled: item.enabled, updatedAt: new Date() },
+          });
+      }
+      return { ok: true, count: input.items.length };
+    }),
 });
