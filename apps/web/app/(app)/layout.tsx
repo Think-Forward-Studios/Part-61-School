@@ -13,7 +13,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { MessagingToggleButton } from '@/components/MessagingDrawer';
 import { BroadcastBanner } from '@/components/BroadcastBanner';
 import { AppShellProviders } from '@/components/AppShellProviders';
-import { AdminSubNav } from '@/components/AdminSubNav';
+import { RoleSubNav } from '@/components/RoleSubNav';
 
 const ROLES: readonly Role[] = ['student', 'instructor', 'mechanic', 'admin'];
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -249,53 +249,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             ) : null}
           </div>
 
-          {/* Spacer */}
+          {/* Spacer — navigation now lives entirely in the role sub-nav below */}
           <div style={{ flex: 1 }} />
-
-          {/* Nav links — hidden for admin role (admin sub-nav carries them instead) */}
-          {activeRole !== 'admin' ? (
-            <nav
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-              }}
-            >
-              {[
-                { href: '/record', label: 'Record' },
-                { href: '/flight-log', label: 'Flight Log' },
-                { href: '/fleet-map', label: 'Fleet Map' },
-                { href: '/schedule', label: 'Schedule' },
-              ].map((l) => (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  style={{
-                    fontSize: '0.82rem',
-                    color: '#cbd5e1',
-                    textDecoration: 'none',
-                    padding: '0.4rem 0.7rem',
-                    borderRadius: 6,
-                    transition: 'background 0.15s ease, color 0.15s ease',
-                  }}
-                >
-                  {l.label}
-                </a>
-              ))}
-              <a
-                href="/profile/notifications"
-                style={{
-                  fontSize: '0.82rem',
-                  color: '#7a869a',
-                  textDecoration: 'none',
-                  padding: '0.4rem 0.7rem',
-                  borderRadius: 6,
-                }}
-              >
-                Prefs
-              </a>
-            </nav>
-          ) : null}
 
           {/* Right controls */}
           <div
@@ -315,10 +270,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        {/* Admin sub-nav — renders on every page (admin + global routes)
-            when the active role is admin, so admins don't lose navigation
-            when they visit /record, /flight-log, /fleet-map, etc. */}
-        {activeRole === 'admin' ? <AdminSubNav /> : null}
+        {/* Role sub-nav — one unified component renders a themed dropdown
+            sub-header for every role (admin / instructor / student /
+            mechanic / rental_customer). The per-role config trims the
+            groups and links to what each role's RLS + route guards
+            actually allow. */}
+        <RoleSubNav role={activeRole} />
 
         <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
       </div>
