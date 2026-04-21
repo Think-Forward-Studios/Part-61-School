@@ -13,6 +13,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { MessagingToggleButton } from '@/components/MessagingDrawer';
 import { BroadcastBanner } from '@/components/BroadcastBanner';
 import { AppShellProviders } from '@/components/AppShellProviders';
+import { AdminSubNav } from '@/components/AdminSubNav';
 
 const ROLES: readonly Role[] = ['student', 'instructor', 'mechanic', 'admin'];
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -313,6 +314,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <LogoutButton />
           </div>
         </header>
+
+        {/* Admin sub-nav — renders on every page (admin + global routes)
+            when the active role is admin, so admins don't lose navigation
+            when they visit /record, /flight-log, /fleet-map, etc. */}
+        {activeRole === 'admin' ? <AdminSubNav /> : null}
 
         <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
       </div>

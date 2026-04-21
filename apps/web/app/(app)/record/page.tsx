@@ -3,7 +3,13 @@
  *
  * Read-only. Scoped strictly to the authenticated user. Sealed rows
  * show a lock icon; drafts never render here.
+ *
+ * When the active role is 'admin', this route instead renders a
+ * training-records directory of all students with active or recent
+ * training activity — admins aren't enrolled in a course so the
+ * student view doesn't apply to them.
  */
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { sql } from 'drizzle-orm';
@@ -15,6 +21,7 @@ import { StudentProgressForecastPanel } from './_components/StudentProgressForec
 import { StudentMinimumsPanel } from './_components/StudentMinimumsPanel';
 import { StudentRolloverQueuePanel } from './_components/StudentRolloverQueuePanel';
 import { CostSummary } from './_components/CostSummary';
+import { AdminRecordIndex } from './_components/AdminRecordIndex';
 import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
@@ -85,6 +92,13 @@ export default async function RecordPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
+
+  // Admin variant: training-records directory across the whole school.
+  const cookieStore = await cookies();
+  const activeRole = cookieStore.get('part61.active_role')?.value;
+  if (activeRole === 'admin') {
+    return <AdminRecordIndex currentUserId={user.id} />;
+  }
 
   const enrollments = (await db.execute(sql`
     select sce.id, sce.enrolled_at, sce.completed_at, sce.withdrawn_at,
