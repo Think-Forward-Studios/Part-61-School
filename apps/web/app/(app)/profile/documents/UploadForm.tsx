@@ -4,21 +4,16 @@
  * UploadForm — client-side upload orchestration.
  *
  * Flow:
- *   1. Client-side pre-flight: size <= MAX_BYTE_SIZE, MIME in allowlist.
- *   2. trpc.documents.createSignedUploadUrl.mutate → { documentId, path, signedUrl }
+ *   1. Pre-flight: size <= MAX_BYTE_SIZE, MIME in allowlist.
+ *   2. trpc.documents.createSignedUploadUrl.mutate (with optional
+ *      forUserId when an admin is operating on someone else) →
+ *      { documentId, path, signedUrl }.
  *   3. PUT the file directly to signedUrl (Content-Type must match).
- *   4. trpc.documents.finalizeUpload.mutate → inserts the row.
- *   5. router.refresh() to re-fetch the server-rendered list.
- *
- * We intentionally never construct the storage path here — the
- * server returns it and we echo it back in finalizeUpload so the
- * server can re-verify tamper-freeness.
- *
- * The expiresAt field is only shown for 'medical' (which has a real
- * calendar expiration). Other kinds pass undefined.
+ *   4. trpc.documents.finalizeUpload.mutate (same forUserId) →
+ *      inserts the documents row scoped to the target user.
+ *   5. onUploaded() so the parent re-fetches the list.
  */
 import { useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { ALLOWED_MIME_TYPES, MAX_BYTE_SIZE, type DocumentKind } from '@part61/domain';
 import { trpc } from '@/lib/trpc/client';
 
@@ -35,8 +30,38 @@ type Status =
   | { kind: 'error'; message: string }
   | { kind: 'success' };
 
-export function UploadForm() {
-  const router = useRouter();
+const LABEL: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.3rem',
+  fontSize: '0.68rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  color: '#7a869a',
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+};
+
+const INPUT: React.CSSProperties = {
+  padding: '0.55rem 0.75rem',
+  background: '#05070e',
+  border: '1px solid #1a2238',
+  borderRadius: 6,
+  color: '#f7f9fc',
+  fontSize: '0.88rem',
+  fontFamily: 'inherit',
+  letterSpacing: 'normal',
+  textTransform: 'none',
+  outline: 'none',
+};
+
+export function UploadForm({
+  targetUserId,
+  onUploaded,
+}: {
+  /** When set, admin is uploading on behalf of this user. */
+  targetUserId?: string;
+  onUploaded?: () => void;
+}) {
   const [kind, setKind] = useState<DocumentKind>('medical');
   const [expiresAt, setExpiresAt] = useState<string>('');
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
@@ -70,6 +95,7 @@ export function UploadForm() {
         mimeType: file.type as (typeof ALLOWED_MIME_TYPES)[number],
         byteSize: file.size,
         expiresAt: expiresDate,
+        forUserId: targetUserId,
       });
 
       setStatus({ kind: 'uploading', message: 'Uploading file…' });
@@ -90,12 +116,13 @@ export function UploadForm() {
         mimeType: file.type as (typeof ALLOWED_MIME_TYPES)[number],
         byteSize: file.size,
         expiresAt: expiresDate,
+        forUserId: targetUserId,
       });
 
       form.reset();
       setExpiresAt('');
       setStatus({ kind: 'success' });
-      router.refresh();
+      onUploaded?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
       setStatus({ kind: 'error', message });
@@ -108,21 +135,23 @@ export function UploadForm() {
     <form
       onSubmit={onSubmit}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.75rem',
-        padding: '1rem',
-        border: '1px solid #ccc',
-        borderRadius: 6,
         marginTop: '1rem',
+        padding: '1.1rem 1.2rem',
+        background: '#0d1220',
+        border: '1px solid #1f2940',
+        borderRadius: 12,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '0.9rem',
       }}
     >
-      <label>
-        Document type{' '}
+      <label style={LABEL}>
+        Document type
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value as DocumentKind)}
           disabled={busy}
+          style={INPUT}
         >
           {KIND_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -133,35 +162,69 @@ export function UploadForm() {
       </label>
 
       {kind === 'medical' ? (
-        <label>
-          Expires{' '}
+        <label style={LABEL}>
+          Expires
           <input
             type="date"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
             disabled={busy}
+            style={INPUT}
           />
         </label>
       ) : null}
 
-      <label>
-        File{' '}
+      <label style={{ ...LABEL, gridColumn: '1 / -1' }}>
+        File
         <input
           type="file"
           name="file"
           accept="image/jpeg,image/png,application/pdf"
           disabled={busy}
           required
+          style={INPUT}
         />
       </label>
 
-      <button type="submit" disabled={busy}>
-        {busy ? 'Working…' : 'Upload'}
-      </button>
-
-      {status.kind === 'uploading' ? <p>{status.message}</p> : null}
-      {status.kind === 'error' ? <p style={{ color: 'crimson' }}>{status.message}</p> : null}
-      {status.kind === 'success' ? <p style={{ color: 'green' }}>Upload complete.</p> : null}
+      <div
+        style={{
+          gridColumn: '1 / -1',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
+        }}
+      >
+        {status.kind === 'uploading' ? (
+          <span style={{ color: '#7a869a', fontSize: '0.82rem' }}>{status.message}</span>
+        ) : null}
+        {status.kind === 'error' ? (
+          <span style={{ color: '#f87171', fontSize: '0.82rem' }}>{status.message}</span>
+        ) : null}
+        {status.kind === 'success' ? (
+          <span style={{ color: '#34d399', fontSize: '0.82rem' }}>Upload complete.</span>
+        ) : null}
+        <button
+          type="submit"
+          disabled={busy}
+          style={{
+            padding: '0.55rem 1.1rem',
+            background: 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)',
+            color: '#0a0e1a',
+            border: 'none',
+            borderRadius: 6,
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            cursor: busy ? 'wait' : 'pointer',
+            opacity: busy ? 0.6 : 1,
+          }}
+        >
+          {busy ? 'Working…' : 'Upload'}
+        </button>
+      </div>
     </form>
   );
 }

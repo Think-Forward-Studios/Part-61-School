@@ -79,11 +79,16 @@ async function getServiceRoleStorage(): Promise<SupabaseStorageApi> {
 
 // --- inputs ------------------------------------------------------------------
 
+const uuidRe = /^[0-9a-fA-F-]{36}$/;
+
 const createSignedUploadUrlInput = z.object({
   kind: DocumentKind,
   mimeType: MimeType,
   byteSize: z.number().int().positive().max(MAX_BYTE_SIZE),
   expiresAt: z.date().optional(),
+  // Admin-only: upload on behalf of another user in the same school.
+  // Ignored (or rejected) for non-admin roles.
+  forUserId: z.string().regex(uuidRe).optional(),
 });
 
 const uploadAircraftPhotoInput = z.object({
@@ -93,17 +98,25 @@ const uploadAircraftPhotoInput = z.object({
 });
 
 const finalizeUploadInput = z.object({
-  documentId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+  documentId: z.string().regex(uuidRe),
   kind: DocumentKind,
   path: z.string().min(1),
   mimeType: MimeType,
   byteSize: z.number().int().positive().max(MAX_BYTE_SIZE),
   expiresAt: z.date().optional(),
+  // Admin-only: must match the same forUserId passed to createSignedUploadUrl.
+  forUserId: z.string().regex(uuidRe).optional(),
 });
 
 const documentIdInput = z.object({
-  documentId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+  documentId: z.string().regex(uuidRe),
 });
+
+const listInput = z
+  .object({
+    forUserId: z.string().regex(uuidRe).optional(),
+  })
+  .optional();
 
 // Minimal Drizzle-transaction shape we actually use. Keeping this
 // narrow avoids pulling a concrete PgTransaction generic through
@@ -133,9 +146,17 @@ export const documentsRouter = router({
           message: `mimeType must be one of ${ALLOWED_MIME_TYPES.join(', ')}`,
         });
       }
+      // Admin-only: upload for another user.
+      const ownerUserId = input.forUserId ?? session.userId;
+      if (ownerUserId !== session.userId && session.activeRole !== 'admin') {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Only admins can upload documents for other users',
+        });
+      }
       const documentId = crypto.randomUUID();
       const ext = extForMime(input.mimeType);
-      const path = storagePath(session.schoolId, session.userId, documentId, ext);
+      const path = storagePath(session.schoolId, ownerUserId, documentId, ext);
 
       const storage = await getServiceRoleStorage();
       const { data, error } = await storage.from('documents').createSignedUploadUrl(path);
@@ -161,8 +182,15 @@ export const documentsRouter = router({
    */
   finalizeUpload: protectedProcedure.input(finalizeUploadInput).mutation(async ({ ctx, input }) => {
     const session = ctx.session!;
+    const ownerUserId = input.forUserId ?? session.userId;
+    if (ownerUserId !== session.userId && session.activeRole !== 'admin') {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Only admins can upload documents for other users',
+      });
+    }
     const ext = extForMime(input.mimeType);
-    const expected = storagePath(session.schoolId, session.userId, input.documentId, ext);
+    const expected = storagePath(session.schoolId, ownerUserId, input.documentId, ext);
     if (input.path !== expected) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -175,7 +203,7 @@ export const documentsRouter = router({
       .values({
         id: input.documentId,
         schoolId: session.schoolId,
-        userId: session.userId,
+        userId: ownerUserId,
         kind: input.kind,
         storagePath: input.path,
         mimeType: input.mimeType,
@@ -200,8 +228,15 @@ export const documentsRouter = router({
    * it, because the runtime connection uses DATABASE_URL and may not
    * carry a JWT — defense in depth.
    */
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: protectedProcedure.input(listInput).query(async ({ ctx, input }) => {
     const session = ctx.session!;
+    const ownerUserId = input?.forUserId ?? session.userId;
+    if (ownerUserId !== session.userId && session.activeRole !== 'admin') {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Only admins can list documents for other users',
+      });
+    }
     const tx = ctx.tx as Tx;
     const rows = await tx
       .select()
@@ -209,7 +244,7 @@ export const documentsRouter = router({
       .where(
         and(
           eq(documents.schoolId, session.schoolId),
-          eq(documents.userId, session.userId),
+          eq(documents.userId, ownerUserId),
           isNull(documents.deletedAt),
         ),
       )
@@ -288,12 +323,7 @@ export const documentsRouter = router({
       const rows = await tx
         .select({ id: aircraft.id })
         .from(aircraft)
-        .where(
-          and(
-            eq(aircraft.id, input.aircraftId),
-            eq(aircraft.schoolId, session.schoolId),
-          ),
-        )
+        .where(and(eq(aircraft.id, input.aircraftId), eq(aircraft.schoolId, session.schoolId)))
         .limit(1);
       if (rows.length === 0) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Aircraft not found' });
@@ -302,9 +332,7 @@ export const documentsRouter = router({
       const ext = extForMime(input.mimeType);
       const path = storagePath(session.schoolId, session.userId, documentId, ext);
       const storage = await getServiceRoleStorage();
-      const { data, error } = await storage
-        .from('documents')
-        .createSignedUploadUrl(path);
+      const { data, error } = await storage.from('documents').createSignedUploadUrl(path);
       if (error || !data) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -324,17 +352,24 @@ export const documentsRouter = router({
   softDelete: protectedProcedure.input(documentIdInput).mutation(async ({ ctx, input }) => {
     const session = ctx.session!;
     const tx = ctx.tx as Tx;
+    // Self can delete own docs; admins can delete any doc in their school.
+    const whereClause =
+      session.activeRole === 'admin'
+        ? and(
+            eq(documents.id, input.documentId),
+            eq(documents.schoolId, session.schoolId),
+            isNull(documents.deletedAt),
+          )
+        : and(
+            eq(documents.id, input.documentId),
+            eq(documents.schoolId, session.schoolId),
+            eq(documents.userId, session.userId),
+            isNull(documents.deletedAt),
+          );
     const rows = await tx
       .update(documents)
       .set({ deletedAt: new Date() })
-      .where(
-        and(
-          eq(documents.id, input.documentId),
-          eq(documents.schoolId, session.schoolId),
-          eq(documents.userId, session.userId),
-          isNull(documents.deletedAt),
-        ),
-      )
+      .where(whereClause)
       .returning({ id: documents.id });
     if (rows.length === 0) {
       throw new TRPCError({
