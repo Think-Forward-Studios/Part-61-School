@@ -37,6 +37,7 @@ type RecentSheet = {
   conducted_at: string;
   lesson_code: string;
   lesson_title: string;
+  enrollment_id: string;
   student_user_id: string;
   student_email: string;
   student_first_name: string | null;
@@ -208,6 +209,7 @@ export async function AdminRecordIndex({ currentUserId }: { currentUserId: strin
       gs.conducted_at,
       l.code                as lesson_code,
       l.title               as lesson_title,
+      sce.id                as enrollment_id,
       u.id                  as student_user_id,
       u.email               as student_email,
       pp.first_name         as student_first_name,
@@ -228,7 +230,7 @@ export async function AdminRecordIndex({ currentUserId }: { currentUserId: strin
       <PageHeader
         eyebrow="Training"
         title="Training Records"
-        subtitle={`${students.length} active ${students.length === 1 ? 'student' : 'students'} across the school. Jump into any student's full record or review recent sealed activity below.`}
+        subtitle={`${students.length} active ${students.length === 1 ? 'student' : 'students'} across the school. Click any lesson to open the course record, or use the action chips to jump to a student's course record or full profile.`}
       />
 
       {/* Metric strip */}
@@ -319,17 +321,27 @@ export async function AdminRecordIndex({ currentUserId }: { currentUserId: strin
                     </Link>
                   </td>
                   <td style={TD}>
-                    <span
+                    <Link
+                      href={`/record/courses/${r.enrollment_id}`}
                       style={{
-                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-                        fontSize: '0.76rem',
-                        color: '#f7f9fc',
-                        marginRight: '0.4rem',
+                        color: '#cbd5e1',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
                       }}
                     >
-                      🔒 {r.lesson_code}
-                    </span>
-                    {r.lesson_title}
+                      <span
+                        style={{
+                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                          fontSize: '0.76rem',
+                          color: '#f7f9fc',
+                          marginRight: '0.4rem',
+                        }}
+                      >
+                        🔒 {r.lesson_code}
+                      </span>
+                      {r.lesson_title}
+                    </Link>
                   </td>
                   <td style={MONO_TD}>{new Date(r.conducted_at).toLocaleDateString()}</td>
                   <td style={{ ...MONO_TD, color: '#34d399' }}>
@@ -485,25 +497,54 @@ export async function AdminRecordIndex({ currentUserId }: { currentUserId: strin
                       )}
                     </td>
                     <td style={{ padding: '0.5rem 0.9rem', textAlign: 'right' }}>
-                      <Link
-                        href={`/admin/people/${s.user_id}`}
+                      <div
                         style={{
                           display: 'inline-flex',
-                          padding: '0.3rem 0.7rem',
-                          background: 'rgba(56, 189, 248, 0.12)',
-                          color: '#38bdf8',
-                          border: '1px solid rgba(56, 189, 248, 0.3)',
-                          borderRadius: 6,
-                          fontSize: '0.68rem',
-                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          fontWeight: 600,
-                          textDecoration: 'none',
+                          gap: '0.35rem',
+                          justifyContent: 'flex-end',
                         }}
                       >
-                        Open record
-                      </Link>
+                        <Link
+                          href={`/record/courses/${s.enrollment_id}`}
+                          style={{
+                            display: 'inline-flex',
+                            padding: '0.3rem 0.7rem',
+                            background: 'rgba(52, 211, 153, 0.12)',
+                            color: '#34d399',
+                            border: '1px solid rgba(52, 211, 153, 0.3)',
+                            borderRadius: 6,
+                            fontSize: '0.68rem',
+                            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Course
+                        </Link>
+                        <Link
+                          href={`/admin/people/${s.user_id}`}
+                          style={{
+                            display: 'inline-flex',
+                            padding: '0.3rem 0.7rem',
+                            background: 'rgba(56, 189, 248, 0.12)',
+                            color: '#38bdf8',
+                            border: '1px solid rgba(56, 189, 248, 0.3)',
+                            borderRadius: 6,
+                            fontSize: '0.68rem',
+                            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Profile
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );
