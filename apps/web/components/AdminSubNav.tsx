@@ -1,39 +1,30 @@
 'use client';
 /**
- * AdminSubNav — the unified sub-header that renders for every admin-role
- * page (admin + global utility routes). Pulled out of admin/layout.tsx
- * so it can also render on /record, /flight-log, /fleet-map, /profile/*,
- * and /schedule when the active role is admin.
+ * AdminSubNav — sub-header navigation for admin-role pages.
  *
- * The parent <nav> uses overflowX: 'auto' so the bar scrolls horizontally
- * on narrow viewports instead of wrapping. That means an absolutely-
- * positioned dropdown INSIDE the nav would get clipped by the overflow
- * box. To escape the clip the More ▾ menu renders through a React portal
- * to document.body and positions itself using the button's bounding rect.
+ * Layout: 8 themed section dropdowns replacing the previous flat admin
+ * links + single "More ▾" mega-menu. Each dropdown is its own portal
+ * menu; opening one closes any other. The brand logo in the top header
+ * already links back to / (→ /admin/dashboard for admins), so Dashboard
+ * is reachable without needing a direct nav link.
  */
 import Link from 'next/link';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-const ADMIN_LINKS = [
-  { href: '/admin/dashboard', label: 'Dashboard' },
-  { href: '/admin/people', label: 'People' },
-  { href: '/admin/aircraft', label: 'Aircraft' },
-  { href: '/admin/schedule', label: 'Schedule' },
-  { href: '/dispatch', label: 'Dispatch' },
-  { href: '/admin/reports', label: 'Reports' },
-  { href: '/admin/audit/logs', label: 'Audit' },
-  { href: '/admin/school', label: 'Settings' },
+type NavLink = { href: string; label: string };
+
+const GLOBAL_LINKS: NavLink[] = [
+  { href: '/record', label: 'Record' },
+  { href: '/flight-log', label: 'Flight Log' },
+  { href: '/fleet-map', label: 'Fleet Map' },
 ];
 
-const MORE_GROUPS: Array<{
-  label: string;
-  accent: string;
-  links: { href: string; label: string }[];
-}> = [
+// 8 themed groups. Order here = left-to-right order in the sub-nav.
+const GROUPS: Array<{ label: string; accent: string; links: NavLink[] }> = [
   {
     label: 'Directory',
-    accent: '#f97316',
+    accent: '#f97316', // orange — OPS / people
     links: [
       { href: '/admin/people', label: 'All People' },
       { href: '/admin/people/pending', label: 'Pending Registrations' },
@@ -42,10 +33,11 @@ const MORE_GROUPS: Array<{
   },
   {
     label: 'Scheduling',
-    accent: '#38bdf8',
+    accent: '#38bdf8', // sky — CFI / scheduling
     links: [
       { href: '/admin/schedule', label: 'Schedule Admin' },
       { href: '/schedule', label: 'Calendar View' },
+      { href: '/dispatch', label: 'Dispatch Board' },
       { href: '/schedule/approvals', label: 'Pending Approvals' },
       { href: '/schedule/request', label: '+ Request Reservation' },
       { href: '/admin/blocks', label: 'Blocks' },
@@ -55,7 +47,7 @@ const MORE_GROUPS: Array<{
   },
   {
     label: 'Training',
-    accent: '#34d399',
+    accent: '#34d399', // mint — students / training
     links: [
       { href: '/admin/courses', label: 'Course Catalog' },
       { href: '/admin/enrollments', label: 'Enrollments' },
@@ -68,7 +60,7 @@ const MORE_GROUPS: Array<{
   },
   {
     label: 'Fleet & Maintenance',
-    accent: '#a78bfa',
+    accent: '#a78bfa', // violet — MX / fleet
     links: [
       { href: '/admin/aircraft', label: 'Fleet' },
       { href: '/admin/aircraft/new', label: '+ New Aircraft' },
@@ -83,7 +75,7 @@ const MORE_GROUPS: Array<{
   },
   {
     label: 'Audit & Oversight',
-    accent: '#fbbf24',
+    accent: '#fbbf24', // amber — safety / audit
     links: [
       { href: '/admin/audit/logs', label: 'Audit Logs' },
       { href: '/admin/audit/activity-trail', label: 'Activity Trail' },
@@ -94,7 +86,7 @@ const MORE_GROUPS: Array<{
   },
   {
     label: 'Reports',
-    accent: '#38bdf8',
+    accent: '#38bdf8', // sky — analytics
     links: [
       { href: '/admin/reports', label: 'Reports Index' },
       { href: '/admin/reports/course-completion', label: 'Course Completion' },
@@ -107,15 +99,16 @@ const MORE_GROUPS: Array<{
   },
   {
     label: 'Training Records',
-    accent: '#34d399',
+    accent: '#34d399', // mint — training
     links: [
+      { href: '/admin/dashboard', label: 'Admin Dashboard' },
       { href: '/record', label: 'School Directory' },
       { href: '/flight-log', label: 'Flight Log' },
     ],
   },
   {
     label: 'Account & School',
-    accent: '#7a869a',
+    accent: '#7a869a', // dim
     links: [
       { href: '/admin/school', label: 'School Settings' },
       { href: '/profile', label: 'My Profile' },
@@ -135,28 +128,31 @@ const linkStyle: React.CSSProperties = {
   transition: 'background 0.15s ease, color 0.15s ease',
 };
 
-const GLOBAL_LINKS = [
-  { href: '/record', label: 'Record' },
-  { href: '/flight-log', label: 'Flight Log' },
-  { href: '/fleet-map', label: 'Fleet Map' },
-];
-
-export function AdminSubNav() {
-  const [moreOpen, setMoreOpen] = useState(false);
+// ---------------------------------------------------------------------
+// GroupDropdown — one section's button + portaled menu.
+// Takes openKey / onOpenChange so only one can be open at a time.
+// ---------------------------------------------------------------------
+function GroupDropdown({
+  group,
+  openKey,
+  onOpenChange,
+}: {
+  group: (typeof GROUPS)[number];
+  openKey: string | null;
+  onOpenChange: (key: string | null) => void;
+}) {
   const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
   const [mounted, setMounted] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const open = openKey === group.label;
 
-  // SSR-safe portal target: only mount after hydration.
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Measure button position whenever the menu opens (and on scroll/resize
-  // while open so the dropdown tracks the button).
   useLayoutEffect(() => {
-    if (!moreOpen) return;
+    if (!open) return;
     function measure() {
       if (buttonRef.current) {
         setButtonRect(buttonRef.current.getBoundingClientRect());
@@ -169,19 +165,18 @@ export function AdminSubNav() {
       window.removeEventListener('scroll', measure, true);
       window.removeEventListener('resize', measure);
     };
-  }, [moreOpen]);
+  }, [open]);
 
-  // Close on outside click or Escape.
   useEffect(() => {
-    if (!moreOpen) return;
+    if (!open) return;
     function onClick(e: MouseEvent) {
       const target = e.target as Node;
       if (buttonRef.current?.contains(target)) return;
       if (menuRef.current?.contains(target)) return;
-      setMoreOpen(false);
+      onOpenChange(null);
     }
     function onEsc(e: KeyboardEvent) {
-      if (e.key === 'Escape') setMoreOpen(false);
+      if (e.key === 'Escape') onOpenChange(null);
     }
     window.addEventListener('mousedown', onClick);
     window.addEventListener('keydown', onEsc);
@@ -189,14 +184,11 @@ export function AdminSubNav() {
       window.removeEventListener('mousedown', onClick);
       window.removeEventListener('keydown', onEsc);
     };
-  }, [moreOpen]);
+  }, [open, onOpenChange]);
 
-  // Compute portal menu position. Prefer to anchor the left edge to the
-  // button; if that would overflow the viewport on the right, shift left
-  // so the menu stays on-screen.
   function menuStyle(): React.CSSProperties {
     if (!buttonRect) return { display: 'none' };
-    const menuWidth = Math.min(820, window.innerWidth - 24);
+    const menuWidth = 260;
     let left = buttonRect.left;
     if (left + menuWidth > window.innerWidth - 12) {
       left = Math.max(12, window.innerWidth - menuWidth - 12);
@@ -210,15 +202,99 @@ export function AdminSubNav() {
       overflowY: 'auto',
       background: '#0d1220',
       border: '1px solid #1f2940',
-      borderRadius: 12,
-      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.55)',
-      padding: '1rem 1.1rem',
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: '0.9rem 1.1rem',
+      borderRadius: 10,
+      boxShadow: '0 20px 50px rgba(0, 0, 0, 0.55)',
+      padding: '0.5rem',
       zIndex: 9999,
     };
   }
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => onOpenChange(open ? null : group.label)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        style={{
+          ...linkStyle,
+          background: open ? `${group.accent}1a` : 'transparent',
+          color: open ? group.accent : '#cbd5e1',
+          border: '1px solid',
+          borderColor: open ? `${group.accent}55` : 'transparent',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.2rem',
+        }}
+      >
+        {group.label}
+        <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>▾</span>
+      </button>
+      {mounted && open
+        ? createPortal(
+            <div ref={menuRef} role="menu" style={menuStyle()}>
+              <div
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: '0.6rem',
+                  letterSpacing: '0.2em',
+                  color: group.accent,
+                  textTransform: 'uppercase',
+                  fontWeight: 600,
+                  padding: '0.35rem 0.5rem 0.5rem',
+                  borderBottom: `1px solid ${group.accent}22`,
+                  marginBottom: '0.25rem',
+                }}
+              >
+                ◆ {group.label}
+              </div>
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.1rem',
+                }}
+              >
+                {group.links.map((l) => (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      onClick={() => onOpenChange(null)}
+                      style={{
+                        display: 'block',
+                        padding: '0.35rem 0.55rem',
+                        fontSize: '0.82rem',
+                        color: '#cbd5e1',
+                        textDecoration: 'none',
+                        borderRadius: 4,
+                        transition: 'background 0.1s, color 0.1s',
+                      }}
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------
+// AdminSubNav
+// ---------------------------------------------------------------------
+export function AdminSubNav() {
+  // Single source of truth so only one dropdown can be open at a time.
+  const [openKey, setOpenKey] = useState<string | null>(null);
 
   return (
     <nav
@@ -251,30 +327,10 @@ export function AdminSubNav() {
       >
         ◆ Admin
       </span>
-      {ADMIN_LINKS.map((l) => (
-        <Link key={l.href} href={l.href} style={linkStyle}>
-          {l.label}
-        </Link>
-      ))}
 
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setMoreOpen((v) => !v)}
-        aria-expanded={moreOpen}
-        aria-haspopup="true"
-        style={{
-          ...linkStyle,
-          background: moreOpen ? 'rgba(251, 191, 36, 0.1)' : 'transparent',
-          color: moreOpen ? '#fbbf24' : '#cbd5e1',
-          border: '1px solid',
-          borderColor: moreOpen ? 'rgba(251, 191, 36, 0.3)' : 'transparent',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-        }}
-      >
-        More ▾
-      </button>
+      {GROUPS.map((g) => (
+        <GroupDropdown key={g.label} group={g} openKey={openKey} onOpenChange={setOpenKey} />
+      ))}
 
       {/* Divider between admin-section routes and cross-role utility routes */}
       <span
@@ -292,74 +348,9 @@ export function AdminSubNav() {
           {l.label}
         </Link>
       ))}
-      <Link
-        href="/profile/notifications"
-        style={{
-          ...linkStyle,
-          color: '#7a869a',
-        }}
-      >
+      <Link href="/profile/notifications" style={{ ...linkStyle, color: '#7a869a' }}>
         Prefs
       </Link>
-
-      {/* Dropdown menu — portaled to document.body so the nav's overflowX
-          doesn't clip it. Positioned with fixed coords relative to the
-          trigger button. */}
-      {mounted && moreOpen
-        ? createPortal(
-            <div ref={menuRef} role="menu" style={menuStyle()}>
-              {MORE_GROUPS.map((g) => (
-                <div key={g.label}>
-                  <div
-                    style={{
-                      fontFamily: '"JetBrains Mono", monospace',
-                      fontSize: '0.62rem',
-                      letterSpacing: '0.18em',
-                      color: g.accent,
-                      textTransform: 'uppercase',
-                      marginBottom: '0.5rem',
-                      fontWeight: 600,
-                      paddingBottom: '0.35rem',
-                      borderBottom: `1px solid ${g.accent}22`,
-                    }}
-                  >
-                    {g.label}
-                  </div>
-                  <ul
-                    style={{
-                      listStyle: 'none',
-                      padding: 0,
-                      margin: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.15rem',
-                    }}
-                  >
-                    {g.links.map((l) => (
-                      <li key={l.href}>
-                        <Link
-                          href={l.href}
-                          onClick={() => setMoreOpen(false)}
-                          style={{
-                            display: 'block',
-                            padding: '0.3rem 0.5rem',
-                            fontSize: '0.82rem',
-                            color: '#cbd5e1',
-                            textDecoration: 'none',
-                            borderRadius: 4,
-                          }}
-                        >
-                          {l.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>,
-            document.body,
-          )
-        : null}
     </nav>
   );
 }
