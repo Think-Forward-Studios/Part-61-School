@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   integer,
   jsonb,
   numeric,
@@ -61,6 +62,17 @@ export const courseRatingSoughtEnum = pgEnum('course_rating_sought', [
   'cfii',
   'mei',
   'custom',
+  // Phase 2 syllabus sprint (migration 0039) — disambiguates the coarse
+  // 'private_pilot' into per-category/class pathways and adds Sport +
+  // Recreational Pilot. Legacy 'private_pilot' rows still work; new
+  // ASEL courses SHOULD use 'private_pilot_asel'.
+  'private_pilot_asel',
+  'private_pilot_amel',
+  'private_pilot_amel_addon',
+  'private_pilot_rotorcraft_helicopter',
+  'private_pilot_glider',
+  'sport_pilot',
+  'recreational_pilot',
 ]);
 
 // ---------------------------------------------------------------------------
@@ -110,7 +122,9 @@ export const courseVersion = pgTable(
   'course_version',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    courseId: uuid('course_id').notNull().references(() => course.id),
+    courseId: uuid('course_id')
+      .notNull()
+      .references(() => course.id),
     schoolId: uuid('school_id').references(() => schools.id),
     versionLabel: text('version_label').notNull(),
     gradingScale: gradingScaleEnum('grading_scale').notNull().default('absolute_ipm'),
@@ -127,16 +141,20 @@ export const courseVersion = pgTable(
     })
       .notNull()
       .default('4'),
+    // Phase 2 syllabus sprint (migration 0039). Both optional / nullable.
+    //   launchMethodPrimary — PPL-G pathway: 'aerotow' | 'ground_launch' |
+    //     'self_launch'. CHECK constraint enforced at DB level.
+    //   mosaicAligned — SP-A MOSAIC alignment flag (LSA definition update
+    //     effective 2025-10-22 pilot / 2026-07-24 airworthiness).
+    launchMethodPrimary: text('launch_method_primary'),
+    mosaicAligned: boolean('mosaic_aligned'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: uuid('created_by').references(() => users.id),
     updatedBy: uuid('updated_by').references(() => users.id),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
-  () => [
-    treeSelectPolicy('course_version_select'),
-    treeModifyPolicy('course_version_modify'),
-  ],
+  () => [treeSelectPolicy('course_version_select'), treeModifyPolicy('course_version_modify')],
 );
 
 // ---------------------------------------------------------------------------
@@ -147,7 +165,9 @@ export const stage = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     schoolId: uuid('school_id').references(() => schools.id),
-    courseVersionId: uuid('course_version_id').notNull().references(() => courseVersion.id),
+    courseVersionId: uuid('course_version_id')
+      .notNull()
+      .references(() => courseVersion.id),
     position: integer('position').notNull(),
     code: text('code').notNull(),
     title: text('title').notNull(),
@@ -170,8 +190,12 @@ export const coursePhase = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     schoolId: uuid('school_id').references(() => schools.id),
-    courseVersionId: uuid('course_version_id').notNull().references(() => courseVersion.id),
-    stageId: uuid('stage_id').notNull().references(() => stage.id),
+    courseVersionId: uuid('course_version_id')
+      .notNull()
+      .references(() => courseVersion.id),
+    stageId: uuid('stage_id')
+      .notNull()
+      .references(() => stage.id),
     position: integer('position').notNull(),
     code: text('code').notNull(),
     title: text('title').notNull(),
@@ -183,10 +207,7 @@ export const coursePhase = pgTable(
     updatedBy: uuid('updated_by').references(() => users.id),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
-  () => [
-    treeSelectPolicy('course_phase_select'),
-    treeModifyPolicy('course_phase_modify'),
-  ],
+  () => [treeSelectPolicy('course_phase_select'), treeModifyPolicy('course_phase_modify')],
 );
 
 // ---------------------------------------------------------------------------
@@ -197,7 +218,9 @@ export const unit = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     schoolId: uuid('school_id').references(() => schools.id),
-    courseVersionId: uuid('course_version_id').notNull().references(() => courseVersion.id),
+    courseVersionId: uuid('course_version_id')
+      .notNull()
+      .references(() => courseVersion.id),
     stageId: uuid('stage_id').references(() => stage.id),
     coursePhaseId: uuid('course_phase_id').references(() => coursePhase.id),
     position: integer('position').notNull(),
@@ -222,7 +245,9 @@ export const lesson = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     schoolId: uuid('school_id').references(() => schools.id),
-    courseVersionId: uuid('course_version_id').notNull().references(() => courseVersion.id),
+    courseVersionId: uuid('course_version_id')
+      .notNull()
+      .references(() => courseVersion.id),
     stageId: uuid('stage_id').references(() => stage.id),
     coursePhaseId: uuid('course_phase_id').references(() => coursePhase.id),
     unitId: uuid('unit_id').references(() => unit.id),
@@ -233,8 +258,12 @@ export const lesson = pgTable(
     objectives: text('objectives'),
     completionStandards: text('completion_standards'),
     minHours: numeric('min_hours', { precision: 4, scale: 1 }),
-    requiredResources: jsonb('required_resources').notNull().default(sql`'[]'::jsonb`),
-    requiredCurrencies: jsonb('required_currencies').notNull().default(sql`'[]'::jsonb`),
+    requiredResources: jsonb('required_resources')
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    requiredCurrencies: jsonb('required_currencies')
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     // Phase 6 additions (SYL-16, SYL-18, SYL-20, SCH-11)
     prerequisiteLessonIds: uuid('prerequisite_lesson_ids')
       .array()
@@ -272,8 +301,12 @@ export const lineItem = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     schoolId: uuid('school_id').references(() => schools.id),
-    courseVersionId: uuid('course_version_id').notNull().references(() => courseVersion.id),
-    lessonId: uuid('lesson_id').notNull().references(() => lesson.id),
+    courseVersionId: uuid('course_version_id')
+      .notNull()
+      .references(() => courseVersion.id),
+    lessonId: uuid('lesson_id')
+      .notNull()
+      .references(() => lesson.id),
     position: integer('position').notNull(),
     code: text('code').notNull(),
     title: text('title').notNull(),
@@ -290,10 +323,7 @@ export const lineItem = pgTable(
     updatedBy: uuid('updated_by').references(() => users.id),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
-  () => [
-    treeSelectPolicy('line_item_select'),
-    treeModifyPolicy('line_item_modify'),
-  ],
+  () => [treeSelectPolicy('line_item_select'), treeModifyPolicy('line_item_modify')],
 );
 
 export type Course = typeof course.$inferSelect;

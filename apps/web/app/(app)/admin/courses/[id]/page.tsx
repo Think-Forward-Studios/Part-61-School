@@ -114,7 +114,7 @@ export default async function CourseDetailPage({ params }: { params: Params }) {
       <PageHeader
         eyebrow="Training"
         title={`${c.code} · ${c.title}`}
-        subtitle={`Rating sought: ${c.ratingSought.replace(/_/g, ' ')}${
+        subtitle={`Rating sought: ${c.ratingSought ? c.ratingSought.replace(/_/g, ' ') : '—'}${
           isSystemTemplate ? ' · system template (read-only)' : ' · school-owned'
         }`}
       />

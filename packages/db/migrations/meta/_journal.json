@@ -274,6 +274,20 @@
       "when": 1775531293000,
       "tag": "0038_phase8_training_activity_view",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1776412800000,
+      "tag": "0039_phase2_rating_sought_additions",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1776412860000,
+      "tag": "0040_phase2_seed_courses",
+      "breakpoints": true
     }
   ]
 }
