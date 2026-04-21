@@ -5,7 +5,6 @@
  * header driven by user_flight_log_totals view.
  */
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { sql } from 'drizzle-orm';
 import { db } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -95,15 +94,10 @@ export default async function FlightLogPage() {
 
   return (
     <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
-      <p style={{ marginBottom: '0.5rem' }}>
-        <Link href="/record" style={{ color: '#38bdf8', fontSize: '0.85rem' }}>
-          ← Back to My Training Record
-        </Link>
-      </p>
       <PageHeader
         eyebrow="Operations"
         title="Flight Log"
-        subtitle="Chronological flight time with IACRA 8710-1 totals and exports."
+        subtitle="Your chronological flight time, grouped by month. Totals match the FAA IACRA 8710-1 (Airman Certificate and/or Rating Application) format. Use the PDF or CSV export when preparing an application for a new certificate or rating."
         actions={
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <a
