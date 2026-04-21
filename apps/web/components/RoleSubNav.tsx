@@ -96,7 +96,10 @@ const CONFIGS: Record<Role, NavConfig> = {
           { href: '/admin/work-orders', label: 'Work Orders' },
           { href: '/admin/parts', label: 'Parts Inventory' },
           { href: '/fleet-map', label: 'Live Fleet Map' },
-          { href: '/flight-log', label: 'Flight Log' },
+          // Personal flight log — shows only the admin's own flight time
+          // (RLS-scoped to caller). Kept here for admins who are also
+          // rated pilots; for school-wide flight data use /admin/reports.
+          { href: '/flight-log', label: 'My Flight Log' },
         ],
       },
       {
