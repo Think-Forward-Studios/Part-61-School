@@ -142,7 +142,7 @@ export async function AdminRecordIndex({ currentUserId }: { currentUserId: strin
          from public.stage_check sc
          where sc.school_id = ${schoolId}::uuid
            and sc.deleted_at is null
-           and sc.result is null)                                as stage_checks_due,
+           and sc.status = 'scheduled')                          as stage_checks_due,
       (select count(*)::int
          from public.student_endorsement se
          where se.school_id = ${schoolId}::uuid
