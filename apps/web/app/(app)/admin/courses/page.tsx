@@ -77,13 +77,24 @@ export default async function AdminCoursesPage() {
   const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
   if (!me?.schoolId) redirect('/login');
 
-  const allCourses = await db
-    .select()
-    .from(course)
-    .where(
-      and(isNull(course.deletedAt), or(isNull(course.schoolId), eq(course.schoolId, me.schoolId))),
-    )
-    .orderBy(asc(course.code));
+  let allCourses: Array<typeof course.$inferSelect> = [];
+  try {
+    allCourses = await db
+      .select()
+      .from(course)
+      .where(
+        and(
+          isNull(course.deletedAt),
+          or(isNull(course.schoolId), eq(course.schoolId, me.schoolId)),
+        ),
+      )
+      .orderBy(asc(course.code));
+  } catch (err) {
+    // Surface the real Postgres / pooler error in Vercel logs instead of
+    // letting it bubble as a generic digest.
+    console.error('[admin/courses] query failed:', err);
+    throw err;
+  }
 
   const systemTemplates = allCourses.filter((c) => c.schoolId === null);
   const schoolCourses = allCourses.filter((c) => c.schoolId !== null);
@@ -127,7 +138,7 @@ function CourseTable({
     id: string;
     code: string;
     title: string;
-    ratingSought: string;
+    ratingSought: string | null;
     description: string | null;
   }>;
   owned: boolean;
@@ -164,7 +175,13 @@ function CourseTable({
                 {r.code}
               </td>
               <td style={{ ...TD, color: '#f7f9fc' }}>{r.title}</td>
-              <td style={TD}>{r.ratingSought.replace(/_/g, ' ')}</td>
+              <td style={TD}>
+                {r.ratingSought ? (
+                  r.ratingSought.replace(/_/g, ' ')
+                ) : (
+                  <span style={{ color: '#5b6784' }}>—</span>
+                )}
+              </td>
               <td style={TD}>
                 <Link href={`/admin/courses/${r.id}`} style={ACTION_LINK}>
                   {owned ? 'Open' : 'View / Fork'}
