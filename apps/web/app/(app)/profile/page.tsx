@@ -1,26 +1,17 @@
 import { PageHeader } from '@/components/ui';
+import { ProfileForm } from './ProfileForm';
+
+export const dynamic = 'force-dynamic';
 
 export default function ProfilePage() {
   return (
-    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1000, margin: '0 auto' }}>
       <PageHeader
-        eyebrow="Account"
-        title="Profile"
-        subtitle="Personal details and contact information."
+        eyebrow="Account & School"
+        title="My Profile"
+        subtitle="Personal details and contact information on file with the school. Legal-status fields (citizenship, TSA AFSP) are admin-managed and shown read-only."
       />
-      <div
-        style={{
-          padding: '3rem 1rem',
-          textAlign: 'center',
-          color: '#7a869a',
-          fontSize: '0.88rem',
-          background: '#0d1220',
-          border: '1px dashed #1f2940',
-          borderRadius: 12,
-        }}
-      >
-        Profile fields land in a later plan.
-      </div>
+      <ProfileForm />
     </main>
   );
 }
