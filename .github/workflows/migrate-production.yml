@@ -59,6 +59,46 @@ jobs:
         env:
           DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
 
+      - name: Pre-apply non-transactional DDL (enum ADD VALUE)
+        # PostgreSQL forbids using an enum value in the same transaction
+        # it was added in (error 55P04 "New enum values must be committed
+        # before they can be used"). drizzle-kit wraps all pending
+        # migrations in a single transaction, so migration 0039
+        # (ADD VALUEs) and migration 0040 (seed that USES them) would
+        # fail if run together. We apply 0039's ADD VALUE and ADD COLUMN
+        # statements here in autocommit mode BEFORE drizzle-kit runs.
+        # Every statement is IF NOT EXISTS, so drizzle-kit will re-apply
+        # 0039 as an idempotent no-op and then apply 0040 in its own tx
+        # with the enum values already committed.
+        #
+        # This step is idempotent — safe to re-run on any database state.
+        run: |
+          pnpm --filter @part61/db exec node -e "
+          const postgres = require('postgres');
+          const sql = postgres(process.env.DIRECT_DATABASE_URL, { prepare: false, max: 1 });
+          const stmts = [
+            \"alter type public.course_rating_sought add value if not exists 'private_pilot_asel'\",
+            \"alter type public.course_rating_sought add value if not exists 'private_pilot_amel'\",
+            \"alter type public.course_rating_sought add value if not exists 'private_pilot_amel_addon'\",
+            \"alter type public.course_rating_sought add value if not exists 'private_pilot_rotorcraft_helicopter'\",
+            \"alter type public.course_rating_sought add value if not exists 'private_pilot_glider'\",
+            \"alter type public.course_rating_sought add value if not exists 'sport_pilot'\",
+            \"alter type public.course_rating_sought add value if not exists 'recreational_pilot'\",
+            \"alter table public.course_version add column if not exists launch_method_primary text check (launch_method_primary is null or launch_method_primary in ('aerotow','ground_launch','self_launch'))\",
+            \"alter table public.course_version add column if not exists mosaic_aligned boolean\"
+          ];
+          (async () => {
+            for (const stmt of stmts) {
+              console.log('pre-apply:', stmt.slice(0, 100));
+              await sql.unsafe(stmt);
+            }
+            console.log('pre-apply: done');
+            await sql.end();
+          })().catch(e => { console.error(e); process.exit(1); });
+          "
+        env:
+          DIRECT_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
       - name: Apply Drizzle migrations
         run: pnpm --filter @part61/db exec drizzle-kit migrate
         env:
