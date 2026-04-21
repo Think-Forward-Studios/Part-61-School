@@ -5,12 +5,15 @@
  * so it can also render on /record, /flight-log, /fleet-map, /profile/*,
  * and /schedule when the active role is admin.
  *
- * Contains a flat set of primary links plus a "More ▾" grouped dropdown
- * that covers every remaining page reachable in the admin surface, so
- * nothing gets stranded.
+ * The parent <nav> uses overflowX: 'auto' so the bar scrolls horizontally
+ * on narrow viewports instead of wrapping. That means an absolutely-
+ * positioned dropdown INSIDE the nav would get clipped by the overflow
+ * box. To escape the clip the More ▾ menu renders through a React portal
+ * to document.body and positions itself using the button's bounding rect.
  */
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const ADMIN_LINKS = [
   { href: '/admin/dashboard', label: 'Dashboard' },
@@ -23,8 +26,6 @@ const ADMIN_LINKS = [
   { href: '/admin/school', label: 'Settings' },
 ];
 
-// Grouped overflow — surfaces every remaining admin route in themed
-// sections so "More ▾" is a true site map.
 const MORE_GROUPS: Array<{
   label: string;
   accent: string;
@@ -134,11 +135,6 @@ const linkStyle: React.CSSProperties = {
   transition: 'background 0.15s ease, color 0.15s ease',
 };
 
-const globalLinkStyle: React.CSSProperties = {
-  ...linkStyle,
-  color: '#cbd5e1',
-};
-
 const GLOBAL_LINKS = [
   { href: '/record', label: 'Record' },
   { href: '/flight-log', label: 'Flight Log' },
@@ -147,14 +143,42 @@ const GLOBAL_LINKS = [
 
 export function AdminSubNav() {
   const [moreOpen, setMoreOpen] = useState(false);
-  const moreRef = useRef<HTMLDivElement>(null);
+  const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
+  // SSR-safe portal target: only mount after hydration.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Measure button position whenever the menu opens (and on scroll/resize
+  // while open so the dropdown tracks the button).
+  useLayoutEffect(() => {
+    if (!moreOpen) return;
+    function measure() {
+      if (buttonRef.current) {
+        setButtonRect(buttonRef.current.getBoundingClientRect());
+      }
+    }
+    measure();
+    window.addEventListener('scroll', measure, true);
+    window.addEventListener('resize', measure);
+    return () => {
+      window.removeEventListener('scroll', measure, true);
+      window.removeEventListener('resize', measure);
+    };
+  }, [moreOpen]);
+
+  // Close on outside click or Escape.
   useEffect(() => {
     if (!moreOpen) return;
     function onClick(e: MouseEvent) {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
+      const target = e.target as Node;
+      if (buttonRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setMoreOpen(false);
     }
     function onEsc(e: KeyboardEvent) {
       if (e.key === 'Escape') setMoreOpen(false);
@@ -166,6 +190,35 @@ export function AdminSubNav() {
       window.removeEventListener('keydown', onEsc);
     };
   }, [moreOpen]);
+
+  // Compute portal menu position. Prefer to anchor the left edge to the
+  // button; if that would overflow the viewport on the right, shift left
+  // so the menu stays on-screen.
+  function menuStyle(): React.CSSProperties {
+    if (!buttonRect) return { display: 'none' };
+    const menuWidth = Math.min(820, window.innerWidth - 24);
+    let left = buttonRect.left;
+    if (left + menuWidth > window.innerWidth - 12) {
+      left = Math.max(12, window.innerWidth - menuWidth - 12);
+    }
+    return {
+      position: 'fixed',
+      top: buttonRect.bottom + 6,
+      left,
+      width: menuWidth,
+      maxHeight: `calc(100vh - ${buttonRect.bottom + 24}px)`,
+      overflowY: 'auto',
+      background: '#0d1220',
+      border: '1px solid #1f2940',
+      borderRadius: 12,
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.55)',
+      padding: '1rem 1.1rem',
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gap: '0.9rem 1.1rem',
+      zIndex: 9999,
+    };
+  }
 
   return (
     <nav
@@ -204,97 +257,24 @@ export function AdminSubNav() {
         </Link>
       ))}
 
-      {/* More ▾ dropdown — every remaining admin route grouped by theme */}
-      <div ref={moreRef} style={{ position: 'relative' }}>
-        <button
-          type="button"
-          onClick={() => setMoreOpen((v) => !v)}
-          aria-expanded={moreOpen}
-          aria-haspopup="true"
-          style={{
-            ...linkStyle,
-            background: moreOpen ? 'rgba(251, 191, 36, 0.1)' : 'transparent',
-            color: moreOpen ? '#fbbf24' : '#cbd5e1',
-            border: '1px solid transparent',
-            borderColor: moreOpen ? 'rgba(251, 191, 36, 0.3)' : 'transparent',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          More ▾
-        </button>
-        {moreOpen ? (
-          <div
-            role="menu"
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 0.4rem)',
-              left: 0,
-              minWidth: 820,
-              maxWidth: '92vw',
-              background: '#0d1220',
-              border: '1px solid #1f2940',
-              borderRadius: 12,
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.55)',
-              padding: '1rem 1.1rem',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '0.9rem 1.1rem',
-              zIndex: 50,
-            }}
-          >
-            {MORE_GROUPS.map((g) => (
-              <div key={g.label}>
-                <div
-                  style={{
-                    fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: '0.62rem',
-                    letterSpacing: '0.18em',
-                    color: g.accent,
-                    textTransform: 'uppercase',
-                    marginBottom: '0.5rem',
-                    fontWeight: 600,
-                    paddingBottom: '0.35rem',
-                    borderBottom: `1px solid ${g.accent}22`,
-                  }}
-                >
-                  {g.label}
-                </div>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.15rem',
-                  }}
-                >
-                  {g.links.map((l) => (
-                    <li key={l.href}>
-                      <Link
-                        href={l.href}
-                        onClick={() => setMoreOpen(false)}
-                        style={{
-                          display: 'block',
-                          padding: '0.3rem 0.5rem',
-                          fontSize: '0.82rem',
-                          color: '#cbd5e1',
-                          textDecoration: 'none',
-                          borderRadius: 4,
-                          transition: 'background 0.15s, color 0.15s',
-                        }}
-                      >
-                        {l.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setMoreOpen((v) => !v)}
+        aria-expanded={moreOpen}
+        aria-haspopup="true"
+        style={{
+          ...linkStyle,
+          background: moreOpen ? 'rgba(251, 191, 36, 0.1)' : 'transparent',
+          color: moreOpen ? '#fbbf24' : '#cbd5e1',
+          border: '1px solid',
+          borderColor: moreOpen ? 'rgba(251, 191, 36, 0.3)' : 'transparent',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}
+      >
+        More ▾
+      </button>
 
       {/* Divider between admin-section routes and cross-role utility routes */}
       <span
@@ -308,19 +288,78 @@ export function AdminSubNav() {
       />
 
       {GLOBAL_LINKS.map((l) => (
-        <Link key={l.href} href={l.href} style={globalLinkStyle}>
+        <Link key={l.href} href={l.href} style={linkStyle}>
           {l.label}
         </Link>
       ))}
       <Link
         href="/profile/notifications"
         style={{
-          ...globalLinkStyle,
+          ...linkStyle,
           color: '#7a869a',
         }}
       >
         Prefs
       </Link>
+
+      {/* Dropdown menu — portaled to document.body so the nav's overflowX
+          doesn't clip it. Positioned with fixed coords relative to the
+          trigger button. */}
+      {mounted && moreOpen
+        ? createPortal(
+            <div ref={menuRef} role="menu" style={menuStyle()}>
+              {MORE_GROUPS.map((g) => (
+                <div key={g.label}>
+                  <div
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '0.62rem',
+                      letterSpacing: '0.18em',
+                      color: g.accent,
+                      textTransform: 'uppercase',
+                      marginBottom: '0.5rem',
+                      fontWeight: 600,
+                      paddingBottom: '0.35rem',
+                      borderBottom: `1px solid ${g.accent}22`,
+                    }}
+                  >
+                    {g.label}
+                  </div>
+                  <ul
+                    style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.15rem',
+                    }}
+                  >
+                    {g.links.map((l) => (
+                      <li key={l.href}>
+                        <Link
+                          href={l.href}
+                          onClick={() => setMoreOpen(false)}
+                          style={{
+                            display: 'block',
+                            padding: '0.3rem 0.5rem',
+                            fontSize: '0.82rem',
+                            color: '#cbd5e1',
+                            textDecoration: 'none',
+                            borderRadius: 4,
+                          }}
+                        >
+                          {l.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
     </nav>
   );
 }
