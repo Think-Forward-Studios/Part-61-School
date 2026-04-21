@@ -67,64 +67,68 @@ export function DocumentsPanel({
             background: 'rgba(249, 115, 22, 0.06)',
             border: '1px solid rgba(249, 115, 22, 0.25)',
             borderRadius: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.8rem',
-            flexWrap: 'wrap',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto',
+            alignItems: 'end',
+            columnGap: '0.8rem',
+            rowGap: '0.5rem',
           }}
         >
-          <span
+          <label
             style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.35rem',
               fontFamily: '"JetBrains Mono", ui-monospace, monospace',
               fontSize: '0.62rem',
               letterSpacing: '0.18em',
               color: '#f97316',
               textTransform: 'uppercase',
               fontWeight: 600,
-              whiteSpace: 'nowrap',
             }}
           >
             ◆ Admin · Upload target
-          </span>
-          <select
-            value={targetUserId}
-            onChange={(e) => setTargetUserId(e.target.value)}
-            style={{
-              padding: '0.45rem 0.7rem',
-              background: '#05070e',
-              border: '1px solid #1a2238',
-              borderRadius: 6,
-              color: '#f7f9fc',
-              fontSize: '0.85rem',
-              minWidth: 280,
-              flex: 1,
-              fontFamily: 'inherit',
-            }}
-          >
-            <option value={currentUserId}>Myself</option>
-            {peopleQ.isLoading ? <option disabled>Loading people…</option> : null}
-            {((peopleQ.data?.rows ?? []) as Array<Record<string, unknown>>)
-              .filter((p) => p.id !== currentUserId)
-              .map((p) => {
-                const id = p.id as string;
-                const first = (p.first_name as string | null) ?? '';
-                const last = (p.last_name as string | null) ?? '';
-                const name = [first, last].filter(Boolean).join(' ').trim();
-                const email = p.email as string;
-                const label = name ? `${name} · ${email}` : email;
-                return (
-                  <option key={id} value={id}>
-                    {label}
-                  </option>
-                );
-              })}
-          </select>
+            <select
+              value={targetUserId}
+              onChange={(e) => setTargetUserId(e.target.value)}
+              style={{
+                padding: '0.55rem 0.75rem',
+                background: '#05070e',
+                border: '1px solid #1a2238',
+                borderRadius: 6,
+                color: '#f7f9fc',
+                fontSize: '0.88rem',
+                width: '100%',
+                fontFamily: 'inherit',
+                letterSpacing: 'normal',
+                textTransform: 'none',
+              }}
+            >
+              <option value={currentUserId}>Myself</option>
+              {peopleQ.isLoading ? <option disabled>Loading people…</option> : null}
+              {((peopleQ.data?.rows ?? []) as Array<Record<string, unknown>>)
+                .filter((p) => p.id !== currentUserId)
+                .map((p) => {
+                  const id = p.id as string;
+                  const first = (p.first_name as string | null) ?? '';
+                  const last = (p.last_name as string | null) ?? '';
+                  const name = [first, last].filter(Boolean).join(' ').trim();
+                  const email = p.email as string;
+                  const label = name ? `${name} · ${email}` : email;
+                  return (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  );
+                })}
+            </select>
+          </label>
           {!isSelf ? (
             <button
               type="button"
               onClick={() => setTargetUserId(currentUserId)}
               style={{
-                padding: '0.4rem 0.9rem',
+                padding: '0.55rem 0.95rem',
                 background: 'transparent',
                 color: '#7a869a',
                 border: '1px solid #1f2940',
@@ -136,6 +140,7 @@ export function DocumentsPanel({
                 fontWeight: 600,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                height: 'fit-content',
               }}
             >
               ← Back to myself

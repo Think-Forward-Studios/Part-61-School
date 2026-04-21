@@ -141,11 +141,16 @@ export function UploadForm({
         border: '1px solid #1f2940',
         borderRadius: 12,
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gridTemplateColumns: '1fr 1fr',
         gap: '0.9rem',
       }}
     >
-      <label style={LABEL}>
+      <label
+        style={{
+          ...LABEL,
+          gridColumn: kind === 'medical' ? 'span 1' : '1 / -1',
+        }}
+      >
         Document type
         <select
           value={kind}
