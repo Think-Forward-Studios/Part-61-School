@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { and, eq } from 'drizzle-orm';
@@ -141,14 +142,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             zIndex: 20,
           }}
         >
-          {/* Brand */}
-          <div
+          {/* Brand — links back to role-appropriate dashboard */}
+          <Link
+            href="/"
+            aria-label="Go to dashboard"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.6rem',
               paddingRight: '1rem',
               borderRight: '1px solid var(--border-subtle, #1a2238)',
+              textDecoration: 'none',
+              color: 'inherit',
             }}
           >
             <span
@@ -176,6 +181,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                   fontSize: '0.96rem',
                   fontWeight: 600,
                   letterSpacing: '-0.01em',
+                  color: '#f7f9fc',
                 }}
               >
                 {schoolName}
@@ -192,7 +198,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 Part 61 · Operations
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* User pill — role callsign */}
           <div
@@ -245,48 +251,50 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 
-          {/* Nav links */}
-          <nav
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-            }}
-          >
-            {[
-              { href: '/record', label: 'Record' },
-              { href: '/flight-log', label: 'Flight Log' },
-              { href: '/fleet-map', label: 'Fleet Map' },
-              { href: '/schedule', label: 'Schedule' },
-            ].map((l) => (
+          {/* Nav links — hidden for admin role (admin sub-nav carries them instead) */}
+          {activeRole !== 'admin' ? (
+            <nav
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+              }}
+            >
+              {[
+                { href: '/record', label: 'Record' },
+                { href: '/flight-log', label: 'Flight Log' },
+                { href: '/fleet-map', label: 'Fleet Map' },
+                { href: '/schedule', label: 'Schedule' },
+              ].map((l) => (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  style={{
+                    fontSize: '0.82rem',
+                    color: '#cbd5e1',
+                    textDecoration: 'none',
+                    padding: '0.4rem 0.7rem',
+                    borderRadius: 6,
+                    transition: 'background 0.15s ease, color 0.15s ease',
+                  }}
+                >
+                  {l.label}
+                </a>
+              ))}
               <a
-                key={l.href}
-                href={l.href}
+                href="/profile/notifications"
                 style={{
                   fontSize: '0.82rem',
-                  color: '#cbd5e1',
+                  color: '#7a869a',
                   textDecoration: 'none',
                   padding: '0.4rem 0.7rem',
                   borderRadius: 6,
-                  transition: 'background 0.15s ease, color 0.15s ease',
                 }}
               >
-                {l.label}
+                Prefs
               </a>
-            ))}
-            <a
-              href="/profile/notifications"
-              style={{
-                fontSize: '0.82rem',
-                color: '#7a869a',
-                textDecoration: 'none',
-                padding: '0.4rem 0.7rem',
-                borderRadius: 6,
-              }}
-            >
-              Prefs
-            </a>
-          </nav>
+            </nav>
+          ) : null}
 
           {/* Right controls */}
           <div

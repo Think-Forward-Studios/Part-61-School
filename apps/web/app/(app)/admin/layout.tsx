@@ -17,7 +17,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   if (activeRole !== 'admin') {
     notFound();
   }
-  const navLinks = [
+  // Admin-section routes (primary workflow).
+  const adminLinks = [
     { href: '/admin/dashboard', label: 'Dashboard' },
     { href: '/admin/people', label: 'People' },
     { href: '/admin/people/pending', label: 'Pending' },
@@ -31,6 +32,25 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     { href: '/admin/overrides', label: 'Overrides' },
     { href: '/admin/school', label: 'Settings' },
   ];
+  // Cross-role utility routes — moved here from the top header so admins
+  // have a single place for navigation.
+  const globalLinks = [
+    { href: '/record', label: 'Record' },
+    { href: '/flight-log', label: 'Flight Log' },
+    { href: '/fleet-map', label: 'Fleet Map' },
+    { href: '/profile/notifications', label: 'Prefs' },
+  ];
+
+  const linkStyle: React.CSSProperties = {
+    fontSize: '0.78rem',
+    color: '#cbd5e1',
+    textDecoration: 'none',
+    padding: '0.35rem 0.7rem',
+    borderRadius: 5,
+    whiteSpace: 'nowrap',
+    transition: 'background 0.15s ease, color 0.15s ease',
+  };
+
   return (
     <div>
       <nav
@@ -63,18 +83,30 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         >
           ◆ Admin
         </span>
-        {navLinks.map((l) => (
+        {adminLinks.map((l) => (
+          <Link key={l.href} href={l.href} style={linkStyle}>
+            {l.label}
+          </Link>
+        ))}
+
+        {/* Divider between admin routes and cross-role utility links */}
+        <span
+          aria-hidden
+          style={{
+            width: 1,
+            alignSelf: 'stretch',
+            background: '#1f2940',
+            margin: '0.15rem 0.6rem',
+          }}
+        />
+
+        {globalLinks.map((l) => (
           <Link
             key={l.href}
             href={l.href}
             style={{
-              fontSize: '0.78rem',
-              color: '#cbd5e1',
-              textDecoration: 'none',
-              padding: '0.35rem 0.7rem',
-              borderRadius: 5,
-              whiteSpace: 'nowrap',
-              transition: 'background 0.15s ease, color 0.15s ease',
+              ...linkStyle,
+              color: l.label === 'Prefs' ? '#7a869a' : '#cbd5e1',
             }}
           >
             {l.label}
