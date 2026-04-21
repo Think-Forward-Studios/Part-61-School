@@ -14,12 +14,6 @@ import { createPortal } from 'react-dom';
 
 type NavLink = { href: string; label: string };
 
-const GLOBAL_LINKS: NavLink[] = [
-  { href: '/record', label: 'Record' },
-  { href: '/flight-log', label: 'Flight Log' },
-  { href: '/fleet-map', label: 'Fleet Map' },
-];
-
 // 8 themed groups. Order here = left-to-right order in the sub-nav.
 const GROUPS: Array<{ label: string; accent: string; links: NavLink[] }> = [
   {
@@ -56,6 +50,7 @@ const GROUPS: Array<{ label: string; accent: string; links: NavLink[] }> = [
       { href: '/admin/fif', label: 'Flight Instruction Forms' },
       { href: '/admin/fif/new', label: '+ New FIF' },
       { href: '/admin/rates', label: 'Rates' },
+      { href: '/record', label: 'School Directory (Record)' },
     ],
   },
   {
@@ -71,6 +66,7 @@ const GROUPS: Array<{ label: string; accent: string; links: NavLink[] }> = [
       { href: '/admin/work-orders', label: 'Work Orders' },
       { href: '/admin/parts', label: 'Parts Inventory' },
       { href: '/fleet-map', label: 'Live Fleet Map' },
+      { href: '/flight-log', label: 'Flight Log' },
     ],
   },
   {
@@ -95,15 +91,6 @@ const GROUPS: Array<{ label: string; accent: string; links: NavLink[] }> = [
       { href: '/admin/reports/no-show-rate', label: 'No-Show Rate' },
       { href: '/admin/reports/squawk-turnaround', label: 'Squawk Turnaround' },
       { href: '/admin/reports/student-progress', label: 'Student Progress' },
-    ],
-  },
-  {
-    label: 'Training Records',
-    accent: '#34d399', // mint — training
-    links: [
-      { href: '/admin/dashboard', label: 'Admin Dashboard' },
-      { href: '/record', label: 'School Directory' },
-      { href: '/flight-log', label: 'Flight Log' },
     ],
   },
   {
@@ -328,29 +315,14 @@ export function AdminSubNav() {
         ◆ Admin
       </span>
 
+      {/* Dashboard as a direct link — it's a home page, not a category */}
+      <Link href="/admin/dashboard" style={linkStyle}>
+        Dashboard
+      </Link>
+
       {GROUPS.map((g) => (
         <GroupDropdown key={g.label} group={g} openKey={openKey} onOpenChange={setOpenKey} />
       ))}
-
-      {/* Divider between admin-section routes and cross-role utility routes */}
-      <span
-        aria-hidden
-        style={{
-          width: 1,
-          alignSelf: 'stretch',
-          background: '#1f2940',
-          margin: '0.15rem 0.6rem',
-        }}
-      />
-
-      {GLOBAL_LINKS.map((l) => (
-        <Link key={l.href} href={l.href} style={linkStyle}>
-          {l.label}
-        </Link>
-      ))}
-      <Link href="/profile/notifications" style={{ ...linkStyle, color: '#7a869a' }}>
-        Prefs
-      </Link>
     </nav>
   );
 }
