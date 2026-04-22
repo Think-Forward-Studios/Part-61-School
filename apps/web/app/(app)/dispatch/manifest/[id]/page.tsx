@@ -107,7 +107,11 @@ export default async function ManifestPage({ params }: { params: Promise<{ id: s
         <PageHeader
           eyebrow="Operations"
           title="Manifest"
-          subtitle={`Passenger manifest · reservation ${r.id.slice(0, 8)}`}
+          subtitle={
+            tail
+              ? `Passenger manifest · ${tail}`
+              : `Passenger manifest · ${pax.length} ${pax.length === 1 ? 'passenger' : 'passengers'}`
+          }
           actions={<PrintButtonClient />}
         />
       </div>

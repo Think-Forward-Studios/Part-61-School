@@ -11,6 +11,8 @@ import {
   workOrderTask,
   workOrderPartConsumption,
   aircraft,
+  part,
+  partLot,
 } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { WorkOrderTasks } from './WorkOrderTasks';
@@ -71,9 +73,23 @@ export default async function WorkOrderDetailPage({ params }: { params: Params }
     .from(workOrderTask)
     .where(and(eq(workOrderTask.workOrderId, wo.id), isNull(workOrderTask.deletedAt)));
 
+  // Join to part + part_lot so the Parts table can render part numbers
+  // and lot/serial identifiers instead of truncated UUIDs.
   const consumption = await db
-    .select()
+    .select({
+      id: workOrderPartConsumption.id,
+      partId: workOrderPartConsumption.partId,
+      partLotId: workOrderPartConsumption.partLotId,
+      quantity: workOrderPartConsumption.quantity,
+      consumedAt: workOrderPartConsumption.consumedAt,
+      partNumber: part.partNumber,
+      partDescription: part.description,
+      lotNumber: partLot.lotNumber,
+      lotSerial: partLot.serialNumber,
+    })
     .from(workOrderPartConsumption)
+    .leftJoin(part, eq(part.id, workOrderPartConsumption.partId))
+    .leftJoin(partLot, eq(partLot.id, workOrderPartConsumption.partLotId))
     .where(eq(workOrderPartConsumption.workOrderId, wo.id));
 
   // Highest required authority among tasks.
@@ -184,12 +200,26 @@ export default async function WorkOrderDetailPage({ params }: { params: Params }
                         href={`/admin/parts/${c.partId}`}
                         style={{ color: '#38bdf8', textDecoration: 'none' }}
                       >
-                        {c.partId.slice(0, 8)}
+                        <span
+                          style={{
+                            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                            fontSize: '0.78rem',
+                            color: '#38bdf8',
+                            marginRight: '0.4rem',
+                          }}
+                        >
+                          {c.partNumber ?? c.partId.slice(0, 8)}
+                        </span>
+                        {c.partDescription ? (
+                          <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>
+                            {c.partDescription}
+                          </span>
+                        ) : null}
                       </Link>
                     </td>
                     <td style={MONO_TD}>
                       {c.partLotId ? (
-                        c.partLotId.slice(0, 8)
+                        (c.lotSerial ?? c.lotNumber ?? c.partLotId.slice(0, 8))
                       ) : (
                         <span style={{ color: '#5b6784' }}>—</span>
                       )}

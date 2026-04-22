@@ -16,6 +16,7 @@ import {
   maintenanceItem,
   aircraftAdCompliance,
   aircraftComponent,
+  airworthinessDirective,
 } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { maintenanceKindLabel } from '@part61/domain';
@@ -136,9 +137,20 @@ export default async function AircraftMaintenancePage({ params }: { params: Para
       ),
     );
 
+  // Join to airworthiness_directive so the AD column can render the
+  // actual FAA AD number + title instead of a truncated UUID.
   const adCompliance = await db
-    .select()
+    .select({
+      id: aircraftAdCompliance.id,
+      adId: aircraftAdCompliance.adId,
+      applicable: aircraftAdCompliance.applicable,
+      status: aircraftAdCompliance.status,
+      firstDueAt: aircraftAdCompliance.firstDueAt,
+      adNumber: airworthinessDirective.adNumber,
+      adTitle: airworthinessDirective.title,
+    })
     .from(aircraftAdCompliance)
+    .leftJoin(airworthinessDirective, eq(airworthinessDirective.id, aircraftAdCompliance.adId))
     .where(
       and(eq(aircraftAdCompliance.aircraftId, id), eq(aircraftAdCompliance.schoolId, me.schoolId)),
     );
@@ -274,7 +286,19 @@ export default async function AircraftMaintenancePage({ params }: { params: Para
                         href={`/admin/ads/${c.adId}`}
                         style={{ color: '#38bdf8', textDecoration: 'none' }}
                       >
-                        {c.adId.slice(0, 8)}
+                        <span
+                          style={{
+                            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                            fontSize: '0.78rem',
+                            color: '#38bdf8',
+                            marginRight: '0.45rem',
+                          }}
+                        >
+                          {c.adNumber ?? c.adId.slice(0, 8)}
+                        </span>
+                        {c.adTitle ? (
+                          <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>{c.adTitle}</span>
+                        ) : null}
                       </Link>
                     </td>
                     <td style={TD}>{c.applicable ? 'Yes' : 'No'}</td>

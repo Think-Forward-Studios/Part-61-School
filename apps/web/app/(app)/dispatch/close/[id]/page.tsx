@@ -41,6 +41,28 @@ export default async function CloseOutPage({ params }: { params: Promise<{ id: s
   )[0];
   if (!r) notFound();
 
+  // Pull human-readable context for the page header (aircraft tail,
+  // student name, time range) instead of rendering a UUID slice.
+  const contextRows = (await db.execute(sql`
+    select
+      a.tail_number                 as aircraft_tail,
+      coalesce(pp.first_name || ' ' || pp.last_name, su.email) as student_label,
+      lower(res.time_range)::text   as starts_at,
+      upper(res.time_range)::text   as ends_at
+    from public.reservation res
+    left join public.aircraft       a   on a.id   = res.aircraft_id
+    left join public.users          su  on su.id  = res.student_id
+    left join public.person_profile pp  on pp.user_id = res.student_id
+    where res.id = ${r.id}::uuid
+    limit 1
+  `)) as unknown as Array<{
+    aircraft_tail: string | null;
+    student_label: string | null;
+    starts_at: string | null;
+    ends_at: string | null;
+  }>;
+  const ctx = contextRows[0];
+
   const cookieStore = await cookies();
   const activeRole = cookieStore.get('part61.active_role')?.value ?? 'student';
   const canSignOff = activeRole === 'instructor' || activeRole === 'admin';
@@ -111,13 +133,11 @@ export default async function CloseOutPage({ params }: { params: Promise<{ id: s
   const hobbsDeltaMinutes =
     flightEntry?.airframeDelta != null ? Math.round(Number(flightEntry.airframeDelta) * 60) : null;
 
+  const subtitle = buildSubtitle(ctx, r.status);
+
   return (
     <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1600, margin: '0 auto' }}>
-      <PageHeader
-        eyebrow="Operations"
-        title="Close Flight"
-        subtitle={`Reservation ${r.id.slice(0, 8)} · status ${r.status}`}
-      />
+      <PageHeader eyebrow="Operations" title="Close Flight" subtitle={subtitle} />
       <CloseOutForm reservationId={r.id} activityType={r.activityType} canSignOff={canSignOff} />
 
       {r.studentId && activeEnrollment?.courseVersionId ? (
@@ -163,4 +183,40 @@ export default async function CloseOutPage({ params }: { params: Promise<{ id: s
       ) : null}
     </main>
   );
+}
+
+function buildSubtitle(
+  ctx:
+    | {
+        aircraft_tail: string | null;
+        student_label: string | null;
+        starts_at: string | null;
+        ends_at: string | null;
+      }
+    | undefined,
+  status: string,
+): string {
+  const parts: string[] = [];
+  if (ctx?.aircraft_tail) parts.push(ctx.aircraft_tail);
+  if (ctx?.student_label) parts.push(ctx.student_label);
+  if (ctx?.starts_at && ctx?.ends_at) {
+    const start = new Date(ctx.starts_at);
+    const end = new Date(ctx.ends_at);
+    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+      const dayOpts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+      const timeOpts: Intl.DateTimeFormatOptions = {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: false,
+      };
+      parts.push(
+        `${start.toLocaleDateString(undefined, dayOpts)} · ${start.toLocaleTimeString(
+          undefined,
+          timeOpts,
+        )} → ${end.toLocaleTimeString(undefined, timeOpts)}`,
+      );
+    }
+  }
+  parts.push(`status ${status}`);
+  return parts.join(' · ');
 }
