@@ -10,11 +10,15 @@ type Row = {
   id: string;
   activityType: string;
   status: string;
-  timeRange: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  aircraftTail: string | null;
   aircraftId: string | null;
+  instructorName: string | null;
   instructorId: string | null;
+  studentName: string | null;
   studentId: string | null;
-  roomId: string | null;
+  roomName: string | null;
   notes: string | null;
 };
 
@@ -41,6 +45,40 @@ const MONO_TD: React.CSSProperties = {
   fontFamily: '"JetBrains Mono", ui-monospace, monospace',
   fontSize: '0.76rem',
 };
+
+/**
+ * Format a Postgres tstzrange's lower/upper pair as a compact
+ * "Apr 21  14:00 → 16:00" string when start and end are on the same
+ * day, or "Apr 21 14:00 → Apr 22 02:00" when they span midnight.
+ */
+function formatRange(startIso: string | null, endIso: string | null): string {
+  if (!startIso || !endIso) return '—';
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return '—';
+  const dayOpts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  const timeOpts: Intl.DateTimeFormatOptions = {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: false,
+  };
+  const sameDay =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate();
+  const startDay = start.toLocaleDateString(undefined, dayOpts);
+  const startTime = start.toLocaleTimeString(undefined, timeOpts);
+  const endTime = end.toLocaleTimeString(undefined, timeOpts);
+  if (sameDay) {
+    return `${startDay} · ${startTime} → ${endTime}`;
+  }
+  const endDay = end.toLocaleDateString(undefined, dayOpts);
+  return `${startDay} ${startTime} → ${endDay} ${endTime}`;
+}
+
+function Missing({ label = '—' }: { label?: string }) {
+  return <span style={{ color: '#5b6784' }}>{label}</span>;
+}
 
 export function ApprovalList({ rows }: { rows: Row[] }) {
   const router = useRouter();
@@ -117,7 +155,8 @@ export function ApprovalList({ rows }: { rows: Row[] }) {
             <th style={TH}>Aircraft</th>
             <th style={TH}>Instructor</th>
             <th style={TH}>Student</th>
-            <th style={TH}>Actions</th>
+            <th style={TH}>Room</th>
+            <th style={{ ...TH, textAlign: 'right' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -129,14 +168,27 @@ export function ApprovalList({ rows }: { rows: Row[] }) {
               <td style={TD}>
                 <StatusLabel status={r.status} />
               </td>
-              <td style={MONO_TD}>{r.timeRange}</td>
-              <td style={MONO_TD}>{r.aircraftId ?? <span style={{ color: '#5b6784' }}>—</span>}</td>
-              <td style={MONO_TD}>
-                {r.instructorId ?? <span style={{ color: '#5b6784' }}>—</span>}
+              <td style={MONO_TD}>{formatRange(r.startsAt, r.endsAt)}</td>
+              <td style={TD}>
+                {r.aircraftTail ? (
+                  <span
+                    style={{
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.78rem',
+                      color: '#f7f9fc',
+                    }}
+                  >
+                    {r.aircraftTail}
+                  </span>
+                ) : (
+                  <Missing />
+                )}
               </td>
-              <td style={MONO_TD}>{r.studentId ?? <span style={{ color: '#5b6784' }}>—</span>}</td>
-              <td style={{ padding: '0.7rem 0.9rem' }}>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <td style={TD}>{r.instructorName ?? <Missing />}</td>
+              <td style={TD}>{r.studentName ?? <Missing />}</td>
+              <td style={TD}>{r.roomName ?? <Missing />}</td>
+              <td style={{ padding: '0.7rem 0.9rem', textAlign: 'right' }}>
+                <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
                   <button
                     type="button"
                     disabled={busyId === r.id}
@@ -181,7 +233,14 @@ export function ApprovalList({ rows }: { rows: Row[] }) {
                   </button>
                 </div>
                 {errors[r.id] ? (
-                  <div style={{ color: '#f87171', fontSize: '0.72rem', marginTop: '0.35rem' }}>
+                  <div
+                    style={{
+                      color: '#f87171',
+                      fontSize: '0.72rem',
+                      marginTop: '0.35rem',
+                      textAlign: 'right',
+                    }}
+                  >
                     {errors[r.id]}
                   </div>
                 ) : null}
