@@ -7,14 +7,16 @@ import type { ReactNode } from 'react';
  *
  * 1. Viewport lock. Tracker's LiveMapView depends on html + body being
  *    height: 100% with overflow hidden so DeckGL's continuous repaint
- *    doesn't trigger body-scroll drift. We scope the lock to this route
- *    only so the rest of the app still scrolls normally.
+ *    doesn't trigger body-scroll drift. Scoped to this route only.
  *
- * 2. Height propagation. Parent (app)/layout.tsx renders the top header
- *    + role sub-nav as sticky elements, then a flex-1 children container.
- *    For the map to fill the remaining space, this layout's own wrapper
- *    has to declare height: 100% so that FleetMapPage's `height: 100%`
- *    resolves against a defined ancestor.
+ * 2. Height chain. Parent (app)/layout.tsx uses minHeight: 100vh on
+ *    .tfs-app (not height), so a naive `height: 100%` on our wrapper
+ *    resolves against `auto` and collapses to 0 — which is why the map
+ *    rendered blank below the sub-nav. We bypass the broken flex chain
+ *    by pinning the content with position: fixed, offset down by the
+ *    top header (~61px) + role sub-nav (~48px). That leaves the nav
+ *    sticky elements visible and fills the remaining viewport with the
+ *    map.
  *
  * NOTE: the old inline <nav> that used to live here was a pre-refactor
  * duplicate of the admin sub-nav. Removed — the role sub-nav in
@@ -29,7 +31,18 @@ export default function FleetMapLayout({ children }: { children: ReactNode }) {
           overflow: hidden;
         }
       `}</style>
-      <div style={{ height: '100%', overflow: 'hidden' }}>{children}</div>
+      <div
+        style={{
+          position: 'fixed',
+          top: 109, // ~61px top header + ~48px role sub-nav
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </div>
     </>
   );
 }
