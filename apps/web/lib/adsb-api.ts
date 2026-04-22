@@ -1,4 +1,8 @@
-const API_BASE = process.env.NEXT_PUBLIC_ADSB_API_URL || 'http://localhost:3002/api';
+// Default to same-origin /api/adsb — our Next.js app now proxies the
+// ADS-B feed through its own API routes. NEXT_PUBLIC_ADSB_API_URL can
+// still override when pointing at a dedicated tracker service (e.g.
+// local dev with a standalone ADS-B Tracker on :3002).
+const API_BASE = process.env.NEXT_PUBLIC_ADSB_API_URL || '/api/adsb';
 
 export interface BBox {
   latMin: number;
