@@ -105,6 +105,26 @@ function mapState(s: OpenSkyState): AircraftPosition | null {
   };
 }
 
+// Short-lived cache keyed by bbox so a burst of polls (multiple tabs,
+// multiple roles viewing /fleet-map) all get served from one upstream
+// request. OpenSky /states/all typically takes 3-8s to respond; a 4s
+// cache means each Vercel lambda hits OpenSky at most once per window.
+interface CachedBbox {
+  key: string;
+  at: number; // ms
+  positions: AircraftPosition[];
+}
+const BBOX_TTL_MS = 4_000;
+const bboxCache = new Map<string, CachedBbox>();
+const pendingBbox = new Map<string, Promise<AircraftPosition[]>>();
+
+function bboxKey(b: BBox): string {
+  // Round to 2 decimal places so near-identical bboxes share a cache
+  // slot (fleet-map adjusts bbox on every map-move).
+  const r = (n: number) => Math.round(n * 100) / 100;
+  return `${r(b.latMin)},${r(b.lonMin)},${r(b.latMax)},${r(b.lonMax)}`;
+}
+
 export class OpenSkyAdsbProvider implements AdsbProvider {
   private readonly clientId: string;
   private readonly clientSecret: string;
@@ -174,24 +194,55 @@ export class OpenSkyAdsbProvider implements AdsbProvider {
   // -----------------------------------------------------------------------
 
   private async fetchStates(bbox: BBox): Promise<AircraftPosition[]> {
+    const key = bboxKey(bbox);
+    const now = Date.now();
+    const hit = bboxCache.get(key);
+    if (hit && now - hit.at < BBOX_TTL_MS) {
+      return hit.positions;
+    }
+    // Deduplicate concurrent fetches for the same bbox window.
+    const pending = pendingBbox.get(key);
+    if (pending) return pending;
+    const p = this.fetchStatesUncached(bbox)
+      .then((positions) => {
+        bboxCache.set(key, { key, at: Date.now(), positions });
+        // Cap cache size.
+        if (bboxCache.size > 64) {
+          const first = bboxCache.keys().next().value;
+          if (first) bboxCache.delete(first);
+        }
+        return positions;
+      })
+      .finally(() => {
+        pendingBbox.delete(key);
+      });
+    pendingBbox.set(key, p);
+    return p;
+  }
+
+  private async fetchStatesUncached(bbox: BBox): Promise<AircraftPosition[]> {
+    const params = new URLSearchParams({
+      lamin: bbox.latMin.toString(),
+      lomin: bbox.lonMin.toString(),
+      lamax: bbox.latMax.toString(),
+      lomax: bbox.lonMax.toString(),
+    });
+    // OpenSky /states/all commonly takes 5-12s. Vercel Pro lambdas
+    // allow up to 60s by default; Hobby caps at 10s. Stick to 20s
+    // here — if the fetch aborts, the caller silently falls back to
+    // an empty feed (which the UI already handles).
+    const STATES_TIMEOUT_MS = 20_000;
     try {
       const token = await this.getToken();
-      const params = new URLSearchParams({
-        lamin: bbox.latMin.toString(),
-        lomin: bbox.lonMin.toString(),
-        lamax: bbox.latMax.toString(),
-        lomax: bbox.lonMax.toString(),
-      });
       const resp = await fetch(`${OPENSKY_API_BASE}/states/all?${params}`, {
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(STATES_TIMEOUT_MS),
         headers: { Authorization: `Bearer ${token.accessToken}` },
       });
       if (resp.status === 401) {
-        // Token may have rotated mid-request; clear cache and retry once.
         this.token = null;
         const retryToken = await this.getToken();
         const retry = await fetch(`${OPENSKY_API_BASE}/states/all?${params}`, {
-          signal: AbortSignal.timeout(10_000),
+          signal: AbortSignal.timeout(STATES_TIMEOUT_MS),
           headers: { Authorization: `Bearer ${retryToken.accessToken}` },
         });
         if (!retry.ok) {

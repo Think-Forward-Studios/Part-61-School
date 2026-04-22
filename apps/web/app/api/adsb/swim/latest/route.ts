@@ -13,6 +13,9 @@ import { getAdsbProvider, parseBbox } from '../../_provider';
 import { ingest } from '../../_trackCache';
 
 export const dynamic = 'force-dynamic';
+// Vercel Pro lambdas allow up to 60s; Hobby caps at 10s. Give ourselves
+// breathing room for the OpenSky API which can take 5-12s to respond.
+export const maxDuration = 30;
 
 function toSwimShape(p: AircraftPosition) {
   return {

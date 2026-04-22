@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { getAdsbProvider } from '../../_provider';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 export async function GET() {
   try {

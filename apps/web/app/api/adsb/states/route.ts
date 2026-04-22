@@ -11,6 +11,7 @@ import type { AircraftPosition } from '@part61/domain';
 import { getAdsbProvider, parseBbox } from '../_provider';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 function toStateShape(p: AircraftPosition) {
   return {
