@@ -39,10 +39,19 @@ function buildProvider(): AdsbProvider {
   const openskySecret = process.env.OPENSKY_CLIENT_SECRET;
   const hasOpenSky = !!(openskyId && openskySecret);
 
+  // Log once per lambda cold start so we can verify env vars are wired
+  // up without sprinkling checks elsewhere. Don't log secrets — only
+  // presence and lengths.
+  console.log(
+    `[adsb] boot — explicit=${explicit || '(none)'} openskyId=${openskyId ? `set(${openskyId.length}c)` : 'MISSING'} openskySecret=${openskySecret ? `set(${openskySecret.length}c)` : 'MISSING'}`,
+  );
+
   if (explicit === 'swim') {
+    console.log('[adsb] using SwimAdsbProvider (explicit)');
     return new SwimAdsbProvider(process.env.ADSB_API_BASE_URL ?? 'http://localhost:3002');
   }
   if (explicit === 'adsbfi') {
+    console.log('[adsb] using AdsbFiProvider (explicit)');
     return new AdsbFiProvider(process.env.ADSB_API_BASE_URL ?? 'https://api.adsb.fi/v2');
   }
   if (explicit === 'opensky' || (explicit === '' && hasOpenSky)) {
@@ -50,9 +59,10 @@ function buildProvider(): AdsbProvider {
       console.warn('[adsb] OPENSKY_CLIENT_ID/SECRET missing; falling back to adsb.fi');
       return new AdsbFiProvider();
     }
+    console.log('[adsb] using OpenSkyAdsbProvider');
     return new OpenSkyAdsbProvider(openskyId!, openskySecret!);
   }
-  // Default when nothing is configured: the no-auth public feed.
+  console.log('[adsb] using AdsbFiProvider (default — no env configured)');
   return new AdsbFiProvider();
 }
 
