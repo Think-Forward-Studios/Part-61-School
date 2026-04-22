@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import MapGL, { NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
 import { DeckGLOverlay } from './DeckGLOverlay';
 import { ScatterplotLayer, PathLayer, IconLayer, PolygonLayer, TextLayer } from '@deck.gl/layers';
@@ -1116,6 +1117,26 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
               )}
               <span style={{ color: '#666' }}>&#x2715;</span>
             </button>
+          )}
+          {selectedIcao24 && (
+            <Link
+              href={`/fleet-map/replay/${encodeURIComponent(selectedCallsign?.trim() || selectedIcao24)}`}
+              onClick={(e) => {
+                // Don't bubble the click through to the map handler
+                // (which would deselect and blank the pill).
+                e.stopPropagation();
+              }}
+              className="flex items-center gap-1.5 rounded px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.15em]"
+              style={{
+                background: 'rgba(34, 197, 94, 0.12)',
+                border: '1px solid rgba(34, 197, 94, 0.4)',
+                color: '#4ade80',
+                textDecoration: 'none',
+              }}
+              title="Open the replay view for this aircraft"
+            >
+              Replay <span style={{ fontSize: '0.85em' }}>↗</span>
+            </Link>
           )}
           {isLoading && (
             <div className="flex items-center gap-2">
