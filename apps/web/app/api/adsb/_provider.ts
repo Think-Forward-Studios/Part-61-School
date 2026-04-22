@@ -8,7 +8,12 @@
  * lambda.
  */
 import type { AdsbProvider } from '@part61/domain';
-import { AdsbFiProvider, OpenSkyAdsbProvider, SwimAdsbProvider } from '@part61/api';
+import {
+  AdsbFiProvider,
+  CompositeAdsbProvider,
+  OpenSkyAdsbProvider,
+  SwimAdsbProvider,
+} from '@part61/api';
 
 let cached: AdsbProvider | null = null;
 
@@ -25,7 +30,17 @@ function build(): AdsbProvider {
     return new AdsbFiProvider(process.env.ADSB_API_BASE_URL ?? 'https://api.adsb.fi/v2');
   }
   if (explicit === 'opensky' || (explicit === '' && hasOpenSky)) {
-    if (hasOpenSky) return new OpenSkyAdsbProvider(openskyId!, openskySecret!);
+    if (hasOpenSky) {
+      // Wrap OpenSky in a composite with adsb.fi as the fallback.
+      // OpenSky sometimes times out from Vercel's lambda edges
+      // (cold start + OAuth token + /states/all chain); the
+      // composite falls back to adsb.fi so the map stays alive.
+      return new CompositeAdsbProvider(
+        new OpenSkyAdsbProvider(openskyId!, openskySecret!),
+        new AdsbFiProvider(),
+        'opensky→adsbfi',
+      );
+    }
     return new AdsbFiProvider();
   }
   return new AdsbFiProvider();
