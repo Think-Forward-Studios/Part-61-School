@@ -10,3 +10,9 @@ dist
 .DS_Store
 supabase/.branches
 supabase/.temp
+.vercel
+
+# Never commit credential dumps dropped into the repo root.
+credentials*.json
+*.credentials.json
+secrets/
