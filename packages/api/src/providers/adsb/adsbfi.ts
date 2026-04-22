@@ -1,27 +1,22 @@
 /**
- * AdsbFiProvider — REST client for the free adsb.fi v2 API.
+ * AdsbFiProvider — REST client for the free adsb.fi open data API.
  *
- *   https://api.adsb.fi/v2/
- *   https://github.com/adsbfi/opendata
+ *   Base: https://opendata.adsb.fi/api/
+ *   Docs: https://github.com/adsbfi/opendata
  *
- * No auth, no API key. Rate limit is ~1 req/s per IP. Our fleet map
- * polls at 5s cadence with two queries per tick (fleet + traffic), so
- * we stay well under the limit.
+ * No auth, no API key. Rate limit is 1 req/s per IP on public
+ * endpoints. Our fleet map polls at 5 s cadence (2 queries/tick), so
+ * we stay inside the limit.
  *
  * Implements the same AdsbProvider interface as SwimAdsbProvider so
  * the tRPC router can swap providers with one import change.
  *
  * Endpoint mapping:
- *   - Fleet / traffic   → GET /lat/{lat}/lon/{lon}/dist/{nm}
+ *   - Fleet / traffic   → GET /api/v3/lat/{lat}/lon/{lon}/dist/{nm}
  *     Our bbox gets reduced to (center lat/lon, radius-to-corner nm).
- *     adsb.fi caps `dist` at 250 NM.
- *   - Flight tracks     → not supported by adsb.fi's free API.
- *                         Returns null; the UI already handles null
- *                         (replay/history feature will need a separate
- *                         source or our own persistence later).
- *   - Feed stats        → derived from a single traffic query; good
- *                         enough for the dashboard's "healthy/unhealthy"
- *                         signal.
+ *     Caps `dist` at 250 NM.
+ *   - Flight tracks     → not supported by adsb.fi's open API.
+ *   - Feed stats        → derived from a single traffic query.
  */
 import type { AdsbProvider, AircraftPosition, BBox, FeedStats, TrackPoint } from '@part61/domain';
 import { normalizeTail } from '@part61/domain';
@@ -113,7 +108,8 @@ function toAircraftPosition(raw: AdsbFiAircraft, nowSeconds: number): AircraftPo
 export class AdsbFiProvider implements AdsbProvider {
   private readonly baseUrl: string;
 
-  constructor(baseUrl: string = 'https://api.adsb.fi/v2') {
+  constructor(baseUrl: string = 'https://opendata.adsb.fi/api') {
+    // Strip trailing slash; the endpoint paths add their own.
     this.baseUrl = baseUrl.replace(/\/+$/, '');
   }
 
@@ -146,7 +142,7 @@ export class AdsbFiProvider implements AdsbProvider {
   async getStats(): Promise<FeedStats> {
     // No stats endpoint; do a single broad query and derive a signal.
     try {
-      const url = `${this.baseUrl}/lat/39.8/lon/-98.5/dist/250`;
+      const url = `${this.baseUrl}/v3/lat/39.8/lon/-98.5/dist/250`;
       const resp = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       if (!resp.ok) return this.emptyStats();
       const json = (await resp.json()) as AdsbFiResponse;
@@ -173,7 +169,7 @@ export class AdsbFiProvider implements AdsbProvider {
   private async fetchTraffic(bbox: BBox): Promise<AircraftPosition[]> {
     const { lat, lon, distNm } = bboxToCenterRadius(bbox);
     try {
-      const url = `${this.baseUrl}/lat/${lat.toFixed(4)}/lon/${lon.toFixed(4)}/dist/${distNm}`;
+      const url = `${this.baseUrl}/v3/lat/${lat.toFixed(4)}/lon/${lon.toFixed(4)}/dist/${distNm}`;
       const resp = await fetch(url, {
         signal: AbortSignal.timeout(10_000),
         // adsb.fi asks consumers to set a descriptive UA so they can
