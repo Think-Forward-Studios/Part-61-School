@@ -133,7 +133,15 @@ export function GeofenceEditor({ geofence }: GeofenceEditorProps) {
   }, [cleanupDraw]);
 
   const handleSave = useCallback(() => {
-    if (!drawnGeometry || !activeBaseId) return;
+    if (!drawnGeometry) return;
+    if (!activeBaseId) {
+      // Make the failure visible — previously this silently no-op'd
+      // and the drawn shape just vanished, which read as "Save button
+      // doesn't work."
+      setMessage('Error: No home base set for this user. Assign a base in admin, then try again.');
+      setTimeout(() => setMessage(null), 6000);
+      return;
+    }
     setSaving(true);
 
     const kind = drawMode === 'circle' ? ('circle' as const) : ('polygon' as const);

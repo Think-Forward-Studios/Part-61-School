@@ -13,13 +13,17 @@ interface GeofenceOverlayProps {
   } | null;
 }
 
+// Bumped from 8% fill / 50% line to something that stays obviously
+// visible on the dark basemap. Previous values were so faint the
+// saved geofence read as "disappeared" after the bright drawing
+// overlay got cleared on save.
 const FILL_LAYER: FillLayerSpecification = {
   id: 'geofence-fill',
   type: 'fill',
   source: 'geofence',
   paint: {
     'fill-color': '#3b82f6',
-    'fill-opacity': 0.08,
+    'fill-opacity': 0.18,
   },
 };
 
@@ -28,9 +32,9 @@ const LINE_LAYER: LineLayerSpecification = {
   type: 'line',
   source: 'geofence',
   paint: {
-    'line-color': '#3b82f6',
-    'line-width': 2,
-    'line-opacity': 0.5,
+    'line-color': '#60a5fa',
+    'line-width': 3,
+    'line-opacity': 0.95,
   },
 };
 
