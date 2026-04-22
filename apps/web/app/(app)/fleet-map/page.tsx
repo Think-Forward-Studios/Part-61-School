@@ -62,7 +62,7 @@ export default function FleetMapPage() {
           overflow: 'hidden',
         }}
       >
-        <LiveMapView fleetAircraft={fleetAircraft} />
+        <LiveMapView fleetAircraft={fleetAircraft} geofence={activeGeofence} />
         {/* Geofence alert and editor rendered on top of the map */}
         <GeofenceAlert outsideAircraft={[]} />
         <GeofenceEditor geofence={activeGeofence} />

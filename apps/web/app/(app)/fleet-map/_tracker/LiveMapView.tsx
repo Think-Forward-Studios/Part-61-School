@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import MapGL, { NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
+import { GeofenceOverlay } from '../_components/GeofenceOverlay';
 import { DeckGLOverlay } from './DeckGLOverlay';
 import { ScatterplotLayer, PathLayer, IconLayer, PolygonLayer, TextLayer } from '@deck.gl/layers';
 import { useQuery } from '@tanstack/react-query';
@@ -289,6 +290,12 @@ export interface FleetAircraft {
 
 export interface LiveMapViewProps {
   fleetAircraft?: FleetAircraft[];
+  /** Active saved geofence for the user's base (from admin.geofence.getActive). */
+  geofence?: {
+    kind: string;
+    geometry: unknown;
+    radiusNm: string | null;
+  } | null;
 }
 
 function normalizeTail(raw: string | null | undefined): string {
@@ -296,7 +303,7 @@ function normalizeTail(raw: string | null | undefined): string {
   return raw.trim().toUpperCase().replace(/^N/, '');
 }
 
-export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
+export default function LiveMapView({ fleetAircraft = [], geofence = null }: LiveMapViewProps) {
   const fleetTailSet = useMemo(
     () => new Set(fleetAircraft.map((ac) => normalizeTail(ac.tailNumber))),
     [fleetAircraft],
@@ -1195,6 +1202,7 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
             );
           })()}
         <DeckGLOverlay layers={deckLayers} onHover={handleHover} onClick={handleClick} />
+        <GeofenceOverlay geofence={geofence} />
         <NavigationControl position="bottom-right" showCompass showZoom />
       </MapGL>
 
