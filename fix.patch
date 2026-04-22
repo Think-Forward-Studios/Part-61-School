@@ -1,0 +1,161 @@
+--- Part-61-School/apps/web/app/(app)/schedule/[id]/page.tsx	2026-04-19 16:01:00
++++ test fixes/2026-04-21-reservation-detail-show-names/page.tsx.patched	2026-04-21 20:54:40
+@@ -1,6 +1,14 @@
+ import { notFound, redirect } from 'next/navigation';
+ import { and, eq, sql } from 'drizzle-orm';
+-import { db, users, reservation } from '@part61/db';
++import { alias } from 'drizzle-orm/pg-core';
++import {
++  db,
++  users,
++  reservation,
++  aircraft,
++  room,
++  schools,
++} from '@part61/db';
+ import { createSupabaseServerClient } from '@/lib/supabase/server';
+ import { ActivityChip } from '@/components/schedule/ActivityChip';
+ import { StatusLabel } from '@/components/schedule/StatusLabel';
+@@ -44,6 +52,40 @@
+   margin: 0,
+ };
+ 
++// Mirrors apps/web/app/(app)/schedule/Calendar.tsx#parseRangeLiteral.
++// Accepts both `[2026-05-01 14:00:00+00,2026-05-01 15:00:00+00)` and the
++// quoted-bound variant Postgres emits for tstzrange. Returns null if the
++// literal can't be parsed so callers can fall back gracefully.
++function parseRangeLiteral(range: string): { start: Date; end: Date } | null {
++  const m = range.match(/^[\[(]\s*"?([^",]+)"?\s*,\s*"?([^"\)]+)"?\s*[\])]$/);
++  if (!m) return null;
++  const norm = (s: string) =>
++    s.trim().replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00');
++  const start = new Date(norm(m[1]!));
++  const end = new Date(norm(m[2]!));
++  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
++  return { start, end };
++}
++
++function formatWhen(range: string, tz: string): string {
++  const parsed = parseRangeLiteral(range);
++  if (!parsed) return range;
++  const dateFmt = new Intl.DateTimeFormat('en-US', {
++    weekday: 'short',
++    month: 'short',
++    day: 'numeric',
++    year: 'numeric',
++    timeZone: tz,
++  });
++  const timeFmt = new Intl.DateTimeFormat('en-US', {
++    hour: 'numeric',
++    minute: '2-digit',
++    timeZone: tz,
++    timeZoneName: 'short',
++  });
++  return `${dateFmt.format(parsed.start)}  ${timeFmt.format(parsed.start)} – ${timeFmt.format(parsed.end)}`;
++}
++
+ export default async function ReservationDetailPage({ params }: { params: Params }) {
+   const { id } = await params;
+   const supabase = await createSupabaseServerClient();
+@@ -54,15 +96,44 @@
+   const me = (await db.select().from(users).where(eq(users.id, user.id)).limit(1))[0];
+   if (!me) redirect('/login');
+ 
++  const instructorAlias = alias(users, 'instructor_user');
++  const studentAlias = alias(users, 'student_user');
++
+   const r = (
+     await db
+-      .select()
++      .select({
++        id: reservation.id,
++        status: reservation.status,
++        activityType: reservation.activityType,
++        timeRange: reservation.timeRange,
++        notes: reservation.notes,
++        routeString: reservation.routeString,
++        // Display-ready joined fields (null if FK is null OR row was soft-deleted)
++        aircraftTail: aircraft.tailNumber,
++        aircraftId: reservation.aircraftId,
++        instructorName: instructorAlias.fullName,
++        instructorEmail: instructorAlias.email,
++        instructorId: reservation.instructorId,
++        studentName: studentAlias.fullName,
++        studentEmail: studentAlias.email,
++        studentId: reservation.studentId,
++        roomName: room.name,
++        roomId: reservation.roomId,
++        schoolTimezone: schools.timezone,
++      })
+       .from(reservation)
++      .leftJoin(aircraft, eq(aircraft.id, reservation.aircraftId))
++      .leftJoin(instructorAlias, eq(instructorAlias.id, reservation.instructorId))
++      .leftJoin(studentAlias, eq(studentAlias.id, reservation.studentId))
++      .leftJoin(room, eq(room.id, reservation.roomId))
++      .innerJoin(schools, eq(schools.id, reservation.schoolId))
+       .where(and(eq(reservation.id, id), eq(reservation.schoolId, me.schoolId)))
+       .limit(1)
+   )[0];
+   if (!r) notFound();
+ 
++  const tz = me.timezone ?? r.schoolTimezone;
++
+   // Audit trail: query audit_log rows for this reservation via raw SQL
+   // (the audit_log shape is already in the schema; we keep this
+   // read-only and best-effort — show nothing if it errors).
+@@ -87,6 +158,26 @@
+ 
+   const dash = <span style={{ color: '#5b6784' }}>—</span>;
+ 
++  // Render a person/aircraft/room field: prefer the joined display value;
++  // if the FK is set but the join produced no row (orphaned reference),
++  // fall back to the UUID with a "(missing)" suffix so the data isn't
++  // silently lost. If the FK is null, show the em-dash placeholder.
++  const personLabel = (
++    name: string | null,
++    email: string | null,
++    fkId: string | null,
++  ) => {
++    if (!fkId) return dash;
++    if (name) return <>{name}{email ? <span style={{ color: '#7a869a' }}> · {email}</span> : null}</>;
++    if (email) return email;
++    return <span style={{ color: '#7a869a' }}>{fkId} (missing)</span>;
++  };
++  const labelOrId = (label: string | null, fkId: string | null) => {
++    if (!fkId) return dash;
++    if (label) return label;
++    return <span style={{ color: '#7a869a' }}>{fkId} (missing)</span>;
++  };
++
+   return (
+     <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1200, margin: '0 auto' }}>
+       <PageHeader
+@@ -124,23 +215,15 @@
+           }}
+         >
+           <dt style={DT}>When</dt>
+-          <dd
+-            style={{
+-              ...DD,
+-              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+-              fontSize: '0.82rem',
+-            }}
+-          >
+-            {r.timeRange}
+-          </dd>
++          <dd style={DD}>{formatWhen(r.timeRange, tz)}</dd>
+           <dt style={DT}>Aircraft</dt>
+-          <dd style={DD}>{r.aircraftId ?? dash}</dd>
++          <dd style={DD}>{labelOrId(r.aircraftTail, r.aircraftId)}</dd>
+           <dt style={DT}>Instructor</dt>
+-          <dd style={DD}>{r.instructorId ?? dash}</dd>
++          <dd style={DD}>{personLabel(r.instructorName, r.instructorEmail, r.instructorId)}</dd>
+           <dt style={DT}>Student</dt>
+-          <dd style={DD}>{r.studentId ?? dash}</dd>
++          <dd style={DD}>{personLabel(r.studentName, r.studentEmail, r.studentId)}</dd>
+           <dt style={DT}>Room</dt>
+-          <dd style={DD}>{r.roomId ?? dash}</dd>
++          <dd style={DD}>{labelOrId(r.roomName, r.roomId)}</dd>
+           <dt style={DT}>Route</dt>
+           <dd style={DD}>{r.routeString ?? dash}</dd>
+           <dt style={DT}>Notes</dt>
