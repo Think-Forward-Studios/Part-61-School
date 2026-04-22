@@ -31,14 +31,16 @@ function build(): AdsbProvider {
   }
   if (explicit === 'opensky' || (explicit === '' && hasOpenSky)) {
     if (hasOpenSky) {
-      // Wrap OpenSky in a composite with adsb.fi as the fallback.
-      // OpenSky sometimes times out from Vercel's lambda edges
-      // (cold start + OAuth token + /states/all chain); the
-      // composite falls back to adsb.fi so the map stays alive.
+      // adsb.fi primary, OpenSky secondary. OpenSky's /states/all
+      // takes 5-12s end-to-end from Vercel lambdas and the Hobby
+      // plan caps each function at 10s; adsb.fi responds sub-second
+      // with no auth dance, so the hot path is far faster with it
+      // first. If adsb.fi returns empty (rare) we still try OpenSky
+      // on the slow path.
       return new CompositeAdsbProvider(
-        new OpenSkyAdsbProvider(openskyId!, openskySecret!),
         new AdsbFiProvider(),
-        'opensky→adsbfi',
+        new OpenSkyAdsbProvider(openskyId!, openskySecret!),
+        'adsbfi→opensky',
       );
     }
     return new AdsbFiProvider();
