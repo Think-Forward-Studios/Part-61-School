@@ -10,14 +10,53 @@ import { aircraft, bases } from '@part61/db';
 import type { BBox } from '@part61/domain';
 import { router } from '../trpc';
 import { protectedProcedure } from '../procedures';
-import { SwimAdsbProvider } from '../providers/adsb';
+import { AdsbFiProvider, OpenSkyAdsbProvider, SwimAdsbProvider } from '../providers/adsb';
+import type { AdsbProvider } from '@part61/domain';
 
 type Tx = {
   select: typeof import('@part61/db').db.select;
   execute: (q: ReturnType<typeof sql>) => Promise<unknown>;
 };
 
-const provider = new SwimAdsbProvider(process.env.ADSB_API_BASE_URL ?? 'http://localhost:3002');
+/**
+ * Choose the ADS-B feed provider based on env.
+ *
+ *   ADSB_PROVIDER=opensky   — OpenSky Network REST API with OAuth2.
+ *                             Requires OPENSKY_CLIENT_ID +
+ *                             OPENSKY_CLIENT_SECRET. Auto-selected
+ *                             when those are set.
+ *   ADSB_PROVIDER=adsbfi    — Free public REST at api.adsb.fi, no auth.
+ *                             Used as the fallback when OpenSky
+ *                             credentials aren't configured.
+ *   ADSB_PROVIDER=swim      — Self-hosted tracker at ADSB_API_BASE_URL.
+ *
+ * All three implement the same AdsbProvider interface; the rest of the
+ * router doesn't care which one is selected.
+ */
+function buildProvider(): AdsbProvider {
+  const explicit = (process.env.ADSB_PROVIDER ?? '').toLowerCase();
+  const openskyId = process.env.OPENSKY_CLIENT_ID;
+  const openskySecret = process.env.OPENSKY_CLIENT_SECRET;
+  const hasOpenSky = !!(openskyId && openskySecret);
+
+  if (explicit === 'swim') {
+    return new SwimAdsbProvider(process.env.ADSB_API_BASE_URL ?? 'http://localhost:3002');
+  }
+  if (explicit === 'adsbfi') {
+    return new AdsbFiProvider(process.env.ADSB_API_BASE_URL ?? 'https://api.adsb.fi/v2');
+  }
+  if (explicit === 'opensky' || (explicit === '' && hasOpenSky)) {
+    if (!hasOpenSky) {
+      console.warn('[adsb] OPENSKY_CLIENT_ID/SECRET missing; falling back to adsb.fi');
+      return new AdsbFiProvider();
+    }
+    return new OpenSkyAdsbProvider(openskyId!, openskySecret!);
+  }
+  // Default when nothing is configured: the no-auth public feed.
+  return new AdsbFiProvider();
+}
+
+const provider: AdsbProvider = buildProvider();
 
 const bboxInput = z.object({
   bbox: z.object({
