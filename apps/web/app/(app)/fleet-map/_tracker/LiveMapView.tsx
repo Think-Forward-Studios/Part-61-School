@@ -727,7 +727,7 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
             <div className="tooltip-row">
               <span className="tooltip-label">Source</span>
               <span className="tooltip-value" style={{ color: '#00e5ff' }}>
-                FAA SWIM
+                ADS-B (adsb.fi)
               </span>
             </div>
           </>
@@ -1214,7 +1214,7 @@ export default function LiveMapView({ fleetAircraft = [] }: LiveMapViewProps) {
               style={{ boxShadow: '0 0 6px #00e5ff', animation: 'pulse 2s infinite' }}
             />
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#888]">
-              FAA SWIM Feed
+              ADS-B Feed
             </span>
           </div>
           <div className="space-y-1.5 p-3">
