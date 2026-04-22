@@ -12,7 +12,8 @@ const LiveMapView = dynamic(() => import('./_tracker/LiveMapView'), {
   loading: () => (
     <div
       style={{
-        height: '100vh',
+        position: 'absolute',
+        inset: 0,
         background: '#0a0a0a',
         display: 'flex',
         alignItems: 'center',
@@ -56,9 +57,8 @@ export default function FleetMapPage() {
     <MapProvider>
       <div
         style={{
-          position: 'relative',
-          width: '100%',
-          height: '100%',
+          position: 'absolute',
+          inset: 0,
           overflow: 'hidden',
         }}
       >
