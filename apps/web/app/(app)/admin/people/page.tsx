@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 
-type SearchParams = Promise<{ role?: string; status?: string }>;
+type SearchParams = Promise<{ role?: string; status?: string; deleted?: string }>;
 
 export default async function AdminPeoplePage({ searchParams }: { searchParams: SearchParams }) {
   const supabase = await createSupabaseServerClient();
@@ -24,6 +24,9 @@ export default async function AdminPeoplePage({ searchParams }: { searchParams: 
   const params = await searchParams;
   const roleFilter = params.role;
   const statusFilter = params.status;
+  // When ?deleted=1 is on the URL, show soft-deleted users so an admin
+  // can navigate back into one to restore it or purge it.
+  const showDeleted = params.deleted === '1';
 
   // Raw SQL for the aggregation. Drizzle's query builder struggles
   // with ARRAY_AGG + filtered subqueries here.
@@ -33,6 +36,9 @@ export default async function AdminPeoplePage({ searchParams }: { searchParams: 
   const statusClause = statusFilter
     ? sql`and u.status = ${statusFilter}::public.user_status`
     : sql``;
+  const deletedClause = showDeleted
+    ? sql`and u.deleted_at is not null`
+    : sql`and u.deleted_at is null`;
   const rowsRaw = (await db.execute(sql`
     select
       u.id,
@@ -53,7 +59,7 @@ export default async function AdminPeoplePage({ searchParams }: { searchParams: 
     from public.users u
     left join public.person_profile pp on pp.user_id = u.id
     where u.school_id = ${schoolId}
-      and u.deleted_at is null
+      ${deletedClause}
       ${roleClause}
       ${statusClause}
     order by coalesce(pp.last_name, u.email)
@@ -77,27 +83,55 @@ export default async function AdminPeoplePage({ searchParams }: { searchParams: 
     <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
       <PageHeader
         eyebrow="Directory"
-        title="People"
-        subtitle={`${rowsRaw.length} ${rowsRaw.length === 1 ? 'record' : 'records'} · students, instructors, mechanics, admins.`}
+        title={showDeleted ? 'People — Deleted' : 'People'}
+        subtitle={
+          showDeleted
+            ? `${rowsRaw.length} soft-deleted ${
+                rowsRaw.length === 1 ? 'record' : 'records'
+              }. Open a record to restore or purge.`
+            : `${rowsRaw.length} ${rowsRaw.length === 1 ? 'record' : 'records'} · students, instructors, mechanics, admins.`
+        }
         actions={
-          <Link
-            href="/admin/people/new"
-            style={{
-              padding: '0.55rem 0.95rem',
-              background: 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)',
-              color: '#0a0e1a',
-              borderRadius: 8,
-              textDecoration: 'none',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              boxShadow:
-                '0 4px 14px rgba(251, 191, 36, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset',
-            }}
-          >
-            + New Person
-          </Link>
+          <div style={{ display: 'inline-flex', gap: '0.5rem', alignItems: 'center' }}>
+            <Link
+              href={showDeleted ? '/admin/people' : '/admin/people?deleted=1'}
+              style={{
+                padding: '0.55rem 0.85rem',
+                background: showDeleted ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.04)',
+                color: showDeleted ? '#fbbf24' : '#cbd5e1',
+                border: showDeleted
+                  ? '1px solid rgba(251,191,36,0.4)'
+                  : '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 8,
+                textDecoration: 'none',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+              }}
+            >
+              {showDeleted ? '← Active only' : 'Show deleted'}
+            </Link>
+            {!showDeleted ? (
+              <Link
+                href="/admin/people/new"
+                style={{
+                  padding: '0.55rem 0.95rem',
+                  background: 'linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%)',
+                  color: '#0a0e1a',
+                  borderRadius: 8,
+                  textDecoration: 'none',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  boxShadow:
+                    '0 4px 14px rgba(251, 191, 36, 0.25), 0 1px 0 rgba(255, 255, 255, 0.15) inset',
+                }}
+              >
+                + New Person
+              </Link>
+            ) : null}
+          </div>
         }
       />
       <PeopleTable rows={rowsRaw} activeRole={roleFilter} activeStatus={statusFilter} />

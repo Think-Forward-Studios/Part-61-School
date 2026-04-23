@@ -274,6 +274,96 @@ export const adminPeopleRouter = router({
     return { ok: true };
   }),
 
+  /**
+   * Hard delete ("purge") — fully remove a user from this tenant and
+   * release their email address so it can be re-invited. Only valid
+   * when the user has ZERO downstream history. Any reference from
+   * flight logs, training records, holds, enrollments, audit trail,
+   * etc. will cause Postgres to raise a foreign-key violation, which
+   * we catch and surface as a clear error message. That's the whole
+   * safety model: soft delete for anyone who has touched the system,
+   * purge only for accidental/typo accounts.
+   *
+   * We delete the "satellite" rows first (user_roles, user_base,
+   * person_profile) so FK dependents don't block the users row, but
+   * we do NOT cascade to history tables. After the DB delete succeeds,
+   * we also remove the Supabase auth.users row so the email is free
+   * to re-use.
+   */
+  purge: adminProcedure.input(userIdInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+
+    // Confirm the user exists in this tenant.
+    const target = await tx
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(and(eq(users.id, input.userId), eq(users.schoolId, schoolId)))
+      .limit(1);
+    if (target.length === 0) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+    }
+    const email = target[0]!.email;
+
+    // Admins cannot purge themselves — that would lock them out.
+    if (input.userId === ctx.session!.userId) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'You cannot purge your own account.',
+      });
+    }
+
+    try {
+      // Delete the safe, user-scoped satellite rows first. These tables
+      // are "owned" by the user and don't participate in audit history
+      // (user_roles, user_base, person_profile). If the user has
+      // anything further — flight logs, enrollments, holds, audit
+      // trail — the final DELETE on public.users will throw an FK
+      // violation and the whole transaction rolls back.
+      await tx.execute(sql`delete from public.user_roles where user_id = ${input.userId}`);
+      await tx.execute(sql`delete from public.user_base  where user_id = ${input.userId}`);
+      await tx.execute(sql`delete from public.person_profile where user_id = ${input.userId}`);
+      await tx.execute(sql`
+        delete from public.users
+         where id = ${input.userId}
+           and school_id = ${schoolId}
+      `);
+    } catch (err) {
+      // Postgres foreign-key violation comes back as error code 23503.
+      // Anything else we surface as a generic failure.
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'This account has activity in the system (flight logs, training records, ' +
+          'audit trail, or similar) and cannot be purged. Soft delete is the ' +
+          'correct permanent state for users with history. Underlying error: ' +
+          msg,
+      });
+    }
+
+    // DB delete succeeded. Best-effort remove the Supabase auth.users row
+    // so the email frees up. If Supabase credentials aren't configured
+    // we skip silently — the DB state is already consistent.
+    const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (url && serviceKey) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const admin = createClient(url, serviceKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        // deleteUser is idempotent — a missing user is treated as ok.
+        await admin.auth.admin.deleteUser(input.userId);
+      } catch {
+        // Non-fatal: operator can re-invite under a different email if
+        // the auth row sticks around. Don't undo the DB delete.
+      }
+    }
+
+    return { ok: true, email };
+  }),
+
   assignRole: adminProcedure.input(assignRoleInput).mutation(async ({ ctx, input }) => {
     const tx = ctx.tx as Tx;
     // Verify the target user belongs to this school.

@@ -34,17 +34,26 @@ export function AdminActionsPanel({ userId, email, status }: AdminActionsPanelPr
   const resendInvite = trpc.admin.people.resendInvite.useMutation();
   const sendReset = trpc.admin.people.sendPasswordReset.useMutation();
   const setStatus = trpc.admin.people.setStatus.useMutation();
+  const purge = trpc.admin.people.purge.useMutation();
+
+  // Purge confirmation flow: admin has to type the email to arm the
+  // button. Mirrors GitHub / Linear / etc. Prevents clicking "Purge"
+  // with fat fingers on the wrong tab.
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const [purgeConfirmText, setPurgeConfirmText] = useState('');
 
   async function run(
-    key: 'invite' | 'reset' | 'toggle',
+    key: 'invite' | 'reset' | 'toggle' | 'purge',
     fn: () => Promise<unknown>,
     successMsg: string,
+    onSuccess?: () => void,
   ) {
     setPending(key);
     setMessage(null);
     try {
       await fn();
       setMessage({ kind: 'ok', text: successMsg });
+      onSuccess?.();
       router.refresh();
     } catch (err) {
       setMessage({
@@ -53,7 +62,8 @@ export function AdminActionsPanel({ userId, email, status }: AdminActionsPanelPr
       });
     } finally {
       setPending(null);
-      setTimeout(() => setMessage(null), 6000);
+      // Keep purge errors visible longer — the message is long.
+      setTimeout(() => setMessage(null), key === 'purge' ? 12000 : 6000);
     }
   }
 
@@ -152,6 +162,110 @@ export function AdminActionsPanel({ userId, email, status }: AdminActionsPanelPr
           {message.text}
         </div>
       ) : null}
+
+      {/* Danger zone — purge. Separated visually so it's not lumped in
+          with the routine rescue actions. Only succeeds when the user
+          has zero downstream history (no flight logs / training
+          records / audit trail). Requires typing the email to arm. */}
+      <div
+        style={{
+          marginTop: '1.1rem',
+          paddingTop: '0.9rem',
+          borderTop: '1px dashed rgba(248, 113, 113, 0.25)',
+        }}
+      >
+        {!purgeOpen ? (
+          <button
+            type="button"
+            onClick={() => setPurgeOpen(true)}
+            style={{
+              ...buttonStyle,
+              borderColor: 'rgba(248, 113, 113, 0.5)',
+              color: '#fca5a5',
+              background: 'rgba(127, 29, 29, 0.15)',
+            }}
+          >
+            Purge account (hard delete)
+          </button>
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.55rem',
+              padding: '0.9rem 1rem',
+              background: 'rgba(127, 29, 29, 0.15)',
+              border: '1px solid rgba(248, 113, 113, 0.4)',
+              borderRadius: 10,
+            }}
+          >
+            <div style={{ color: '#fca5a5', fontWeight: 600, fontSize: '0.85rem' }}>
+              Hard delete — this can&apos;t be undone.
+            </div>
+            <div style={{ color: '#fecaca', fontSize: '0.78rem', lineHeight: 1.5 }}>
+              Fully removes the account and frees up the email address. Only works if the user has{' '}
+              <strong>no activity</strong> in the system — no flight logs, training records, holds,
+              or audit trail. Users with history must stay soft-deleted for FAA/audit compliance.
+              <br />
+              Type <code style={{ color: '#fff' }}>{email}</code> below to confirm.
+            </div>
+            <input
+              type="text"
+              value={purgeConfirmText}
+              onChange={(e) => setPurgeConfirmText(e.target.value)}
+              placeholder={email}
+              autoComplete="off"
+              style={{
+                height: '2.3rem',
+                background: 'rgba(9, 13, 24, 0.85)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: 8,
+                color: '#e2e8f0',
+                padding: '0 0.75rem',
+                fontSize: '0.88rem',
+                outline: 'none',
+              }}
+            />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type="button"
+                disabled={pending !== null || purgeConfirmText.trim() !== email}
+                onClick={() =>
+                  run(
+                    'purge',
+                    () => purge.mutateAsync({ userId }),
+                    `${email} has been purged.`,
+                    () => {
+                      // Bounce back to the list — this user's detail
+                      // page no longer exists.
+                      router.push('/admin/people');
+                    },
+                  )
+                }
+                style={{
+                  ...buttonStyle,
+                  borderColor: 'rgba(248, 113, 113, 0.5)',
+                  color: purgeConfirmText.trim() === email ? '#fca5a5' : 'rgba(252,165,165,0.4)',
+                  background: 'rgba(127, 29, 29, 0.25)',
+                  cursor: purgeConfirmText.trim() === email ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {pending === 'purge' ? 'Purging…' : 'Purge permanently'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPurgeOpen(false);
+                  setPurgeConfirmText('');
+                }}
+                style={buttonStyle}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
