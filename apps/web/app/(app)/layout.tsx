@@ -56,6 +56,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .where(eq(schools.id, shadow.schoolId))
     .limit(1);
   const schoolName = schoolRows[0]?.name ?? 'Part 61 School';
+  const schoolIconUrl = schoolRows[0]?.iconUrl ?? null;
+  const schoolHomeBaseAirport = schoolRows[0]?.homeBaseAirport?.trim() || null;
 
   // MUL-02: resolve the active base for this user. Cookie first (when
   // valid and the user actually has a user_base row for it), then the
@@ -157,25 +159,46 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               color: 'inherit',
             }}
           >
-            <span
-              aria-hidden
-              style={{
-                display: 'inline-flex',
-                width: 28,
-                height: 28,
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                color: '#0a0e1a',
-                borderRadius: 6,
-                fontWeight: 800,
-                fontSize: '0.72rem',
-                letterSpacing: '-0.03em',
-                boxShadow: '0 0 12px rgba(251, 191, 36, 0.3)',
-              }}
-            >
-              ◆
-            </span>
+            {schoolIconUrl ? (
+              // Admin-uploaded school logo (migration 0041). Rendered as
+              // a plain <img> — the asset is a data URL so next/image's
+              // loader is unnecessary. Falls back to the diamond when
+              // no icon is set.
+              <img
+                src={schoolIconUrl}
+                alt=""
+                aria-hidden
+                style={{
+                  display: 'inline-block',
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  objectFit: 'contain',
+                  background: '#0a0e1a',
+                  boxShadow: '0 0 12px rgba(251, 191, 36, 0.25)',
+                }}
+              />
+            ) : (
+              <span
+                aria-hidden
+                style={{
+                  display: 'inline-flex',
+                  width: 28,
+                  height: 28,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                  color: '#0a0e1a',
+                  borderRadius: 6,
+                  fontWeight: 800,
+                  fontSize: '0.72rem',
+                  letterSpacing: '-0.03em',
+                  boxShadow: '0 0 12px rgba(251, 191, 36, 0.3)',
+                }}
+              >
+                ◆
+              </span>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <span
                 style={{
@@ -231,20 +254,49 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               {roleCallsign[activeRole] ?? activeRole.toUpperCase().slice(0, 3)}
             </span>
             <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>{shadow.email}</span>
-            {activeBaseName ? (
+            {/* Home-base label + optional icon.
+                Prefer the admin-editable airport string from
+                schools.home_base_airport (migration 0041); fall back to
+                the legacy user_base name if the school hasn't set one
+                yet. The small uploaded icon renders immediately AFTER
+                the label — this is the "school icon displayed on top of
+                the page after the text home base" surface. */}
+            {(schoolHomeBaseAirport ?? activeBaseName) ? (
               <span
                 style={{
-                  fontFamily: '"JetBrains Mono", monospace',
-                  fontSize: '0.65rem',
-                  color: '#7a869a',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
                   paddingLeft: '0.5rem',
                   borderLeft: '1px solid #1f2940',
                   marginLeft: '0.1rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
                 }}
               >
-                {activeBaseName}
+                <span
+                  style={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: '0.65rem',
+                    color: '#7a869a',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {schoolHomeBaseAirport ?? activeBaseName}
+                </span>
+                {schoolIconUrl ? (
+                  <img
+                    src={schoolIconUrl}
+                    alt=""
+                    aria-hidden
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      objectFit: 'contain',
+                      background: '#0a0e1a',
+                    }}
+                  />
+                ) : null}
               </span>
             ) : null}
           </div>

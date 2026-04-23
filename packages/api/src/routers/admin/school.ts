@@ -29,23 +29,26 @@ export const adminSchoolRouter = router({
     return row;
   }),
 
-  update: adminProcedure
-    .input(updateSchoolInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const patch: Record<string, unknown> = {};
-      if (input.name !== undefined) patch.name = input.name;
-      if (input.timezone !== undefined) patch.timezone = input.timezone;
-      // defaultBaseId column does not exist on schools in Phase 1/2 schema;
-      // v1 deploys ship with a single base per school, so storing the
-      // default base is deferred. Accept the input to keep the UI contract
-      // forward-compatible and silently ignore when the column is absent.
-      if (Object.keys(patch).length === 0) return { ok: true };
-      const rows = await tx
-        .update(schools)
-        .set(patch)
-        .where(eq(schools.id, ctx.session!.schoolId))
-        .returning();
-      return rows[0]!;
-    }),
+  update: adminProcedure.input(updateSchoolInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) patch.name = input.name;
+    if (input.timezone !== undefined) patch.timezone = input.timezone;
+    // Branding columns (migration 0041). null clears the value.
+    if (input.iconUrl !== undefined) patch.iconUrl = input.iconUrl;
+    if (input.homeBaseAirport !== undefined) {
+      patch.homeBaseAirport = input.homeBaseAirport;
+    }
+    // defaultBaseId column does not exist on schools in Phase 1/2 schema;
+    // v1 deploys ship with a single base per school, so storing the
+    // default base is deferred. Accept the input to keep the UI contract
+    // forward-compatible and silently ignore when the column is absent.
+    if (Object.keys(patch).length === 0) return { ok: true };
+    const rows = await tx
+      .update(schools)
+      .set(patch)
+      .where(eq(schools.id, ctx.session!.schoolId))
+      .returning();
+    return rows[0]!;
+  }),
 });

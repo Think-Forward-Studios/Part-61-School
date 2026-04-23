@@ -18,6 +18,15 @@ export const schools = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(),
     timezone: text('timezone').notNull(), // IANA name, e.g. 'America/Chicago'
+    // Branding — set by admins on /admin/school.
+    // icon_url holds a data URL (image/png|jpeg, base64). Migration
+    // 0041 added it; keep the column small (~300 KB) by downscaling
+    // client-side before encoding.
+    iconUrl: text('icon_url'),
+    // ICAO / display name of the airport the school operates from
+    // (e.g. 'KBHM'). Shown in the top header pill in place of the
+    // legacy base name.
+    homeBaseAirport: text('home_base_airport'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

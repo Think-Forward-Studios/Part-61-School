@@ -22,14 +22,83 @@ export default async function SchoolSettingsPage() {
   const school = rows[0];
   if (!school) redirect('/login');
 
+  const airportDisplay = school.homeBaseAirport?.trim() || null;
+
   return (
-    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 800, margin: '0 auto' }}>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 900, margin: '0 auto' }}>
       <PageHeader
         eyebrow="Administration"
         title="School Settings"
         subtitle={`${school.name} · ${school.timezone}`}
       />
-      <SchoolSettingsForm initial={{ name: school.name, timezone: school.timezone }} />
+
+      {/* Home-base + icon strip. The request was literally "display the
+          icon on top of the page after the text 'home base'" — so the
+          top of the school settings page gets a row with the airport
+          label followed by the uploaded logo. This doubles as a live
+          preview: whatever admins save here is what the top header
+          pill and any future branding surface will render. */}
+      <section
+        style={{
+          marginTop: '1.5rem',
+          marginBottom: '0.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          padding: '1rem 1.25rem',
+          background: 'rgba(18, 24, 38, 0.6)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '0.7rem',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#7a869a',
+          }}
+        >
+          Home base
+        </span>
+        <span
+          style={{
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            fontSize: '1rem',
+            letterSpacing: '0.08em',
+            color: airportDisplay ? '#e2e8f0' : '#475569',
+            fontWeight: 700,
+          }}
+        >
+          {airportDisplay ?? '— not set —'}
+        </span>
+        {school.iconUrl ? (
+          // Data URL is safe as <img src>. Using a native <img> skips
+          // next/image's remote-loader dance for an admin-owned asset.
+          <img
+            src={school.iconUrl}
+            alt={`${school.name} icon`}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.12)',
+              objectFit: 'contain',
+              marginLeft: '0.5rem',
+            }}
+          />
+        ) : null}
+      </section>
+
+      <SchoolSettingsForm
+        initial={{
+          name: school.name,
+          timezone: school.timezone,
+          homeBaseAirport: school.homeBaseAirport,
+          iconUrl: school.iconUrl,
+        }}
+      />
     </main>
   );
 }

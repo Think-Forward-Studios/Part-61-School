@@ -39,7 +39,10 @@ export const createAircraftInput = z.object({
   model: z.string().max(100).optional().nullable(),
   year: z.number().int().min(1900).max(2100).optional().nullable(),
   equipmentNotes: z.string().max(5000).optional().nullable(),
-  baseId: z.string().regex(/^[0-9a-fA-F-]{36}$/).optional(),
+  baseId: z
+    .string()
+    .regex(/^[0-9a-fA-F-]{36}$/)
+    .optional(),
 });
 export type CreateAircraftInput = z.infer<typeof createAircraftInput>;
 
@@ -50,7 +53,10 @@ export const updateAircraftInput = z.object({
   model: z.string().max(100).optional().nullable(),
   year: z.number().int().min(1900).max(2100).optional().nullable(),
   equipmentNotes: z.string().max(5000).optional().nullable(),
-  baseId: z.string().regex(/^[0-9a-fA-F-]{36}$/).optional(),
+  baseId: z
+    .string()
+    .regex(/^[0-9a-fA-F-]{36}$/)
+    .optional(),
 });
 
 export const aircraftIdInput = z.object({
@@ -74,7 +80,10 @@ export const setEquipmentInput = z.object({
 });
 
 export const listAircraftInput = z.object({
-  baseId: z.string().regex(/^[0-9a-fA-F-]{36}$/).optional(),
+  baseId: z
+    .string()
+    .regex(/^[0-9a-fA-F-]{36}$/)
+    .optional(),
   limit: z.number().int().min(1).max(500).default(100),
   offset: z.number().int().min(0).default(0),
 });
@@ -98,5 +107,25 @@ export const updateSchoolInput = z.object({
       { message: 'Invalid IANA timezone' },
     )
     .optional(),
-  defaultBaseId: z.string().regex(/^[0-9a-fA-F-]{36}$/).optional().nullable(),
+  defaultBaseId: z
+    .string()
+    .regex(/^[0-9a-fA-F-]{36}$/)
+    .optional()
+    .nullable(),
+  // Branding: data URL (image/png|jpeg + base64) for the school's
+  // logo. Client downscales to ~256 px before encoding; we cap at
+  // ~400 KB (base64 inflates ~33% vs raw bytes) so a single schools
+  // row stays small. Null clears the icon.
+  iconUrl: z
+    .string()
+    .max(400_000)
+    .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, {
+      message: 'iconUrl must be a data URL for an image',
+    })
+    .optional()
+    .nullable(),
+  // ICAO or display string — shown in the top header pill. 40 chars is
+  // enough for 'KBHM (Birmingham-Shuttlesworth)' if the admin wants
+  // something more descriptive than the raw code.
+  homeBaseAirport: z.string().max(80).optional().nullable(),
 });
