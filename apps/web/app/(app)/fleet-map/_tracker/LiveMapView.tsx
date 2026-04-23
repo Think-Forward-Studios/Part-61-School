@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import MapGL, { NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
+import MapGL, { NavigationControl, useMap } from 'react-map-gl/maplibre';
 import { GeofenceOverlay } from '../_components/GeofenceOverlay';
 import { DeckGLOverlay } from './DeckGLOverlay';
 import { ScatterplotLayer, PathLayer, IconLayer, PolygonLayer, TextLayer } from '@deck.gl/layers';
@@ -304,6 +304,7 @@ function normalizeTail(raw: string | null | undefined): string {
 }
 
 export default function LiveMapView({ fleetAircraft = [], geofence = null }: LiveMapViewProps) {
+  const { fleetMap } = useMap();
   const fleetTailSet = useMemo(
     () => new Set(fleetAircraft.map((ac) => normalizeTail(ac.tailNumber))),
     [fleetAircraft],
@@ -444,6 +445,9 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
   const [radarFrames, setRadarFrames] = useState<RadarFrame[]>([]);
   const [radarFrame, setRadarFrame] = useState(0);
   const [radarPlaying, setRadarPlaying] = useState(true);
+  // Bumped each time the basemap style reloads (satellite ↔ map toggle)
+  // so the radar controller knows to re-attach the source+layer.
+  const [styleEpoch, setStyleEpoch] = useState(0);
 
   useEffect(() => {
     if (!layers.weather) return;
@@ -483,6 +487,77 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
     const id = setInterval(() => setRadarFrame((f) => (f + 1) % radarFrames.length), 600);
     return () => clearInterval(id);
   }, [radarPlaying, radarFrames.length]);
+
+  // Imperative radar controller.
+  //
+  // Previously we rendered the radar as a <Source key={frame.time}> inside
+  // the MapGL tree. Changing the key every 600ms (animation tick) forced
+  // MapLibre to rip down and rebuild the source+layer each frame, which
+  // caused the radar to flash off between frames and sometimes vanish
+  // entirely on pan/zoom. Now we create the source+layer once on mount
+  // and mutate its tile URL in place as the frame advances — MapLibre
+  // swaps tiles smoothly without remounting.
+  useEffect(() => {
+    const map = fleetMap?.getMap();
+    if (!map) return;
+    const ensureRemoved = () => {
+      if (map.getLayer('radar-layer')) map.removeLayer('radar-layer');
+      if (map.getSource('radar')) map.removeSource('radar');
+    };
+    if (!layers.weather || radarFrames.length === 0) {
+      ensureRemoved();
+      return;
+    }
+    const frame = radarFrames[radarFrame] ?? radarFrames[radarFrames.length - 1];
+    if (!frame) return;
+    // RainViewer tile template:
+    //   {host}{path}/{size}/{z}/{x}/{y}/{color}/{options}.png
+    // color=2 → Universal Blue, options=1_1 → smooth + snow overlay.
+    // maxzoom=7 matches the public tier's real ceiling (z=8+ returns a
+    // "Zoom Level Not Supported" PNG). MapLibre upsamples past that.
+    const tileUrl = `${radarHost}${frame.path}/512/{z}/{x}/{y}/2/1_1.png`;
+
+    const apply = () => {
+      if (!map.getSource('radar')) {
+        map.addSource('radar', {
+          type: 'raster',
+          tiles: [tileUrl],
+          tileSize: 512,
+          minzoom: 0,
+          maxzoom: 7,
+        });
+        map.addLayer({
+          id: 'radar-layer',
+          type: 'raster',
+          source: 'radar',
+          paint: { 'raster-opacity': 0.6 },
+        });
+      } else {
+        // Swap the tile URL in place — no remount, no flicker
+        const source = map.getSource('radar') as unknown as { setTiles: (t: string[]) => void };
+        source.setTiles([tileUrl]);
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      apply();
+    } else {
+      map.once('load', apply);
+    }
+  }, [fleetMap, layers.weather, radarFrame, radarFrames, radarHost, styleEpoch]);
+
+  // Satellite toggle rebuilds the whole basemap style, which throws out
+  // any sources we've attached. Bump a counter on style.load so the
+  // radar controller effect re-runs and re-adds the layer.
+  useEffect(() => {
+    const map = fleetMap?.getMap();
+    if (!map) return;
+    const onStyleLoad = () => setStyleEpoch((e) => e + 1);
+    map.on('style.load', onStyleLoad);
+    return () => {
+      map.off('style.load', onStyleLoad);
+    };
+  }, [fleetMap]);
 
   // Reference data
   const waypointsQuery = useQuery({
@@ -1205,38 +1280,6 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
         maxPitch={85}
         attributionControl={false}
       >
-        {layers.weather &&
-          radarFrames.length > 0 &&
-          (() => {
-            const frame = radarFrames[radarFrame] ?? radarFrames[radarFrames.length - 1];
-            if (!frame) return null;
-            // RainViewer tile template:
-            //   {host}{path}/{size}/{z}/{x}/{y}/{color}/{options}.png
-            // color=2 → Universal Blue, options=1_1 → smooth + snow overlay.
-            //
-            // Use 512px tiles so MapLibre doesn't request one zoom level
-            // higher than the display zoom (that quirk comes from its
-            // tileSize=256 + Retina prefetch behavior).
-            //
-            // maxzoom=7 matches what RainViewer's free public tier
-            // actually serves; beyond that the endpoint returns a
-            // literal "Zoom Level Not Supported" PNG. MapLibre upsamples
-            // z=7 tiles for anything zoomed further in.
-            const tileUrl = `${radarHost}${frame.path}/512/{z}/{x}/{y}/2/1_1.png`;
-            return (
-              <Source
-                key={frame.time}
-                id="radar"
-                type="raster"
-                tiles={[tileUrl]}
-                tileSize={512}
-                minzoom={0}
-                maxzoom={7}
-              >
-                <Layer id="radar-layer" type="raster" paint={{ 'raster-opacity': 0.6 }} />
-              </Source>
-            );
-          })()}
         <DeckGLOverlay layers={deckLayers} onHover={handleHover} onClick={handleClick} />
         <GeofenceOverlay geofence={geofence} />
         <NavigationControl position="bottom-right" showCompass showZoom />
