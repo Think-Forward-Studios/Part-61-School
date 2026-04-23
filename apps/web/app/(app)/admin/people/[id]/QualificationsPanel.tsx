@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
+import * as s from './_panelStyles';
 
 interface QualRow {
   id: string;
@@ -11,6 +12,12 @@ interface QualRow {
 }
 
 const KINDS = ['aircraft_type', 'sim_authorization', 'course_authorization'] as const;
+
+const KIND_LABEL: Record<string, string> = {
+  aircraft_type: 'Aircraft type',
+  sim_authorization: 'Sim authorization',
+  course_authorization: 'Course authorization',
+};
 
 export function QualificationsPanel({ userId, quals }: { userId: string; quals: QualRow[] }) {
   const router = useRouter();
@@ -43,55 +50,59 @@ export function QualificationsPanel({ userId, quals }: { userId: string; quals: 
   }
 
   return (
-    <section
-      style={{
-        marginTop: '1.25rem',
-        padding: '1.1rem 1.25rem',
-        background: 'rgba(18, 24, 38, 0.6)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 12,
-      }}
-    >
-      <h2
-        style={{
-          margin: 0,
-          fontSize: '0.72rem',
-          fontFamily: String.raw`"JetBrains Mono", ui-monospace, monospace`,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: '#7a869a',
-          fontWeight: 600,
-        }}
-      >
-        Qualifications
-      </h2>
-      {error ? (
-        <p style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.5rem' }}>{error}</p>
-      ) : null}
+    <section style={s.section}>
+      <h2 style={s.heading}>Qualifications</h2>
+      {error ? <p style={s.errorText}>{error}</p> : null}
+
       <form
         onSubmit={onCreate}
-        style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginTop: '0.85rem',
+          marginBottom: '0.5rem',
+          flexWrap: 'wrap',
+        }}
       >
-        <select name="kind" defaultValue="aircraft_type">
+        <select name="kind" defaultValue="aircraft_type" style={s.select}>
           {KINDS.map((k) => (
             <option key={k} value={k}>
-              {k}
+              {KIND_LABEL[k] ?? k}
             </option>
           ))}
         </select>
-        <input name="descriptor" placeholder="e.g. C172" required />
-        <input name="notes" placeholder="Notes" />
-        <button type="submit">Add</button>
+        <input name="descriptor" placeholder="e.g. C172" required style={s.input} />
+        <input name="notes" placeholder="Notes" style={{ ...s.input, flex: 1, minWidth: 160 }} />
+        <button type="submit" style={s.primaryButton} disabled={create.isPending}>
+          {create.isPending ? 'Adding…' : 'Add'}
+        </button>
       </form>
+
       {quals.length === 0 ? (
-        <p style={{ color: '#888' }}>No qualifications on record.</p>
+        <p style={s.emptyText}>No qualifications on record.</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0 0' }}>
           {quals.map((q) => (
-            <li key={q.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
-              <strong>{q.kind}</strong>: {q.descriptor}
-              {q.notes ? ` · ${q.notes}` : ''}{' '}
-              <button type="button" onClick={() => onRevoke(q.id)}>
+            <li key={q.id} style={s.listRow}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: '#f7f9fc' }}>
+                  <span
+                    style={{
+                      color: '#94a3b8',
+                      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      fontSize: '0.78rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      marginRight: '0.4rem',
+                    }}
+                  >
+                    {KIND_LABEL[q.kind] ?? q.kind}
+                  </span>
+                  <strong style={{ color: '#f7f9fc' }}>{q.descriptor}</strong>
+                </div>
+                {q.notes ? <div style={s.listRowMeta}>{q.notes}</div> : null}
+              </div>
+              <button type="button" onClick={() => onRevoke(q.id)} style={s.danger}>
                 Revoke
               </button>
             </li>

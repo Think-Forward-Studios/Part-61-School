@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
+import * as s from './_panelStyles';
 
 interface HoldRow {
   id: string;
@@ -49,54 +50,57 @@ export function HoldsPanel({ userId, holds }: { userId: string; holds: HoldRow[]
   }
 
   return (
-    <section
-      style={{
-        marginTop: '1.25rem',
-        padding: '1.1rem 1.25rem',
-        background: 'rgba(18, 24, 38, 0.6)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 12,
-      }}
-    >
-      <h2
+    <section style={s.section}>
+      <h2 style={s.heading}>Holds &amp; Groundings</h2>
+      {error ? <p style={s.errorText}>{error}</p> : null}
+
+      <form
+        onSubmit={onCreate}
         style={{
-          margin: 0,
-          fontSize: '0.72rem',
-          fontFamily: String.raw`"JetBrains Mono", ui-monospace, monospace`,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: '#7a869a',
-          fontWeight: 600,
+          display: 'flex',
+          gap: '0.5rem',
+          marginTop: '0.85rem',
+          marginBottom: '0.5rem',
+          flexWrap: 'wrap',
         }}
       >
-        Holds <h2>Holds &amp; Groundings</h2>amp; Groundings
-      </h2>
-      {error ? (
-        <p style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.5rem' }}>{error}</p>
-      ) : null}
-      <form onSubmit={onCreate} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <select name="kind" defaultValue="hold">
+        <select name="kind" defaultValue="hold" style={s.select}>
           <option value="hold">Hold</option>
           <option value="grounding">Grounding</option>
         </select>
-        <input name="reason" placeholder="Reason" required style={{ flex: 1 }} />
-        <button type="submit">Add</button>
+        <input
+          name="reason"
+          placeholder="Reason"
+          required
+          style={{ ...s.input, flex: 1, minWidth: 200 }}
+        />
+        <button type="submit" style={s.primaryButton} disabled={create.isPending}>
+          {create.isPending ? 'Adding…' : 'Add'}
+        </button>
       </form>
+
       {holds.length === 0 ? (
-        <p style={{ color: '#888' }}>No holds on record.</p>
+        <p style={s.emptyText}>No holds on record.</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0 0' }}>
           {holds.map((h) => (
-            <li key={h.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
-              <strong>{h.kind.toUpperCase()}</strong> — {h.reason}
-              <div style={{ fontSize: '0.8rem', color: '#555' }}>
-                Placed {new Date(h.createdAt).toLocaleString()}
-                {h.clearedAt
-                  ? ` · Cleared ${new Date(h.clearedAt).toLocaleString()} (${h.clearedReason})`
-                  : ' · ACTIVE'}
+            <li key={h.id} style={s.listRow}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div>
+                  <strong style={{ color: '#f7f9fc' }}>{h.kind.toUpperCase()}</strong> ·{' '}
+                  <span style={{ color: '#cbd5e1' }}>{h.reason}</span>
+                </div>
+                <div style={s.listRowMeta}>
+                  Placed {new Date(h.createdAt).toLocaleString()}
+                  {h.clearedAt
+                    ? ` · Cleared ${new Date(h.clearedAt).toLocaleString()}${
+                        h.clearedReason ? ` (${h.clearedReason})` : ''
+                      }`
+                    : ' · ACTIVE'}
+                </div>
               </div>
               {!h.clearedAt ? (
-                <button type="button" onClick={() => onClear(h.id)}>
+                <button type="button" onClick={() => onClear(h.id)} style={s.danger}>
                   Clear
                 </button>
               ) : null}

@@ -2,6 +2,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
+import * as s from './_panelStyles';
 
 interface ContactRow {
   id: string;
@@ -51,56 +52,96 @@ export function EmergencyContactsPanel({
   }
 
   return (
-    <section
-      style={{
-        marginTop: '1.25rem',
-        padding: '1.1rem 1.25rem',
-        background: 'rgba(18, 24, 38, 0.6)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 12,
-      }}
-    >
-      <h2
-        style={{
-          margin: 0,
-          fontSize: '0.72rem',
-          fontFamily: String.raw`"JetBrains Mono", ui-monospace, monospace`,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: '#7a869a',
-          fontWeight: 600,
-        }}
-      >
-        Emergency Contacts
-      </h2>
-      {error ? (
-        <p style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.5rem' }}>{error}</p>
-      ) : null}
+    <section style={s.section}>
+      <h2 style={s.heading}>Emergency Contacts</h2>
+      {error ? <p style={s.errorText}>{error}</p> : null}
+
       <form
         onSubmit={onCreate}
-        style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          marginTop: '0.85rem',
+          marginBottom: '0.5rem',
+        }}
       >
-        <input name="name" placeholder="Name" required />
-        <input name="relationship" placeholder="Relationship" />
-        <input name="phone" placeholder="Phone" />
-        <input name="email" type="email" placeholder="Email" />
-        <label>
-          <input type="checkbox" name="isPrimary" /> Primary
+        <input name="name" placeholder="Name" required style={{ ...s.input, flex: '1 1 160px' }} />
+        <input
+          name="relationship"
+          placeholder="Relationship"
+          style={{ ...s.input, flex: '1 1 140px' }}
+        />
+        <input name="phone" placeholder="Phone" style={{ ...s.input, flex: '1 1 140px' }} />
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          style={{ ...s.input, flex: '1 1 180px' }}
+        />
+        <label
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            color: '#cbd5e1',
+            fontSize: '0.82rem',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <input type="checkbox" name="isPrimary" />
+          Primary
         </label>
-        <button type="submit">Add</button>
+        <button type="submit" style={s.primaryButton} disabled={create.isPending}>
+          {create.isPending ? 'Adding…' : 'Add'}
+        </button>
       </form>
+
       {contacts.length === 0 ? (
-        <p style={{ color: '#888' }}>No emergency contacts on record.</p>
+        <p style={s.emptyText}>No emergency contacts on record.</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0 0' }}>
           {contacts.map((c) => (
-            <li key={c.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
-              {c.isPrimary ? <strong>[PRIMARY] </strong> : null}
-              <strong>{c.name}</strong> ({c.relationship ?? '—'})
-              <div style={{ fontSize: '0.85rem', color: '#555' }}>
-                {c.phone ?? '—'} · {c.email ?? '—'}
+            <li key={c.id} style={s.listRow}>
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {c.isPrimary ? (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        padding: '0.1rem 0.45rem',
+                        background: 'rgba(251, 191, 36, 0.14)',
+                        border: '1px solid rgba(251, 191, 36, 0.4)',
+                        borderRadius: 999,
+                        color: '#fbbf24',
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                      }}
+                    >
+                      Primary
+                    </span>
+                  ) : null}
+                  <strong style={{ color: '#f7f9fc' }}>{c.name}</strong>
+                  <span style={{ color: '#94a3b8', fontSize: '0.82rem' }}>
+                    ({c.relationship ?? '—'})
+                  </span>
+                </div>
+                <div style={s.listRowMeta}>
+                  {c.phone ?? '—'} · {c.email ?? '—'}
+                </div>
               </div>
-              <button type="button" onClick={() => onDelete(c.id)}>
+              <button type="button" onClick={() => onDelete(c.id)} style={s.danger}>
                 Delete
               </button>
             </li>
