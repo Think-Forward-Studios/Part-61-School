@@ -156,11 +156,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // --- styles --------------------------------------------------------------
 
 const labelStyle: React.CSSProperties = {
-  fontSize: '0.68rem',
+  fontSize: '0.7rem',
   fontFamily: '"JetBrains Mono", ui-monospace, monospace',
   letterSpacing: '0.14em',
   textTransform: 'uppercase',
-  color: '#7a869a',
+  color: '#cbd5e1',
   fontWeight: 600,
 };
 
