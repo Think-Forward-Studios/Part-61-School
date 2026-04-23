@@ -24,6 +24,7 @@ import { InfoReleasePanel } from './InfoReleasePanel';
 import { ExperiencePanel } from './ExperiencePanel';
 import { RolesPanel } from './RolesPanel';
 import { StudentCurrenciesPanel } from './StudentCurrenciesPanel';
+import { StudentEnrollmentsPanel } from './StudentEnrollmentsPanel';
 import { TrainingRecordPanel } from './TrainingRecordPanel';
 import { MinimumsStatusPanel } from './_panels/MinimumsStatusPanel';
 import { ProgressForecastPanel } from './_panels/ProgressForecastPanel';
@@ -217,6 +218,15 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
       <EmergencyContactsPanel userId={id} contacts={contacts.map(serialize)} />
       <InfoReleasePanel userId={id} releases={releases.map(serialize)} />
       <ExperiencePanel userId={id} experience={experience.map(serialize)} />
+      {roles.some((r) => r.role === 'student') ? (
+        <StudentEnrollmentsPanel
+          userId={id}
+          userDisplayName={
+            [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim() ||
+            targetUser.email
+          }
+        />
+      ) : null}
       <StudentCurrenciesPanel studentUserId={id} />
       <TrainingRecordPanel studentUserId={id} schoolId={schoolId} />
 

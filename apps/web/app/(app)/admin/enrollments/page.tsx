@@ -4,6 +4,7 @@ import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db, users, studentCourseEnrollment } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui';
+import { NewEnrollmentDialog } from './NewEnrollmentDialog';
 
 export const dynamic = 'force-dynamic';
 
@@ -127,6 +128,7 @@ export default async function EnrollmentsPage() {
         eyebrow="Training"
         title="Enrollments"
         subtitle={`${enrollments.length} total · ${active.length} active · ${completed.length} completed`}
+        actions={<NewEnrollmentDialog />}
       />
 
       <Section title="Active" rows={active} />

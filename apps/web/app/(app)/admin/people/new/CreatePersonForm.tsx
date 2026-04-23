@@ -1,5 +1,5 @@
 'use client';
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 
@@ -52,7 +52,29 @@ export function CreatePersonForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [role, setRole] = useState<Role>('student');
+  const [enrollCourseId, setEnrollCourseId] = useState('');
+  const [enrollVersionId, setEnrollVersionId] = useState('');
+  const [enrollInstructorId, setEnrollInstructorId] = useState('');
   const create = trpc.admin.people.create.useMutation();
+  const enroll = trpc.admin.enrollments.create.useMutation();
+
+  // Reference data for the optional "enroll on create" section — only
+  // loaded once the admin picks the Student role.
+  const isStudent = role === 'student';
+  const courses = trpc.admin.courses.list.useQuery(undefined, { enabled: isStudent });
+  const courseDetail = trpc.admin.courses.get.useQuery(
+    { id: enrollCourseId },
+    { enabled: isStudent && !!enrollCourseId },
+  );
+  const instructors = trpc.admin.people.list.useQuery(
+    { role: 'instructor', status: 'active', limit: 500, offset: 0 },
+    { enabled: isStudent },
+  );
+
+  const publishedVersions = useMemo(() => {
+    const versions = courseDetail.data?.versions ?? [];
+    return versions.filter((v) => v.publishedAt != null);
+  }, [courseDetail.data]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -87,6 +109,27 @@ export function CreatePersonForm() {
             ? ((fd.get('mechanicAuthority') as 'none' | 'a_and_p' | 'ia') ?? 'none')
             : 'none',
       });
+      // If the admin asked to enroll this student in a course, fire
+      // the enrollment mutation before redirecting so the student
+      // shows up on the training roster immediately. Any failure here
+      // doesn't roll back the person creation — we surface the error
+      // and still route to the new person page so the admin can retry
+      // enrollment from there.
+      if (isStudent && enrollVersionId && result.userId) {
+        try {
+          await enroll.mutateAsync({
+            studentUserId: result.userId,
+            courseVersionId: enrollVersionId,
+            primaryInstructorId: enrollInstructorId || undefined,
+          });
+        } catch (enrollErr) {
+          setError(
+            `Person created, but enrollment failed: ${
+              enrollErr instanceof Error ? enrollErr.message : String(enrollErr)
+            }. You can retry from their profile.`,
+          );
+        }
+      }
       router.push(`/admin/people/${result.userId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Create failed');
@@ -194,6 +237,92 @@ export function CreatePersonForm() {
           ))}
         </select>
       </label>
+
+      {/* Optional enrollment-on-create. Only shown when the role is
+          'student' — the courses/instructors queries are gated on the
+          same flag so non-student roles don't pay for the reference-
+          data roundtrips. */}
+      {isStudent ? (
+        <>
+          <div
+            style={{
+              gridColumn: '1 / -1',
+              marginTop: '0.5rem',
+              paddingTop: '0.9rem',
+              borderTop: '1px dashed #1f2940',
+              fontSize: '0.68rem',
+              fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+              color: '#7a869a',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+            }}
+          >
+            Enrollment (optional)
+          </div>
+          <label style={LABEL}>
+            Course
+            <select
+              value={enrollCourseId}
+              onChange={(e) => {
+                setEnrollCourseId(e.target.value);
+                setEnrollVersionId('');
+              }}
+              style={INPUT}
+            >
+              <option value="">— Enroll later —</option>
+              {(courses.data ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code} — {c.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {enrollCourseId ? (
+            <label style={LABEL}>
+              Version
+              <select
+                value={enrollVersionId}
+                onChange={(e) => setEnrollVersionId(e.target.value)}
+                style={INPUT}
+                disabled={courseDetail.isLoading}
+              >
+                <option value="">— None —</option>
+                {publishedVersions.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.versionLabel ?? v.id.slice(0, 8)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {enrollCourseId ? (
+            <label style={LABEL}>
+              Primary instructor
+              <select
+                value={enrollInstructorId}
+                onChange={(e) => setEnrollInstructorId(e.target.value)}
+                style={INPUT}
+              >
+                <option value="">— None —</option>
+                {((instructors.data?.rows ?? []) as Array<Record<string, unknown>>).map((p) => {
+                  const id = String(p.id);
+                  const first = (p.first_name as string | null) ?? '';
+                  const last = (p.last_name as string | null) ?? '';
+                  const email = (p.email as string) ?? '';
+                  const name = `${first} ${last}`.trim() || email;
+                  return (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+          ) : null}
+        </>
+      ) : null}
+
       <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end' }}>
         <button
           type="submit"
