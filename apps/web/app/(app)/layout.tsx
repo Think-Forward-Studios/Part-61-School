@@ -189,29 +189,16 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             >
               ◆
             </span>
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-              <span
-                style={{
-                  fontSize: '0.96rem',
-                  fontWeight: 600,
-                  letterSpacing: '-0.01em',
-                  color: '#f7f9fc',
-                }}
-              >
-                Flight School Platform
-              </span>
-              <span
-                style={{
-                  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-                  fontSize: '0.58rem',
-                  letterSpacing: '0.2em',
-                  color: '#7a869a',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Part 61 · Operations
-              </span>
-            </div>
+            <span
+              style={{
+                fontSize: '0.96rem',
+                fontWeight: 600,
+                letterSpacing: '-0.01em',
+                color: '#f7f9fc',
+              }}
+            >
+              Flight School Platform
+            </span>
           </Link>
 
           {/* User pill — role callsign */}
