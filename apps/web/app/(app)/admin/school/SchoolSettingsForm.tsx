@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 
@@ -40,7 +40,16 @@ export interface SchoolSettingsInitial {
   name: string;
   timezone: string;
   homeBaseAirport: string | null;
+  homeBaseAirportName: string | null;
   iconUrl: string | null;
+}
+
+interface AirportSuggestion {
+  location_id: string;
+  icao_id?: string;
+  name: string;
+  city?: string;
+  state_code?: string;
 }
 
 export function SchoolSettingsForm({ initial }: { initial: SchoolSettingsInitial }) {
@@ -55,12 +64,55 @@ export function SchoolSettingsForm({ initial }: { initial: SchoolSettingsInitial
     !TIMEZONE_OPTIONS.some((t) => t.value === initial.timezone),
   );
   const [homeBaseAirport, setHomeBaseAirport] = useState(initial.homeBaseAirport ?? '');
+  const [homeBaseAirportName, setHomeBaseAirportName] = useState(initial.homeBaseAirportName ?? '');
+  const [airportSuggestions, setAirportSuggestions] = useState<AirportSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [iconUrl, setIconUrl] = useState<string | null>(initial.iconUrl);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [processingIcon, setProcessingIcon] = useState(false);
 
   const update = trpc.admin.school.update.useMutation();
+
+  // Debounced OurAirports search. The /api/adsb/airports/search route
+  // is already wired up (it backs HomeAirportPanel on /fleet-map); we
+  // reuse it here so the admin can type 'KBHM' or 'Birmingham' and
+  // pick a real airport rather than typing free-form text. Picking a
+  // suggestion populates BOTH the ICAO field and the hidden
+  // homeBaseAirportName field — that's what lets the top header pill
+  // render 'Birmingham-Shuttlesworth Intl' instead of 'KBHM'.
+  useEffect(() => {
+    const q = homeBaseAirport.trim();
+    if (q.length < 2) {
+      setAirportSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const id = setTimeout(() => {
+      fetch(`/api/adsb/airports/search?q=${encodeURIComponent(q)}`)
+        .then((r) => (r.ok ? r.json() : { data: [] }))
+        .then((json: { data?: AirportSuggestion[] }) => {
+          if (cancelled) return;
+          setAirportSuggestions((json.data ?? []).slice(0, 8));
+        })
+        .catch(() => {
+          if (!cancelled) setAirportSuggestions([]);
+        });
+    }, 220);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [homeBaseAirport]);
+
+  function pickAirport(a: AirportSuggestion) {
+    // Prefer the ICAO code when present; OurAirports' `location_id`
+    // (its internal ident) otherwise.
+    const code = a.icao_id?.trim() || a.location_id.trim();
+    setHomeBaseAirport(code);
+    setHomeBaseAirportName(a.name);
+    setShowSuggestions(false);
+  }
 
   async function onIconChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -106,6 +158,7 @@ export function SchoolSettingsForm({ initial }: { initial: SchoolSettingsInitial
         // Empty string → null (clear). Trim so whitespace-only is treated
         // as empty.
         homeBaseAirport: homeBaseAirport.trim() || null,
+        homeBaseAirportName: homeBaseAirportName.trim() || null,
         iconUrl: iconUrl ?? null,
       });
       setOk(true);
@@ -200,17 +253,114 @@ export function SchoolSettingsForm({ initial }: { initial: SchoolSettingsInitial
         <div style={labelBlockStyle}>
           <div style={labelTitleStyle}>Home base airport</div>
           <div style={labelHintStyle}>
-            ICAO or display name (e.g. <code style={codeStyle}>KBHM</code>). Shown in the top header
-            pill on every page. Leave blank to hide.
+            Type an ICAO (<code style={codeStyle}>KBHM</code>) or airport name. Pick a match to
+            auto-fill the full name — the header pill shows the name, not the code. Leave blank to
+            hide.
           </div>
         </div>
-        <input
-          value={homeBaseAirport}
-          onChange={(e) => setHomeBaseAirport(e.target.value.toUpperCase())}
-          placeholder="KBHM"
-          maxLength={80}
-          style={inputStyle}
-        />
+        <div
+          style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+        >
+          <input
+            value={homeBaseAirport}
+            onChange={(e) => {
+              setHomeBaseAirport(e.target.value.toUpperCase());
+              // Clear the resolved name as soon as the admin edits the
+              // code — they'll re-pick from the suggestions or leave it
+              // blank. Prevents stale 'Birmingham-Shuttlesworth Intl'
+              // sticking around when they change the ICAO.
+              setHomeBaseAirportName('');
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => {
+              // Delay so clicking a suggestion can register before
+              // the list unmounts.
+              setTimeout(() => setShowSuggestions(false), 150);
+            }}
+            placeholder="KBHM or Birmingham"
+            maxLength={80}
+            style={inputStyle}
+            autoComplete="off"
+          />
+          {showSuggestions && airportSuggestions.length > 0 ? (
+            <div
+              style={{
+                position: 'absolute',
+                top: '2.7rem',
+                left: 0,
+                right: 0,
+                background: 'rgba(9, 13, 24, 0.98)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 8,
+                maxHeight: 260,
+                overflowY: 'auto',
+                zIndex: 10,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              }}
+            >
+              {airportSuggestions.map((a, i) => (
+                <button
+                  key={`${a.location_id}-${i}`}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    pickAirport(a);
+                  }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '0.15rem',
+                    width: '100%',
+                    padding: '0.55rem 0.8rem',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom:
+                      i === airportSuggestions.length - 1
+                        ? 'none'
+                        : '1px solid rgba(255,255,255,0.06)',
+                    color: '#e2e8f0',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                    <span
+                      style={{
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                        fontSize: '0.75rem',
+                        letterSpacing: '0.08em',
+                        color: '#fbbf24',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {(a.icao_id?.trim() || a.location_id.trim()).toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: '0.85rem' }}>{a.name}</span>
+                  </div>
+                  {a.city ? (
+                    <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                      {a.city}
+                      {a.state_code ? ` · ${a.state_code}` : ''}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {homeBaseAirportName ? (
+            <div
+              style={{
+                fontSize: '0.82rem',
+                color: '#94a3b8',
+                paddingLeft: '0.15rem',
+              }}
+            >
+              Resolved: <span style={{ color: '#e2e8f0' }}>{homeBaseAirportName}</span>
+            </div>
+          ) : null}
+        </div>
       </section>
 
       {/* Timezone */}

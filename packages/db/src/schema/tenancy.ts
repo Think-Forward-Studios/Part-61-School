@@ -27,6 +27,11 @@ export const schools = pgTable(
     // (e.g. 'KBHM'). Shown in the top header pill in place of the
     // legacy base name.
     homeBaseAirport: text('home_base_airport'),
+    // Resolved full airport name (migration 0042). Populated by the
+    // admin form's OurAirports lookup so the header can render the
+    // friendly name ('Birmingham-Shuttlesworth Intl') rather than
+    // the ICAO.
+    homeBaseAirportName: text('home_base_airport_name'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

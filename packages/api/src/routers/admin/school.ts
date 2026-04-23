@@ -39,6 +39,9 @@ export const adminSchoolRouter = router({
     if (input.homeBaseAirport !== undefined) {
       patch.homeBaseAirport = input.homeBaseAirport;
     }
+    if (input.homeBaseAirportName !== undefined) {
+      patch.homeBaseAirportName = input.homeBaseAirportName;
+    }
     // defaultBaseId column does not exist on schools in Phase 1/2 schema;
     // v1 deploys ship with a single base per school, so storing the
     // default base is deferred. Accept the input to keep the UI contract

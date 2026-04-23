@@ -57,6 +57,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .limit(1);
   const schoolName = schoolRows[0]?.name ?? 'Part 61 School';
   const schoolIconUrl = schoolRows[0]?.iconUrl ?? null;
+  // Home-base label priority:
+  //   1. Resolved airport NAME stored on the school row (migration 0042)
+  //   2. The raw identifier the admin entered (e.g. 'KBHM')
+  //   3. The legacy user_base row name ('Home Base') — set below
+  // Picked in JSX by falling back onto activeBaseName when both school
+  // fields are empty.
+  const schoolHomeBaseAirportName = schoolRows[0]?.homeBaseAirportName?.trim() || null;
   const schoolHomeBaseAirport = schoolRows[0]?.homeBaseAirport?.trim() || null;
 
   // MUL-02: resolve the active base for this user. Cookie first (when
@@ -159,11 +166,35 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               color: 'inherit',
             }}
           >
+            {/* School name + subtitle sit at the LEFT; the school icon
+                (or diamond fallback) sits at the RIGHT of the brand pill.
+                Admin-uploaded icon (migration 0041) replaces the diamond
+                entirely; if no icon is set, the diamond stays as a
+                neutral placeholder. */}
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+              <span
+                style={{
+                  fontSize: '0.96rem',
+                  fontWeight: 600,
+                  letterSpacing: '-0.01em',
+                  color: '#f7f9fc',
+                }}
+              >
+                {schoolName}
+              </span>
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                  fontSize: '0.58rem',
+                  letterSpacing: '0.2em',
+                  color: '#7a869a',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Part 61 · Operations
+              </span>
+            </div>
             {schoolIconUrl ? (
-              // Admin-uploaded school logo (migration 0041). Rendered as
-              // a plain <img> — the asset is a data URL so next/image's
-              // loader is unnecessary. Falls back to the diamond when
-              // no icon is set.
               <img
                 src={schoolIconUrl}
                 alt=""
@@ -199,29 +230,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 ◆
               </span>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-              <span
-                style={{
-                  fontSize: '0.96rem',
-                  fontWeight: 600,
-                  letterSpacing: '-0.01em',
-                  color: '#f7f9fc',
-                }}
-              >
-                {schoolName}
-              </span>
-              <span
-                style={{
-                  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
-                  fontSize: '0.58rem',
-                  letterSpacing: '0.2em',
-                  color: '#7a869a',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Part 61 · Operations
-              </span>
-            </div>
           </Link>
 
           {/* User pill — role callsign */}
@@ -254,49 +262,26 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               {roleCallsign[activeRole] ?? activeRole.toUpperCase().slice(0, 3)}
             </span>
             <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>{shadow.email}</span>
-            {/* Home-base label + optional icon.
-                Prefer the admin-editable airport string from
-                schools.home_base_airport (migration 0041); fall back to
-                the legacy user_base name if the school hasn't set one
-                yet. The small uploaded icon renders immediately AFTER
-                the label — this is the "school icon displayed on top of
-                the page after the text home base" surface. */}
-            {(schoolHomeBaseAirport ?? activeBaseName) ? (
+            {/* Home-base label. Prefer the resolved airport NAME from
+                schools.home_base_airport_name (migration 0042), fall
+                back to the admin-entered code in schools.home_base_airport,
+                then the legacy user_base name. The school icon lives
+                next to the school name in the brand pill at the left —
+                not here. */}
+            {(schoolHomeBaseAirportName ?? schoolHomeBaseAirport ?? activeBaseName) ? (
               <span
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: '0.65rem',
+                  color: '#7a869a',
                   paddingLeft: '0.5rem',
                   borderLeft: '1px solid #1f2940',
                   marginLeft: '0.1rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: '0.65rem',
-                    color: '#7a869a',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {schoolHomeBaseAirport ?? activeBaseName}
-                </span>
-                {schoolIconUrl ? (
-                  <img
-                    src={schoolIconUrl}
-                    alt=""
-                    aria-hidden
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 4,
-                      objectFit: 'contain',
-                      background: '#0a0e1a',
-                    }}
-                  />
-                ) : null}
+                {schoolHomeBaseAirportName ?? schoolHomeBaseAirport ?? activeBaseName}
               </span>
             ) : null}
           </div>

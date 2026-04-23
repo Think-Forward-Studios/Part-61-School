@@ -128,4 +128,9 @@ export const updateSchoolInput = z.object({
   // enough for 'KBHM (Birmingham-Shuttlesworth)' if the admin wants
   // something more descriptive than the raw code.
   homeBaseAirport: z.string().max(80).optional().nullable(),
+  // Resolved full airport name (migration 0042). Populated by the
+  // admin form's OurAirports autocomplete so the header can render
+  // the friendly name. Admins can also clear it by saving an empty
+  // string when they type a free-form identifier.
+  homeBaseAirportName: z.string().max(200).optional().nullable(),
 });

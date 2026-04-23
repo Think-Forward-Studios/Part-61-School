@@ -22,7 +22,10 @@ export default async function SchoolSettingsPage() {
   const school = rows[0];
   if (!school) redirect('/login');
 
-  const airportDisplay = school.homeBaseAirport?.trim() || null;
+  // Prefer the resolved full airport name (migration 0042); fall back
+  // to the raw ICAO/ident if no name is on file.
+  const airportDisplay =
+    school.homeBaseAirportName?.trim() || school.homeBaseAirport?.trim() || null;
 
   return (
     <main style={{ padding: '0 1.5rem 2rem', maxWidth: 900, margin: '0 auto' }}>
@@ -96,6 +99,7 @@ export default async function SchoolSettingsPage() {
           name: school.name,
           timezone: school.timezone,
           homeBaseAirport: school.homeBaseAirport,
+          homeBaseAirportName: school.homeBaseAirportName,
           iconUrl: school.iconUrl,
         }}
       />
