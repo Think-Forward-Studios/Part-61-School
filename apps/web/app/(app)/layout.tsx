@@ -166,11 +166,29 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               color: 'inherit',
             }}
           >
-            {/* School name + subtitle sit at the LEFT; the school icon
-                (or diamond fallback) sits at the RIGHT of the brand pill.
-                Admin-uploaded icon (migration 0041) replaces the diamond
-                entirely; if no icon is set, the diamond stays as a
-                neutral placeholder. */}
+            {/* Brand pill = PRODUCT branding, not tenant branding.
+                Diamond glyph on the LEFT of the product name 'Part 61
+                School'. The tenant's school name + uploaded icon live
+                in the user pill further to the right. */}
+            <span
+              aria-hidden
+              style={{
+                display: 'inline-flex',
+                width: 28,
+                height: 28,
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#0a0e1a',
+                borderRadius: 6,
+                fontWeight: 800,
+                fontSize: '0.72rem',
+                letterSpacing: '-0.03em',
+                boxShadow: '0 0 12px rgba(251, 191, 36, 0.3)',
+              }}
+            >
+              ◆
+            </span>
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
               <span
                 style={{
@@ -180,7 +198,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                   color: '#f7f9fc',
                 }}
               >
-                {schoolName}
+                Part 61 School
               </span>
               <span
                 style={{
@@ -191,45 +209,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                   textTransform: 'uppercase',
                 }}
               >
-                Part 61 · Operations
+                Flight Operations Platform
               </span>
             </div>
-            {schoolIconUrl ? (
-              <img
-                src={schoolIconUrl}
-                alt=""
-                aria-hidden
-                style={{
-                  display: 'inline-block',
-                  width: 28,
-                  height: 28,
-                  borderRadius: 6,
-                  objectFit: 'contain',
-                  background: '#0a0e1a',
-                  boxShadow: '0 0 12px rgba(251, 191, 36, 0.25)',
-                }}
-              />
-            ) : (
-              <span
-                aria-hidden
-                style={{
-                  display: 'inline-flex',
-                  width: 28,
-                  height: 28,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                  color: '#0a0e1a',
-                  borderRadius: 6,
-                  fontWeight: 800,
-                  fontSize: '0.72rem',
-                  letterSpacing: '-0.03em',
-                  boxShadow: '0 0 12px rgba(251, 191, 36, 0.3)',
-                }}
-              >
-                ◆
-              </span>
-            )}
           </Link>
 
           {/* User pill — role callsign */}
@@ -268,22 +250,56 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 then the legacy user_base name. The school icon lives
                 next to the school name in the brand pill at the left —
                 not here. */}
+            {/* Home base airport NAME (not ICAO). Prefers the resolved
+                name from schools.home_base_airport_name, falls back to
+                the raw identifier, then to the legacy user_base name. */}
             {(schoolHomeBaseAirportName ?? schoolHomeBaseAirport ?? activeBaseName) ? (
               <span
                 style={{
-                  fontFamily: '"JetBrains Mono", monospace',
-                  fontSize: '0.65rem',
-                  color: '#7a869a',
+                  fontSize: '0.72rem',
+                  color: '#cbd5e1',
                   paddingLeft: '0.5rem',
                   borderLeft: '1px solid #1f2940',
                   marginLeft: '0.1rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
                 }}
               >
                 {schoolHomeBaseAirportName ?? schoolHomeBaseAirport ?? activeBaseName}
               </span>
             ) : null}
+            {/* School name + icon — the TENANT's identity (the specific
+                flight school this deploy is serving), separate from the
+                product branding in the brand pill. Rendered right after
+                the home-base airport so the pill reads
+                  OPS · email · <airport name> · <school name> · <icon> */}
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                paddingLeft: '0.5rem',
+                borderLeft: '1px solid #1f2940',
+                marginLeft: '0.1rem',
+              }}
+            >
+              <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 600 }}>
+                {schoolName}
+              </span>
+              {schoolIconUrl ? (
+                <img
+                  src={schoolIconUrl}
+                  alt=""
+                  aria-hidden
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 5,
+                    objectFit: 'contain',
+                    background: '#0a0e1a',
+                    boxShadow: '0 0 8px rgba(251, 191, 36, 0.2)',
+                  }}
+                />
+              ) : null}
+            </span>
           </div>
 
           {/* Spacer — navigation now lives entirely in the role sub-nav below */}
