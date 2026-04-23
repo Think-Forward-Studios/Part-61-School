@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { and, eq, isNull } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { db, users, aircraft } from '@part61/db';
+import { db, users } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { AircraftTable } from './AircraftTable';
+import { AircraftTable, type AircraftRow } from './AircraftTable';
 import { PageHeader } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
@@ -19,20 +19,89 @@ export default async function AdminAircraftPage() {
   const schoolId = me[0]?.schoolId;
   if (!schoolId) redirect('/login');
 
-  const rows = await db
-    .select({
-      id: aircraft.id,
-      tailNumber: aircraft.tailNumber,
-      make: aircraft.make,
-      model: aircraft.model,
-      year: aircraft.year,
-      baseId: aircraft.baseId,
-    })
-    .from(aircraft)
-    .where(and(eq(aircraft.schoolId, schoolId), isNull(aircraft.deletedAt)));
+  // Join aircraft against:
+  //   - aircraft_current_totals view (Hobbs / Tach / airframe / last flown)
+  //     — built on flight_log_entry so it reflects every recorded flight
+  //     including baseline-snapshot entries.
+  //   - bases for the home-base name column.
+  //   - maintenance_item for the soonest next-due task (ignoring resolved
+  //     or deleted items).
+  //   - public.is_airworthy_at(id, now()) for the go/no-go chip.
+  // One query means the list stays fast even with 50+ aircraft.
+  const rowsRaw = (await db.execute(sql`
+    select
+      a.id,
+      a.tail_number,
+      a.make,
+      a.model,
+      a.year,
+      b.name as base_name,
+      a.grounded_at,
+      coalesce(act.current_hobbs, 0)    as current_hobbs,
+      coalesce(act.current_tach, 0)     as current_tach,
+      coalesce(act.current_airframe, 0) as current_airframe,
+      act.last_flown_at                 as last_flown_at,
+      public.is_airworthy_at(a.id, now()) as airworthy,
+      (
+        select min(mi.next_due_at)
+          from public.maintenance_item mi
+         where mi.aircraft_id = a.id
+           and mi.deleted_at is null
+           and mi.status <> 'deferred'
+           and mi.next_due_at is not null
+      ) as next_due_at,
+      (
+        select mi.title
+          from public.maintenance_item mi
+         where mi.aircraft_id = a.id
+           and mi.deleted_at is null
+           and mi.status <> 'deferred'
+           and mi.next_due_at is not null
+         order by mi.next_due_at asc
+         limit 1
+      ) as next_due_title
+    from public.aircraft a
+    left join public.bases b on b.id = a.base_id
+    left join public.aircraft_current_totals act on act.aircraft_id = a.id
+    where a.school_id = ${schoolId}
+      and a.deleted_at is null
+    order by a.tail_number
+  `)) as unknown as Array<{
+    id: string;
+    tail_number: string;
+    make: string | null;
+    model: string | null;
+    year: number | null;
+    base_name: string | null;
+    grounded_at: string | null;
+    current_hobbs: string | number;
+    current_tach: string | number;
+    current_airframe: string | number;
+    last_flown_at: string | null;
+    airworthy: boolean | null;
+    next_due_at: string | null;
+    next_due_title: string | null;
+  }>;
+
+  const rows: AircraftRow[] = rowsRaw.map((r) => ({
+    id: r.id,
+    tailNumber: r.tail_number,
+    make: r.make,
+    model: r.model,
+    year: r.year,
+    baseName: r.base_name,
+    grounded: r.grounded_at != null,
+    airworthy: r.airworthy ?? false,
+    currentHobbs: Number(r.current_hobbs ?? 0),
+    currentTach: Number(r.current_tach ?? 0),
+    currentAirframe: Number(r.current_airframe ?? 0),
+    lastFlownAt: r.last_flown_at,
+    nextDueAt: r.next_due_at,
+    nextDueTitle: r.next_due_title,
+  }));
 
   return (
-    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1300, margin: '0 auto' }}>
+    <main style={{ padding: '0 1.5rem 2rem', maxWidth: 1500, margin: '0 auto' }}>
       <PageHeader
         eyebrow="Maintenance"
         title="Fleet"
