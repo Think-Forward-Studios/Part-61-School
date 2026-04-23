@@ -309,6 +309,13 @@
       "when": 1777239600000,
       "tag": "0043_hard_delete_bypass_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1777240080000,
+      "tag": "0044_admin_purge_user_function",
+      "breakpoints": true
     }
   ]
 }
