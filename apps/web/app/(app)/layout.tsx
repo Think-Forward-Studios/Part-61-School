@@ -198,7 +198,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                   color: '#f7f9fc',
                 }}
               >
-                Part 61 School
+                Flight School Platform
               </span>
               <span
                 style={{
@@ -209,7 +209,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                   textTransform: 'uppercase',
                 }}
               >
-                Flight Operations Platform
+                Part 61 · Operations
               </span>
             </div>
           </Link>
