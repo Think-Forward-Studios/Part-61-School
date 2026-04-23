@@ -104,6 +104,17 @@ export const rejectRegistrationInput = z.object({
   reason: z.string().min(1).max(1000),
 });
 
+/**
+ * Admin override: toggle a user between active and inactive. Pending /
+ * rejected states are managed by the registration flow (approve /
+ * reject) — we deliberately don't expose them here so admins can't
+ * accidentally dump a live user back into the pending bucket.
+ */
+export const setUserStatusInput = z.object({
+  userId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+  status: z.enum(['active', 'inactive']),
+});
+
 export const registerSubmitInput = z.object({
   schoolId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
   email: z.string().email(),

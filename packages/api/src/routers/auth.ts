@@ -44,11 +44,18 @@ export const authRouter = router({
     // tests can import this file without env vars present.
     const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
     if (!url || !serviceKey) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Supabase admin credentials are not configured',
+      });
+    }
+    if (!siteUrl) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message:
+          'NEXT_PUBLIC_SITE_URL is not set. The invite link would point to localhost. Set it in Vercel before retrying.',
       });
     }
     // Lazy import to avoid pulling supabase-js into non-invite code paths.

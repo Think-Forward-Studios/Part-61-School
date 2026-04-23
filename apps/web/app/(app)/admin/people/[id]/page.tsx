@@ -14,6 +14,7 @@ import {
   userRoles,
 } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { AdminActionsPanel } from './AdminActionsPanel';
 import { EditProfileForm } from './EditProfileForm';
 import { HoldsPanel } from './HoldsPanel';
 import { CurrenciesPanel } from './CurrenciesPanel';
@@ -185,6 +186,12 @@ export default async function PersonDetailPage({ params }: { params: Params }) {
           </div>
         </div>
       ) : null}
+
+      <AdminActionsPanel
+        userId={id}
+        email={targetUser.email}
+        status={targetUser.status as 'pending' | 'active' | 'inactive' | 'rejected'}
+      />
 
       <EditProfileForm
         userId={id}

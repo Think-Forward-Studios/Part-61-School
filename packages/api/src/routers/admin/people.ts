@@ -22,6 +22,7 @@ import {
   assignRoleInput,
   removeRoleInput,
   rejectRegistrationInput,
+  setUserStatusInput,
 } from '@part61/domain';
 import { router } from '../../trpc';
 import { adminProcedure } from '../../procedures';
@@ -141,11 +142,19 @@ export const adminPeopleRouter = router({
     // Use the supabase service role client lazily.
     const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
     if (!url || !serviceKey) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Supabase admin credentials are not configured',
+      });
+    }
+    if (!siteUrl) {
+      // Fail loud instead of emailing a broken localhost link.
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message:
+          'NEXT_PUBLIC_SITE_URL is not set. The invite link would point to localhost. Set it in Vercel before retrying.',
       });
     }
     const { createClient } = await import('@supabase/supabase-js');
@@ -329,11 +338,19 @@ export const adminPeopleRouter = router({
     }
     const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
     if (!url || !serviceKey) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Supabase admin credentials are not configured',
+      });
+    }
+    if (!siteUrl) {
+      // Fail loud instead of emailing a broken localhost link.
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message:
+          'NEXT_PUBLIC_SITE_URL is not set. The invite link would point to localhost. Set it in Vercel before retrying.',
       });
     }
     const { createClient } = await import('@supabase/supabase-js');
@@ -402,6 +419,141 @@ export const adminPeopleRouter = router({
       `);
       return { ok: true };
     }),
+
+  /**
+   * Re-send the Supabase invite email. Useful when the original link
+   * landed on a broken host (e.g. localhost during an early deploy
+   * before NEXT_PUBLIC_SITE_URL was set), or when the user never got
+   * the first email at all. Idempotent — each call generates a new
+   * invite token and invalidates the previous one.
+   */
+  resendInvite: adminProcedure.input(userIdInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+    const rows = await tx
+      .select({ email: users.email, status: users.status })
+      .from(users)
+      .where(and(eq(users.id, input.userId), eq(users.schoolId, schoolId)))
+      .limit(1);
+    const target = rows[0];
+    if (!target) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+    }
+    const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (!url || !serviceKey) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Supabase admin credentials are not configured',
+      });
+    }
+    if (!siteUrl) {
+      // Guard so we never silently send another broken localhost link.
+      // Set NEXT_PUBLIC_SITE_URL in the Vercel project (Production env)
+      // to the production host, e.g. https://<project>.vercel.app.
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message:
+          'NEXT_PUBLIC_SITE_URL is not set. The invite link would point to localhost. Set it in Vercel before retrying.',
+      });
+    }
+    const { createClient } = await import('@supabase/supabase-js');
+    const admin = createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { error } = await admin.auth.admin.inviteUserByEmail(target.email, {
+      redirectTo: `${siteUrl}/invite/accept`,
+      data: { invited_school_id: schoolId, resent_by: ctx.session!.userId },
+    });
+    if (error) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: error.message || 'Failed to resend invite',
+      });
+    }
+    return { ok: true };
+  }),
+
+  /**
+   * Email the user a password-reset link. Delegates to Supabase Auth,
+   * which handles token generation, email delivery, and rate limiting.
+   * The redirect lands on /reset-password which already accepts the
+   * recovery flow (see apps/web/app/(auth)/reset-password/page.tsx).
+   */
+  sendPasswordReset: adminProcedure.input(userIdInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const schoolId = ctx.session!.schoolId;
+    const rows = await tx
+      .select({ email: users.email })
+      .from(users)
+      .where(and(eq(users.id, input.userId), eq(users.schoolId, schoolId)))
+      .limit(1);
+    const target = rows[0];
+    if (!target) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+    }
+    const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (!url || !serviceKey) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Supabase admin credentials are not configured',
+      });
+    }
+    if (!siteUrl) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'NEXT_PUBLIC_SITE_URL is not set. Set it in Vercel before retrying.',
+      });
+    }
+    const { createClient } = await import('@supabase/supabase-js');
+    const admin = createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    // generateLink with type='recovery' returns a magic link + sends
+    // the standard Supabase reset email. We don't need the returned
+    // URL — Supabase delivers it to the user directly.
+    const { error } = await admin.auth.admin.generateLink({
+      type: 'recovery',
+      email: target.email,
+      options: { redirectTo: `${siteUrl}/reset-password` },
+    });
+    if (error) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: error.message || 'Failed to send password reset',
+      });
+    }
+    return { ok: true };
+  }),
+
+  /**
+   * Flip a user between 'active' and 'inactive'. Inactive users keep
+   * all their history + tenant rows; they just can't act on the
+   * platform. Pending/rejected stay the exclusive domain of the
+   * registration flow (approve/reject) so this path can't reopen a
+   * closed decision.
+   */
+  setStatus: adminProcedure.input(setUserStatusInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const rows = await tx
+      .update(users)
+      .set({ status: input.status })
+      .where(
+        and(
+          eq(users.id, input.userId),
+          eq(users.schoolId, ctx.session!.schoolId),
+          isNull(users.deletedAt),
+        ),
+      )
+      .returning({ id: users.id, status: users.status });
+    if (rows.length === 0) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+    }
+    return { ok: true, status: rows[0]!.status };
+  }),
 });
 
 // Silence unused import warnings for desc/personHold (kept for future list joins).
