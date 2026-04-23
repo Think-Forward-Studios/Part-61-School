@@ -43,6 +43,9 @@ export const createAircraftInput = z.object({
     .string()
     .regex(/^[0-9a-fA-F-]{36}$/)
     .optional(),
+  // Optional per-aircraft airport override (migration 0045). Blank →
+  // inherit school.home_base_airport.
+  homeAirport: z.string().max(80).optional().nullable(),
 });
 export type CreateAircraftInput = z.infer<typeof createAircraftInput>;
 
@@ -57,6 +60,7 @@ export const updateAircraftInput = z.object({
     .string()
     .regex(/^[0-9a-fA-F-]{36}$/)
     .optional(),
+  homeAirport: z.string().max(80).optional().nullable(),
 });
 
 export const aircraftIdInput = z.object({

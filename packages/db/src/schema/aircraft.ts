@@ -38,6 +38,12 @@ export const aircraft = pgTable(
     model: text('model'),
     year: integer('year'),
     equipmentNotes: text('equipment_notes'),
+    // Migration 0045. Optional ICAO / display string for the airfield
+    // this specific tail lives at. When null the UI falls back to
+    // schools.home_base_airport (migration 0041). When set it overrides
+    // for this tail — useful when one aircraft is parked somewhere
+    // other than the school's main base.
+    homeAirport: text('home_airport'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

@@ -3,27 +3,26 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { trpc } from '@/lib/trpc/client';
 
-interface BaseOption {
-  id: string;
-  name: string;
-}
-
 interface EditInitial {
   tailNumber: string;
   make: string;
   model: string;
   year: number | null;
   equipmentNotes: string;
-  baseId: string;
+  homeAirport: string;
 }
 
 export function EditAircraftForm({
   aircraftId,
-  bases,
+  schoolHomeAirport,
+  schoolHomeAirportName,
   initial,
 }: {
   aircraftId: string;
-  bases: BaseOption[];
+  /** ICAO / ident the school set on /admin/school. */
+  schoolHomeAirport: string | null;
+  /** Full airport name (e.g. 'Birmingham-Shuttlesworth Intl'). */
+  schoolHomeAirportName: string | null;
   initial: EditInitial;
 }) {
   const router = useRouter();
@@ -45,7 +44,10 @@ export function EditAircraftForm({
         model: (fd.get('model') as string) || null,
         year: fd.get('year') ? Number(fd.get('year')) : null,
         equipmentNotes: (fd.get('equipmentNotes') as string) || null,
-        baseId: String(fd.get('baseId') ?? ''),
+        // Empty string → null so the aircraft falls back to the
+        // school's home airport. Admin can clear it at any time to
+        // re-sync with school settings.
+        homeAirport: (fd.get('homeAirport') as string)?.trim() || null,
       });
       setOk(true);
       router.refresh();
@@ -64,6 +66,12 @@ export function EditAircraftForm({
       setError(err instanceof Error ? err.message : 'Delete failed');
     }
   }
+
+  const fallbackDisplay = schoolHomeAirport
+    ? schoolHomeAirportName
+      ? `${schoolHomeAirport} · ${schoolHomeAirportName}`
+      : schoolHomeAirport
+    : 'no school home airport set';
 
   return (
     <section
@@ -107,25 +115,24 @@ export function EditAircraftForm({
             />
           </Field>
 
-          <Field label="Home base" htmlFor="edit-baseId">
-            <select
-              id="edit-baseId"
-              name="baseId"
-              defaultValue={initial.baseId}
-              required
+          <Field
+            label="Home airfield (ICAO)"
+            htmlFor="edit-homeAirport"
+            hint={
+              initial.homeAirport
+                ? 'Clear to inherit from school home base.'
+                : `Blank → inherits from school: ${fallbackDisplay}`
+            }
+          >
+            <input
+              id="edit-homeAirport"
+              name="homeAirport"
+              defaultValue={initial.homeAirport}
+              placeholder={schoolHomeAirport ?? 'KBHM'}
+              maxLength={80}
+              onChange={(e) => (e.target.value = e.target.value.toUpperCase())}
               style={inputStyle}
-            >
-              {bases.length === 0 ? (
-                <option value="" disabled>
-                  No bases available
-                </option>
-              ) : null}
-              {bases.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+            />
           </Field>
 
           <Field label="Make" htmlFor="edit-make">
@@ -187,6 +194,7 @@ export function EditAircraftForm({
             gap: '0.6rem',
             marginTop: '1.25rem',
             alignItems: 'center',
+            flexWrap: 'wrap',
           }}
         >
           <button type="submit" style={primaryButton} disabled={update.isPending}>
@@ -206,10 +214,12 @@ export function EditAircraftForm({
 function Field({
   label,
   htmlFor,
+  hint,
   children,
 }: {
   label: string;
   htmlFor: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -228,6 +238,9 @@ function Field({
         {label}
       </label>
       {children}
+      {hint ? (
+        <span style={{ fontSize: '0.72rem', color: '#7a869a', lineHeight: 1.4 }}>{hint}</span>
+      ) : null}
     </div>
   );
 }

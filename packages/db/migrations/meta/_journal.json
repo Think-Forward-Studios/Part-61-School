@@ -316,6 +316,13 @@
       "when": 1777240080000,
       "tag": "0044_admin_purge_user_function",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1777251600000,
+      "tag": "0045_aircraft_home_airport",
+      "breakpoints": true
     }
   ]
 }

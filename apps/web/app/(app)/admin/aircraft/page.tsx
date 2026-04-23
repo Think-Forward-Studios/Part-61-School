@@ -19,13 +19,24 @@ export default async function AdminAircraftPage() {
   const schoolId = me[0]?.schoolId;
   if (!schoolId) redirect('/login');
 
+  // Resolve the school's home-airport fallback once — used below when
+  // an aircraft doesn't have its own home_airport override set.
+  const schoolRow = (await db.execute(sql`
+    select home_base_airport, home_base_airport_name
+    from public.schools
+    where id = ${schoolId}
+    limit 1
+  `)) as unknown as Array<{
+    home_base_airport: string | null;
+    home_base_airport_name: string | null;
+  }>;
+  const schoolHomeAirport = schoolRow[0]?.home_base_airport?.trim() || null;
+
   // Join aircraft against:
   //   - aircraft_current_totals view (Hobbs / Tach / airframe / last flown)
   //     — built on flight_log_entry so it reflects every recorded flight
   //     including baseline-snapshot entries.
-  //   - bases for the home-base name column.
-  //   - maintenance_item for the soonest next-due task (ignoring resolved
-  //     or deleted items).
+  //   - maintenance_item for the soonest next-due task.
   //   - public.is_airworthy_at(id, now()) for the go/no-go chip.
   // One query means the list stays fast even with 50+ aircraft.
   const rowsRaw = (await db.execute(sql`
@@ -35,7 +46,7 @@ export default async function AdminAircraftPage() {
       a.make,
       a.model,
       a.year,
-      b.name as base_name,
+      a.home_airport,
       a.grounded_at,
       coalesce(act.current_hobbs, 0)    as current_hobbs,
       coalesce(act.current_tach, 0)     as current_tach,
@@ -59,7 +70,6 @@ export default async function AdminAircraftPage() {
          limit 1
       ) as next_due_title
     from public.aircraft a
-    left join public.bases b on b.id = a.base_id
     left join public.aircraft_current_totals act on act.aircraft_id = a.id
     where a.school_id = ${schoolId}
       and a.deleted_at is null
@@ -70,7 +80,7 @@ export default async function AdminAircraftPage() {
     make: string | null;
     model: string | null;
     year: number | null;
-    base_name: string | null;
+    home_airport: string | null;
     grounded_at: string | null;
     current_hobbs: string | number;
     current_tach: string | number;
@@ -87,7 +97,9 @@ export default async function AdminAircraftPage() {
     make: r.make,
     model: r.model,
     year: r.year,
-    baseName: r.base_name,
+    // Home airfield: aircraft override wins; school fallback otherwise.
+    homeAirport: r.home_airport?.trim() || schoolHomeAirport,
+    usingSchoolDefault: !r.home_airport?.trim(),
     grounded: r.grounded_at != null,
     airworthy: r.airworthy ?? false,
     currentHobbs: Number(r.current_hobbs ?? 0),
@@ -103,7 +115,9 @@ export default async function AdminAircraftPage() {
       <PageHeader
         eyebrow="Maintenance"
         title="Fleet"
-        subtitle={`${rows.length} ${rows.length === 1 ? 'aircraft' : 'aircraft'} on the line.`}
+        subtitle={`${rows.length} ${
+          rows.length === 1 ? 'aircraft' : 'aircraft'
+        } in the fleet · click a tail number for more details.`}
         actions={
           <Link
             href="/admin/aircraft/new"

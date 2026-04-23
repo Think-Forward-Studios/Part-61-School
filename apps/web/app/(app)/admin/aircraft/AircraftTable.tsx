@@ -7,7 +7,10 @@ export interface AircraftRow {
   make: string | null;
   model: string | null;
   year: number | null;
-  baseName: string | null;
+  /** Resolved ICAO — aircraft override when set, school fallback otherwise. */
+  homeAirport: string | null;
+  /** True when homeAirport came from the school fallback (no aircraft override). */
+  usingSchoolDefault: boolean;
   grounded: boolean;
   airworthy: boolean;
   currentHobbs: number;
@@ -182,7 +185,7 @@ export function AircraftTable({ rows }: { rows: AircraftRow[] }) {
           <tr style={{ background: '#121826' }}>
             <th style={TH}>Tail #</th>
             <th style={TH}>Aircraft</th>
-            <th style={TH}>Base</th>
+            <th style={TH}>Home airfield</th>
             <th style={TH}>Status</th>
             <th style={{ ...TH, textAlign: 'right' }}>Hobbs</th>
             <th style={{ ...TH, textAlign: 'right' }}>Tach</th>
@@ -216,7 +219,38 @@ export function AircraftTable({ rows }: { rows: AircraftRow[] }) {
                     <div style={{ color: '#7a869a', fontSize: '0.72rem' }}>{r.year}</div>
                   ) : null}
                 </td>
-                <td style={TD}>{r.baseName ?? <span style={{ color: '#5b6784' }}>—</span>}</td>
+                <td style={TD}>
+                  {r.homeAirport ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span
+                        style={{
+                          fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                          color: '#e2e8f0',
+                          fontWeight: 600,
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {r.homeAirport}
+                      </span>
+                      {r.usingSchoolDefault ? (
+                        <span
+                          title="Inherited from school home base. Click the tail to override."
+                          style={{
+                            fontSize: '0.6rem',
+                            color: '#7a869a',
+                            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          · school
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span style={{ color: '#5b6784' }}>—</span>
+                  )}
+                </td>
                 <td style={TD}>
                   <StatusChip airworthy={r.airworthy} grounded={r.grounded} />
                 </td>

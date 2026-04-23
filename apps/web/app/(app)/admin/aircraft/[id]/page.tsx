@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { notFound, redirect } from 'next/navigation';
 import {
   db,
@@ -8,7 +8,7 @@ import {
   aircraftEquipment,
   flightLogEntry,
   aircraftCurrentTotals,
-  bases,
+  schools,
 } from '@part61/db';
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -67,13 +67,19 @@ export default async function AircraftDetailPage({ params }: { params: Params })
     .from(aircraftEquipment)
     .where(eq(aircraftEquipment.aircraftId, id));
 
-  // Load all active bases for this school so the admin can re-assign
-  // the aircraft to another airfield from the edit form.
-  const schoolBases = await db
-    .select({ id: bases.id, name: bases.name })
-    .from(bases)
-    .where(and(eq(bases.schoolId, schoolId), isNull(bases.deletedAt)))
-    .orderBy(asc(bases.name));
+  // School's home airport — surfaced on the edit form as the
+  // fallback that applies when this aircraft's own home_airport
+  // override is blank.
+  const schoolRow = (
+    await db
+      .select({
+        homeBaseAirport: schools.homeBaseAirport,
+        homeBaseAirportName: schools.homeBaseAirportName,
+      })
+      .from(schools)
+      .where(eq(schools.id, schoolId))
+      .limit(1)
+  )[0];
 
   // IA authority check: does this user have any user_roles row with mechanic_authority='ia'?
   const iaRows = (await db.execute(sql`
@@ -202,14 +208,15 @@ export default async function AircraftDetailPage({ params }: { params: Params })
 
       <EditAircraftForm
         aircraftId={id}
-        bases={schoolBases}
+        schoolHomeAirport={schoolRow?.homeBaseAirport?.trim() || null}
+        schoolHomeAirportName={schoolRow?.homeBaseAirportName?.trim() || null}
         initial={{
           tailNumber: row.tailNumber,
           make: row.make ?? '',
           model: row.model ?? '',
           year: row.year ?? null,
           equipmentNotes: row.equipmentNotes ?? '',
-          baseId: row.baseId,
+          homeAirport: row.homeAirport ?? '',
         }}
       />
 
