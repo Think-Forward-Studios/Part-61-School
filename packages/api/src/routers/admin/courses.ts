@@ -9,15 +9,7 @@
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { and, asc, eq, isNull, or, sql } from 'drizzle-orm';
-import {
-  course,
-  courseVersion,
-  stage,
-  coursePhase,
-  unit,
-  lesson,
-  lineItem,
-} from '@part61/db';
+import { course, courseVersion, stage, coursePhase, unit, lesson, lineItem } from '@part61/db';
 import { router } from '../../trpc';
 import { adminOrChiefInstructorProcedure } from '../../procedures';
 
@@ -74,10 +66,7 @@ export const adminCoursesRouter = router({
       .select()
       .from(course)
       .where(
-        and(
-          isNull(course.deletedAt),
-          or(isNull(course.schoolId), eq(course.schoolId, schoolId)),
-        ),
+        and(isNull(course.deletedAt), or(isNull(course.schoolId), eq(course.schoolId, schoolId))),
       )
       .orderBy(asc(course.code));
     return rows;
@@ -87,7 +76,7 @@ export const adminCoursesRouter = router({
   // get — single course + all its versions (own + templates)
   // -------------------------------------------------------------------------
   get: adminOrChiefInstructorProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .query(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       const courseRows = await tx
@@ -109,7 +98,7 @@ export const adminCoursesRouter = router({
   // getVersion — full tree (stages / phases / units / lessons / line items)
   // -------------------------------------------------------------------------
   getVersion: adminOrChiefInstructorProcedure
-    .input(z.object({ versionId: z.string().uuid() }))
+    .input(z.object({ versionId: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .query(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       const vRows = await tx
@@ -130,9 +119,7 @@ export const adminCoursesRouter = router({
         tx
           .select()
           .from(coursePhase)
-          .where(
-            and(eq(coursePhase.courseVersionId, version.id), isNull(coursePhase.deletedAt)),
-          )
+          .where(and(eq(coursePhase.courseVersionId, version.id), isNull(coursePhase.deletedAt)))
           .orderBy(asc(coursePhase.position)),
         tx
           .select()
@@ -204,7 +191,7 @@ export const adminCoursesRouter = router({
   createVersion: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        courseId: z.string().uuid(),
+        courseId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
         versionLabel: z.string().min(1),
         gradingScale: gradingScaleSchema.default('absolute_ipm'),
         minLevels: z.number().int().min(3).max(6).default(3),
@@ -237,7 +224,7 @@ export const adminCoursesRouter = router({
   fork: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        sourceVersionId: z.string().uuid(),
+        sourceVersionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
         newCode: z.string().min(1),
         newTitle: z.string().min(1),
         description: z.string().optional(),
@@ -316,7 +303,7 @@ export const adminCoursesRouter = router({
   // publish — set published_at on a draft (transitive seal activates)
   // -------------------------------------------------------------------------
   publish: adminOrChiefInstructorProcedure
-    .input(z.object({ versionId: z.string().uuid() }))
+    .input(z.object({ versionId: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .mutation(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       await assertDraft(tx, input.versionId);
@@ -338,7 +325,7 @@ export const adminCoursesRouter = router({
   addStage: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        versionId: z.string().uuid(),
+        versionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
         position: z.number().int().min(0),
         code: z.string().min(1),
         title: z.string().min(1),
@@ -369,8 +356,8 @@ export const adminCoursesRouter = router({
   addPhase: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        versionId: z.string().uuid(),
-        stageId: z.string().uuid(),
+        versionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        stageId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
         position: z.number().int().min(0),
         code: z.string().min(1),
         title: z.string().min(1),
@@ -402,9 +389,15 @@ export const adminCoursesRouter = router({
   addUnit: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        versionId: z.string().uuid(),
-        stageId: z.string().uuid().optional(),
-        coursePhaseId: z.string().uuid().optional(),
+        versionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        stageId: z
+          .string()
+          .regex(/^[0-9a-fA-F-]{36}$/)
+          .optional(),
+        coursePhaseId: z
+          .string()
+          .regex(/^[0-9a-fA-F-]{36}$/)
+          .optional(),
         position: z.number().int().min(0),
         code: z.string().min(1),
         title: z.string().min(1),
@@ -443,10 +436,19 @@ export const adminCoursesRouter = router({
   addLesson: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        versionId: z.string().uuid(),
-        stageId: z.string().uuid().optional(),
-        coursePhaseId: z.string().uuid().optional(),
-        unitId: z.string().uuid().optional(),
+        versionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        stageId: z
+          .string()
+          .regex(/^[0-9a-fA-F-]{36}$/)
+          .optional(),
+        coursePhaseId: z
+          .string()
+          .regex(/^[0-9a-fA-F-]{36}$/)
+          .optional(),
+        unitId: z
+          .string()
+          .regex(/^[0-9a-fA-F-]{36}$/)
+          .optional(),
         position: z.number().int().min(0),
         code: z.string().min(1),
         title: z.string().min(1),
@@ -496,8 +498,8 @@ export const adminCoursesRouter = router({
   addLineItem: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        versionId: z.string().uuid(),
-        lessonId: z.string().uuid(),
+        versionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        lessonId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
         position: z.number().int().min(0),
         code: z.string().min(1),
         title: z.string().min(1),
@@ -535,8 +537,8 @@ export const adminCoursesRouter = router({
   updateLineItem: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        versionId: z.string().uuid(),
-        lineItemId: z.string().uuid(),
+        versionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        lineItemId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
         title: z.string().min(1).optional(),
         description: z.string().optional(),
         objectives: z.string().optional(),
@@ -571,7 +573,7 @@ export const adminCoursesRouter = router({
     }),
 
   softDelete: adminOrChiefInstructorProcedure
-    .input(z.object({ courseId: z.string().uuid() }))
+    .input(z.object({ courseId: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .mutation(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       // Refuse if any version is published

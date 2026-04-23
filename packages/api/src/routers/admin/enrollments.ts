@@ -23,7 +23,16 @@ type Tx = {
 
 export const adminEnrollmentsRouter = router({
   list: adminOrChiefInstructorProcedure
-    .input(z.object({ studentUserId: z.string().uuid().optional() }).optional())
+    .input(
+      z
+        .object({
+          studentUserId: z
+            .string()
+            .regex(/^[0-9a-fA-F-]{36}$/)
+            .optional(),
+        })
+        .optional(),
+    )
     .query(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       const schoolId = ctx.session!.schoolId;
@@ -76,7 +85,7 @@ export const adminEnrollmentsRouter = router({
     }),
 
   get: adminOrChiefInstructorProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(z.object({ id: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .query(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       const rows = await tx
@@ -105,9 +114,12 @@ export const adminEnrollmentsRouter = router({
   create: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        studentUserId: z.string().uuid(),
-        courseVersionId: z.string().uuid(),
-        primaryInstructorId: z.string().uuid().optional(),
+        studentUserId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        courseVersionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        primaryInstructorId: z
+          .string()
+          .regex(/^[0-9a-fA-F-]{36}$/)
+          .optional(),
         notes: z.string().optional(),
       }),
     )
@@ -148,8 +160,8 @@ export const adminEnrollmentsRouter = router({
   migrate: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        enrollmentId: z.string().uuid(),
-        newCourseVersionId: z.string().uuid(),
+        enrollmentId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        newCourseVersionId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
         reason: z.string().min(1),
       }),
     )
@@ -189,7 +201,7 @@ export const adminEnrollmentsRouter = router({
     }),
 
   markComplete: adminOrChiefInstructorProcedure
-    .input(z.object({ enrollmentId: z.string().uuid() }))
+    .input(z.object({ enrollmentId: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .mutation(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       const [row] = await tx
@@ -206,7 +218,7 @@ export const adminEnrollmentsRouter = router({
   withdraw: adminOrChiefInstructorProcedure
     .input(
       z.object({
-        enrollmentId: z.string().uuid(),
+        enrollmentId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
         reason: z.string().min(1),
       }),
     )
@@ -229,7 +241,7 @@ export const adminEnrollmentsRouter = router({
    * Returns the cached forecast for an enrollment; refreshes if missing.
    */
   getProgressForecast: adminOrChiefInstructorProcedure
-    .input(z.object({ enrollmentId: z.string().uuid() }))
+    .input(z.object({ enrollmentId: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .query(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
 
@@ -259,7 +271,7 @@ export const adminEnrollmentsRouter = router({
    * Returns the live minimums tracker view row for an enrollment.
    */
   getMinimumsStatus: adminOrChiefInstructorProcedure
-    .input(z.object({ enrollmentId: z.string().uuid() }))
+    .input(z.object({ enrollmentId: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .query(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       const rows = (await tx.execute(sql`
@@ -276,7 +288,7 @@ export const adminEnrollmentsRouter = router({
    * ready for the RolloverQueuePanel UI.
    */
   listRolloverQueue: adminOrChiefInstructorProcedure
-    .input(z.object({ enrollmentId: z.string().uuid() }))
+    .input(z.object({ enrollmentId: z.string().regex(/^[0-9a-fA-F-]{36}$/) }))
     .query(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       const rows = (await tx.execute(sql`

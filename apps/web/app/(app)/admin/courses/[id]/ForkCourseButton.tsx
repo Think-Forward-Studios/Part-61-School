@@ -15,11 +15,7 @@ interface Props {
  * to the new course detail page so the caller can open the draft
  * version tree editor.
  */
-export function ForkCourseButton({
-  sourceVersionId,
-  defaultCode,
-  defaultTitle,
-}: Props) {
+export function ForkCourseButton({ sourceVersionId, defaultCode, defaultTitle }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,19 +42,7 @@ export function ForkCourseButton({
 
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        style={{
-          padding: '0.5rem 1rem',
-          background: '#2563eb',
-          color: 'white',
-          border: 0,
-          borderRadius: 4,
-          cursor: 'pointer',
-          fontWeight: 600,
-        }}
-      >
+      <button type="button" onClick={() => setOpen(true)} style={primaryButton}>
         Fork this template into a school draft
       </button>
     );
@@ -68,64 +52,155 @@ export function ForkCourseButton({
     <form
       onSubmit={onSubmit}
       style={{
-        padding: '1rem',
-        border: '1px solid #2563eb',
-        borderRadius: 6,
-        background: '#eff6ff',
+        padding: '1.1rem 1.25rem',
+        background: 'rgba(18, 24, 38, 0.6)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 12,
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
-        maxWidth: 480,
+        gap: '0.9rem',
+        maxWidth: 560,
       }}
     >
-      <strong>Fork template</strong>
-      <p style={{ fontSize: '0.8rem', color: '#555', margin: 0 }}>
-        Creates an owned school course + a draft version with every stage,
-        unit, lesson, and line item deep-copied. You can then edit and
-        publish it on your own schedule.
-      </p>
-      <label style={{ fontSize: '0.85rem' }}>
-        New course code
-        <input
-          name="code"
-          defaultValue={defaultCode}
-          required
-          style={{ display: 'block', width: '100%' }}
-        />
-      </label>
-      <label style={{ fontSize: '0.85rem' }}>
-        New course title
+      <div>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: '0.72rem',
+            fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#7a869a',
+            fontWeight: 600,
+          }}
+        >
+          Fork template
+        </h3>
+        <p
+          style={{
+            margin: '0.35rem 0 0',
+            fontSize: '0.82rem',
+            color: '#94a3b8',
+            lineHeight: 1.45,
+          }}
+        >
+          Creates an owned school course + a draft version with every stage, unit, lesson, and line
+          item deep-copied. You can then edit and publish it on your own schedule.
+        </p>
+      </div>
+
+      <Field label="New course code">
+        <input name="code" defaultValue={defaultCode} required style={inputStyle} maxLength={40} />
+      </Field>
+
+      <Field label="New course title">
         <input
           name="title"
           defaultValue={defaultTitle}
           required
-          style={{ display: 'block', width: '100%' }}
+          style={inputStyle}
+          maxLength={200}
         />
-      </label>
-      <label style={{ fontSize: '0.85rem' }}>
-        Description (optional)
-        <textarea name="description" rows={2} style={{ display: 'block', width: '100%' }} />
-      </label>
-      {error ? <p style={{ color: 'crimson', fontSize: '0.85rem' }}>{error}</p> : null}
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button type="button" onClick={() => setOpen(false)}>
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={fork.isPending}
+      </Field>
+
+      <Field label="Description (optional)">
+        <textarea
+          name="description"
+          rows={3}
           style={{
-            padding: '0.5rem 1rem',
-            background: '#2563eb',
-            color: 'white',
-            border: 0,
-            borderRadius: 4,
-            fontWeight: 600,
+            ...inputStyle,
+            height: 'auto',
+            padding: '0.55rem 0.75rem',
+            minHeight: '4rem',
+            resize: 'vertical',
+            fontFamily: 'inherit',
+          }}
+        />
+      </Field>
+
+      {error ? (
+        <p
+          style={{
+            color: '#f87171',
+            fontSize: '0.82rem',
+            margin: 0,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
           }}
         >
+          {error}
+        </p>
+      ) : null}
+
+      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+        <button type="button" onClick={() => setOpen(false)} style={ghostButton}>
+          Cancel
+        </button>
+        <button type="submit" disabled={fork.isPending} style={primaryButton}>
           {fork.isPending ? 'Forking…' : 'Fork'}
         </button>
       </div>
     </form>
   );
 }
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+      <span style={labelStyle}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+// --- styles --------------------------------------------------------------
+
+const labelStyle: React.CSSProperties = {
+  fontSize: '0.68rem',
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: '#7a869a',
+  fontWeight: 600,
+};
+
+const inputStyle: React.CSSProperties = {
+  height: '2.3rem',
+  background: 'rgba(9, 13, 24, 0.85)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  borderRadius: 8,
+  color: '#e2e8f0',
+  padding: '0 0.75rem',
+  fontSize: '0.88rem',
+  outline: 'none',
+  width: '100%',
+};
+
+const primaryButton: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  height: '2.3rem',
+  padding: '0 1rem',
+  background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+  color: '#0a0e1a',
+  border: 'none',
+  borderRadius: 8,
+  fontSize: '0.88rem',
+  fontWeight: 700,
+  cursor: 'pointer',
+  letterSpacing: '0.01em',
+};
+
+const ghostButton: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  height: '2.3rem',
+  padding: '0 1rem',
+  background: 'transparent',
+  border: '1px solid rgba(255,255,255,0.14)',
+  borderRadius: 8,
+  color: '#cbd5e1',
+  fontSize: '0.82rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+};
