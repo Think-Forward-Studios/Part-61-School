@@ -26,6 +26,10 @@ interface LayerConfig {
   minZoom?: number;
 }
 
+// Waypoints + tracks are intentionally omitted from the legend — tracks stay
+// on by default (drawn behind each aircraft) and waypoints stay off by default
+// since OurAirports doesn't carry them. Reintroduce here if we ever wire FAA
+// NASR fix data in.
 const LAYER_CONFIG: LayerConfig[] = [
   {
     key: 'aircraft',
@@ -45,19 +49,6 @@ const LAYER_CONFIG: LayerConfig[] = [
     color: '#ff9100',
     glowColor: 'rgba(255, 145, 0, 0.3)',
     minZoom: 6,
-  },
-  {
-    key: 'tracks',
-    label: 'TRACKS',
-    color: '#c864ff',
-    glowColor: 'rgba(200, 100, 255, 0.3)',
-  },
-  {
-    key: 'waypoints',
-    label: 'WAYPOINTS',
-    color: '#00e5ff',
-    glowColor: 'rgba(0, 229, 255, 0.3)',
-    minZoom: 7,
   },
   {
     key: 'weather',
@@ -159,27 +150,6 @@ function ControlPanel({ layers, counts, onToggle, zoom }: ControlPanelProps) {
             );
           })}
         </div>
-
-        {/* Track altitude legend */}
-        {layers.tracks && (
-          <div className="space-y-1 px-3 py-2" style={{ borderTop: '1px solid #1e1e1e' }}>
-            <span className="font-mono text-[8px] tracking-wider text-[#ccc]">TRACK ALTITUDE</span>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <div className="h-[2px] w-4 rounded" style={{ background: '#00ff64' }} />
-                <span className="font-mono text-[8px] text-[#ccc]">&lt;10K</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="h-[2px] w-4 rounded" style={{ background: '#00c8ff' }} />
-                <span className="font-mono text-[8px] text-[#ccc]">10-33K</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="h-[2px] w-4 rounded" style={{ background: '#c864ff' }} />
-                <span className="font-mono text-[8px] text-[#ccc]">&gt;33K</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Footer stats */}
         <div

@@ -432,20 +432,45 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
     refetchInterval: 30_000,
   });
 
-  // OpenWeatherMap radar — 1-hour loop using 10-min intervals (OWM is not weather.gov)
-  const OWM_KEY = process.env.NEXT_PUBLIC_OWM_KEY;
-
-  // Build 7 frames covering the past ~60 minutes at 10-min steps
-  const radarFrames = useMemo(() => {
-    if (!OWM_KEY) return [];
-    const now = Math.floor(Date.now() / 1000);
-    return Array.from({ length: 7 }, (_, i) => ({
-      time: now - (6 - i) * 600, // -60min → now
-    }));
-  }, [OWM_KEY]);
-
+  // Weather radar via RainViewer — free, no API key required. Returns a
+  // JSON index of recent radar snapshots (past ~2h at 10-min resolution +
+  // a near-term nowcast). We refetch every 5 min so new frames roll in.
+  // Docs: https://www.rainviewer.com/api.html
+  interface RadarFrame {
+    time: number;
+    path: string;
+  }
+  const [radarHost, setRadarHost] = useState<string>('https://tilecache.rainviewer.com');
+  const [radarFrames, setRadarFrames] = useState<RadarFrame[]>([]);
   const [radarFrame, setRadarFrame] = useState(0);
   const [radarPlaying, setRadarPlaying] = useState(true);
+
+  useEffect(() => {
+    if (!layers.weather) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+        if (!res.ok) return;
+        const json = (await res.json()) as {
+          host: string;
+          radar: { past: RadarFrame[]; nowcast: RadarFrame[] };
+        };
+        if (cancelled) return;
+        setRadarHost(json.host);
+        // Past frames + nowcast so the animation previews the next ~30 min
+        setRadarFrames([...(json.radar.past ?? []), ...(json.radar.nowcast ?? [])]);
+      } catch {
+        // Silent — weather is a nice-to-have overlay
+      }
+    };
+    void load();
+    const id = setInterval(() => void load(), 5 * 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [layers.weather]);
 
   // Clamp frame when frames change
   useEffect(() => {
@@ -1181,12 +1206,14 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
         attributionControl={false}
       >
         {layers.weather &&
-          OWM_KEY &&
           radarFrames.length > 0 &&
           (() => {
             const frame = radarFrames[radarFrame] ?? radarFrames[radarFrames.length - 1];
             if (!frame) return null;
-            const tileUrl = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OWM_KEY}&date=${frame.time}`;
+            // RainViewer tile template:
+            //   {host}{path}/{size}/{z}/{x}/{y}/{color}/{options}.png
+            // color=2 → Universal Blue, options=1_1 → smooth + snow overlay
+            const tileUrl = `${radarHost}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
             return (
               <Source
                 key={frame.time}
@@ -1195,9 +1222,9 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
                 tiles={[tileUrl]}
                 tileSize={256}
                 minzoom={0}
-                maxzoom={18}
+                maxzoom={12}
               >
-                <Layer id="radar-layer" type="raster" paint={{ 'raster-opacity': 0.7 }} />
+                <Layer id="radar-layer" type="raster" paint={{ 'raster-opacity': 0.6 }} />
               </Source>
             );
           })()}
@@ -1292,20 +1319,6 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
         onAirportChange={setHomeAirport}
         onRadiusChange={setHomeRadiusNm}
       />
-
-      {/* Radar — no key notice */}
-      {layers.weather && !OWM_KEY && (
-        <div
-          className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-lg px-4 py-2 font-mono text-[11px]"
-          style={{
-            background: 'rgba(17,17,17,0.92)',
-            border: '1px solid rgba(255,100,0,0.4)',
-            color: '#ff6400',
-          }}
-        >
-          Add NEXT_PUBLIC_OWM_KEY to .env (free at openweathermap.org)
-        </div>
-      )}
 
       {/* Radar playback controls */}
       {layers.weather && radarFrames.length > 0 && (
