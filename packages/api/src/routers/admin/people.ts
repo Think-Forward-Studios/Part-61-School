@@ -314,14 +314,22 @@ export const adminPeopleRouter = router({
     }
 
     try {
-      // Delete the safe, user-scoped satellite rows first. These tables
-      // are "owned" by the user and don't participate in audit history
-      // (user_roles, user_base, person_profile). If the user has
-      // anything further — flight logs, enrollments, holds, audit
-      // trail — the final DELETE on public.users will throw an FK
-      // violation and the whole transaction rolls back.
-      await tx.execute(sql`delete from public.user_roles where user_id = ${input.userId}`);
-      await tx.execute(sql`delete from public.user_base  where user_id = ${input.userId}`);
+      // Authorize THIS transaction to bypass the BEFORE DELETE trigger
+      // on audit-protected tables (users, user_roles, user_base,
+      // person_profile — all wired by audit.attach). Migration 0043
+      // taught fn_block_hard_delete to honor this GUC. SET LOCAL
+      // keeps it scoped to the transaction so the next request starts
+      // with the guard armed again.
+      //
+      // FK constraints are unaffected. If the user has any history in
+      // flight logs / training events / holds / audit trail, those
+      // DELETEs still throw 23503 and the whole thing rolls back —
+      // which is exactly the safety behaviour we want.
+      await tx.execute(sql`set local app.allow_hard_delete = 'on'`);
+
+      // Delete the satellite rows first, then the user row.
+      await tx.execute(sql`delete from public.user_roles     where user_id = ${input.userId}`);
+      await tx.execute(sql`delete from public.user_base      where user_id = ${input.userId}`);
       await tx.execute(sql`delete from public.person_profile where user_id = ${input.userId}`);
       await tx.execute(sql`
         delete from public.users
