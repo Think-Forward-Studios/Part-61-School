@@ -1212,17 +1212,26 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
             if (!frame) return null;
             // RainViewer tile template:
             //   {host}{path}/{size}/{z}/{x}/{y}/{color}/{options}.png
-            // color=2 → Universal Blue, options=1_1 → smooth + snow overlay
-            const tileUrl = `${radarHost}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
+            // color=2 → Universal Blue, options=1_1 → smooth + snow overlay.
+            //
+            // Use 512px tiles so MapLibre doesn't request one zoom level
+            // higher than the display zoom (that quirk comes from its
+            // tileSize=256 + Retina prefetch behavior).
+            //
+            // maxzoom=7 matches what RainViewer's free public tier
+            // actually serves; beyond that the endpoint returns a
+            // literal "Zoom Level Not Supported" PNG. MapLibre upsamples
+            // z=7 tiles for anything zoomed further in.
+            const tileUrl = `${radarHost}${frame.path}/512/{z}/{x}/{y}/2/1_1.png`;
             return (
               <Source
                 key={frame.time}
                 id="radar"
                 type="raster"
                 tiles={[tileUrl]}
-                tileSize={256}
+                tileSize={512}
                 minzoom={0}
-                maxzoom={12}
+                maxzoom={7}
               >
                 <Layer id="radar-layer" type="raster" paint={{ 'raster-opacity': 0.6 }} />
               </Source>
