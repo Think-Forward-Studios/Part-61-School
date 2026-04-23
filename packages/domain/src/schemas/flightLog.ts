@@ -6,11 +6,7 @@
  */
 import { z } from 'zod';
 
-export const flightLogEntryKindSchema = z.enum([
-  'flight',
-  'baseline',
-  'correction',
-]);
+export const flightLogEntryKindSchema = z.enum(['flight', 'baseline', 'correction']);
 
 export const engineDeltaSchema = z.object({
   engineId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
@@ -20,6 +16,12 @@ export const engineDeltaSchema = z.object({
 export const flightLogEntryCreateInput = z.object({
   aircraftId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
   flownAt: z.coerce.date(),
+  // Optional kind. 'flight' (default) logs a normal flight. 'baseline'
+  // lets an admin set the current Hobbs/Tach/Airframe floor (used on
+  // the first entry of a new aircraft, or when reconciling against a
+  // paper log). 'correction' is reserved for fixing an earlier entry
+  // and goes through flightLog.correct, not this mutation.
+  kind: z.enum(['flight', 'baseline']).optional().default('flight'),
   hobbsOut: z.number().nonnegative().optional().nullable(),
   hobbsIn: z.number().nonnegative().optional().nullable(),
   tachOut: z.number().nonnegative().optional().nullable(),
@@ -28,9 +30,7 @@ export const flightLogEntryCreateInput = z.object({
   notes: z.string().max(5000).optional().nullable(),
   engineDeltas: z.array(engineDeltaSchema).default([]),
 });
-export type FlightLogEntryCreateInput = z.infer<
-  typeof flightLogEntryCreateInput
->;
+export type FlightLogEntryCreateInput = z.infer<typeof flightLogEntryCreateInput>;
 
 export const flightLogCorrectionCreateInput = z.object({
   correctsId: z.string().regex(/^[0-9a-fA-F-]{36}$/),

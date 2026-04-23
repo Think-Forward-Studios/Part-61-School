@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { ALLOWED_MIME_TYPES, MAX_BYTE_SIZE } from '@part61/domain';
 import { trpc } from '@/lib/trpc/client';
+import * as s from './_panelStyles';
 
 /**
  * PhotoPanel (FLT-06).
@@ -60,6 +61,7 @@ export function PhotoPanel({ aircraftId }: { aircraftId: string }) {
       form.reset();
       setOk(true);
       router.refresh();
+      setTimeout(() => setOk(false), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
@@ -68,16 +70,39 @@ export function PhotoPanel({ aircraftId }: { aircraftId: string }) {
   }
 
   return (
-    <section style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: 6 }}>
-      <h2>Photo</h2>
-      <form onSubmit={onSubmit} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-        <input type="file" name="file" accept="image/jpeg,image/png,application/pdf" disabled={busy} required />
-        <button type="submit" disabled={busy}>
+    <section style={s.section}>
+      <h2 style={s.heading}>Photo</h2>
+
+      <form
+        onSubmit={onSubmit}
+        style={{
+          display: 'flex',
+          gap: '0.6rem',
+          alignItems: 'center',
+          marginTop: '0.85rem',
+          flexWrap: 'wrap',
+        }}
+      >
+        <input
+          type="file"
+          name="file"
+          accept="image/jpeg,image/png,application/pdf"
+          disabled={busy}
+          required
+          style={{
+            ...s.input,
+            padding: '0.35rem 0.5rem',
+            height: 'auto',
+            cursor: 'pointer',
+            flex: '1 1 260px',
+          }}
+        />
+        <button type="submit" style={s.primaryButton} disabled={busy}>
           {busy ? 'Uploading…' : 'Upload photo'}
         </button>
+        {error ? <span style={{ color: '#f87171', fontSize: '0.82rem' }}>{error}</span> : null}
+        {ok ? <span style={{ color: '#4ade80', fontSize: '0.82rem' }}>Uploaded.</span> : null}
       </form>
-      {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
-      {ok ? <p style={{ color: 'green' }}>Uploaded.</p> : null}
     </section>
   );
 }

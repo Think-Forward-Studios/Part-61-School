@@ -20,12 +20,7 @@
 import { TRPCError } from '@trpc/server';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import {
-  aircraft,
-  flightLogEntry,
-  flightLogEntryEngine,
-  flightLogTime,
-} from '@part61/db';
+import { aircraft, flightLogEntry, flightLogEntryEngine, flightLogTime } from '@part61/db';
 import {
   flightLogEntryCreateInput,
   flightLogCorrectionCreateInput,
@@ -58,58 +53,53 @@ async function loadAircraftOrThrow(tx: Tx, aircraftId: string, schoolId: string)
 }
 
 export const flightLogRouter = router({
-  list: protectedProcedure
-    .input(flightLogListInput)
-    .query(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      await loadAircraftOrThrow(tx, input.aircraftId, ctx.session!.schoolId);
-      const rows = await tx
-        .select()
-        .from(flightLogEntry)
-        .where(eq(flightLogEntry.aircraftId, input.aircraftId))
-        .orderBy(desc(flightLogEntry.flownAt))
-        .limit(input.limit);
-      return rows;
-    }),
+  list: protectedProcedure.input(flightLogListInput).query(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    await loadAircraftOrThrow(tx, input.aircraftId, ctx.session!.schoolId);
+    const rows = await tx
+      .select()
+      .from(flightLogEntry)
+      .where(eq(flightLogEntry.aircraftId, input.aircraftId))
+      .orderBy(desc(flightLogEntry.flownAt))
+      .limit(input.limit);
+    return rows;
+  }),
 
-  create: protectedProcedure
-    .input(flightLogEntryCreateInput)
-    .mutation(async ({ ctx, input }) => {
-      const tx = ctx.tx as Tx;
-      const ac = await loadAircraftOrThrow(
-        tx,
-        input.aircraftId,
-        ctx.session!.schoolId,
+  create: protectedProcedure.input(flightLogEntryCreateInput).mutation(async ({ ctx, input }) => {
+    const tx = ctx.tx as Tx;
+    const ac = await loadAircraftOrThrow(tx, input.aircraftId, ctx.session!.schoolId);
+    const rows = await tx
+      .insert(flightLogEntry)
+      .values({
+        schoolId: ctx.session!.schoolId,
+        baseId: ac.baseId,
+        aircraftId: input.aircraftId,
+        // input.kind is 'flight' | 'baseline' per the zod schema. The
+        // 'correction' kind has its own dedicated mutation (below)
+        // so the correctsId back-pointer can be enforced.
+        kind: input.kind ?? 'flight',
+        flownAt: input.flownAt,
+        hobbsOut: numStr(input.hobbsOut),
+        hobbsIn: numStr(input.hobbsIn),
+        tachOut: numStr(input.tachOut),
+        tachIn: numStr(input.tachIn),
+        airframeDelta: input.airframeDelta.toFixed(1),
+        notes: input.notes ?? null,
+        recordedBy: ctx.session!.userId,
+      })
+      .returning();
+    const entry = rows[0]!;
+    if (input.engineDeltas.length > 0) {
+      await tx.insert(flightLogEntryEngine).values(
+        input.engineDeltas.map((d) => ({
+          flightLogEntryId: entry.id,
+          engineId: d.engineId,
+          deltaHours: d.deltaHours.toFixed(1),
+        })),
       );
-      const rows = await tx
-        .insert(flightLogEntry)
-        .values({
-          schoolId: ctx.session!.schoolId,
-          baseId: ac.baseId,
-          aircraftId: input.aircraftId,
-          kind: 'flight',
-          flownAt: input.flownAt,
-          hobbsOut: numStr(input.hobbsOut),
-          hobbsIn: numStr(input.hobbsIn),
-          tachOut: numStr(input.tachOut),
-          tachIn: numStr(input.tachIn),
-          airframeDelta: input.airframeDelta.toFixed(1),
-          notes: input.notes ?? null,
-          recordedBy: ctx.session!.userId,
-        })
-        .returning();
-      const entry = rows[0]!;
-      if (input.engineDeltas.length > 0) {
-        await tx.insert(flightLogEntryEngine).values(
-          input.engineDeltas.map((d) => ({
-            flightLogEntryId: entry.id,
-            engineId: d.engineId,
-            deltaHours: d.deltaHours.toFixed(1),
-          })),
-        );
-      }
-      return entry;
-    }),
+    }
+    return entry;
+  }),
 
   /**
    * categorize — Phase 5 SYL-12/14.
