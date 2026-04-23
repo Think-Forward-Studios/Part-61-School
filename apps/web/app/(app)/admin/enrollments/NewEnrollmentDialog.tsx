@@ -65,6 +65,7 @@ export function NewEnrollmentDialog({
   );
 
   const create = trpc.admin.enrollments.create.useMutation();
+  const publish = trpc.admin.courses.publish.useMutation();
 
   // When the caller preselects a student, keep selectedStudentId in sync
   // if the prop ever changes.
@@ -91,11 +92,19 @@ export function NewEnrollmentDialog({
     if (!preselectedStudentId) setSelectedStudentId('');
   }
 
-  /** Published versions of the selected course, newest first. */
-  const availableVersions = useMemo(() => {
-    const versions = courseDetail.data?.versions ?? [];
-    return versions.filter((v) => v.publishedAt != null);
-  }, [courseDetail.data]);
+  /** All versions of the selected course. */
+  const allVersions = useMemo(() => courseDetail.data?.versions ?? [], [courseDetail.data]);
+  /** Only the published ones — the enrollment mutation refuses drafts. */
+  const availableVersions = useMemo(
+    () => allVersions.filter((v) => v.publishedAt != null),
+    [allVersions],
+  );
+  /** Drafts surface an inline "Publish now" fix-it when there are no published versions. */
+  const draftVersions = useMemo(
+    () => allVersions.filter((v) => v.publishedAt == null && v.deletedAt == null),
+    [allVersions],
+  );
+  const trpcUtils = trpc.useUtils();
 
   // Auto-select the newest published version when course changes.
   useEffect(() => {
@@ -239,14 +248,7 @@ export function NewEnrollmentDialog({
 
             {/* Version — only after course is chosen */}
             {selectedCourseId ? (
-              <Field
-                label="Version"
-                hint={
-                  availableVersions.length === 0 && !courseDetail.isLoading
-                    ? 'This course has no published version yet.'
-                    : undefined
-                }
-              >
+              <Field label="Version">
                 <select
                   value={selectedVersionId}
                   onChange={(e) => setSelectedVersionId(e.target.value)}
@@ -268,6 +270,88 @@ export function NewEnrollmentDialog({
                     </option>
                   ))}
                 </select>
+
+                {/* Fix-it: this course has draft versions but none published.
+                    Offer a one-click publish for each draft so the admin
+                    doesn't have to bounce to /admin/courses mid-flow. */}
+                {availableVersions.length === 0 &&
+                draftVersions.length > 0 &&
+                !courseDetail.isLoading ? (
+                  <div
+                    style={{
+                      marginTop: '0.5rem',
+                      padding: '0.65rem 0.75rem',
+                      background: 'rgba(251, 191, 36, 0.08)',
+                      border: '1px solid rgba(251, 191, 36, 0.3)',
+                      borderRadius: 8,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.78rem', color: '#fbbf24' }}>
+                      This course has {draftVersions.length}{' '}
+                      {draftVersions.length === 1 ? 'draft version' : 'draft versions'} but nothing
+                      is published yet. Enrollment requires a published version.
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      {draftVersions.map((v) => (
+                        <div
+                          key={v.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '0.5rem',
+                          }}
+                        >
+                          <span style={{ color: '#e2e8f0', fontSize: '0.82rem' }}>
+                            {v.versionLabel ?? v.id.slice(0, 8)}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={publish.isPending}
+                            onClick={async () => {
+                              try {
+                                await publish.mutateAsync({ versionId: v.id });
+                                // Refetch so the now-published version
+                                // moves into availableVersions and the
+                                // main dropdown picks it up.
+                                await trpcUtils.admin.courses.get.invalidate({
+                                  id: selectedCourseId,
+                                });
+                                setSelectedVersionId(v.id);
+                              } catch (err) {
+                                setError(
+                                  err instanceof Error ? err.message : 'Failed to publish version.',
+                                );
+                              }
+                            }}
+                            style={{
+                              ...ghostButton,
+                              height: '1.9rem',
+                              padding: '0 0.7rem',
+                              border: '1px solid rgba(251, 191, 36, 0.5)',
+                              color: '#fbbf24',
+                              fontSize: '0.75rem',
+                            }}
+                          >
+                            {publish.isPending ? 'Publishing…' : 'Publish now'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {availableVersions.length === 0 &&
+                draftVersions.length === 0 &&
+                !courseDetail.isLoading ? (
+                  <span style={{ fontSize: '0.72rem', color: '#7a869a' }}>
+                    This course has no versions yet. Create one at{' '}
+                    <code style={inlineCode}>/admin/courses/{selectedCourseId.slice(0, 8)}</code>.
+                  </span>
+                ) : null}
               </Field>
             ) : null}
 
