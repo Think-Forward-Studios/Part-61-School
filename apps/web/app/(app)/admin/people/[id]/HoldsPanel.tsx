@@ -58,8 +58,22 @@ export function HoldsPanel({ userId, holds }: { userId: string; holds: HoldRow[]
         borderRadius: 12,
       }}
     >
-      <h2>Holds &amp; Groundings</h2>
-      {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
+      <h2
+        style={{
+          margin: 0,
+          fontSize: '0.72rem',
+          fontFamily: String.raw`"JetBrains Mono", ui-monospace, monospace`,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#7a869a',
+          fontWeight: 600,
+        }}
+      >
+        Holds <h2>Holds &amp; Groundings</h2>amp; Groundings
+      </h2>
+      {error ? (
+        <p style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.5rem' }}>{error}</p>
+      ) : null}
       <form onSubmit={onCreate} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <select name="kind" defaultValue="hold">
           <option value="hold">Hold</option>

@@ -50,8 +50,22 @@ export function InfoReleasePanel({ userId, releases }: { userId: string; release
         borderRadius: 12,
       }}
     >
-      <h2>Information Release Authorizations</h2>
-      {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
+      <h2
+        style={{
+          margin: 0,
+          fontSize: '0.72rem',
+          fontFamily: String.raw`"JetBrains Mono", ui-monospace, monospace`,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#7a869a',
+          fontWeight: 600,
+        }}
+      >
+        Information Release Authorizations
+      </h2>
+      {error ? (
+        <p style={{ color: '#f87171', fontSize: '0.82rem', marginTop: '0.5rem' }}>{error}</p>
+      ) : null}
       <form
         onSubmit={onCreate}
         style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}
