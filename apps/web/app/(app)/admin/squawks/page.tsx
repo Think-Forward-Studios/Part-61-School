@@ -7,6 +7,7 @@ import { sql, eq } from 'drizzle-orm';
 import { db, users } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui';
+import { NewSquawkDialog } from './NewSquawkDialog';
 
 export const dynamic = 'force-dynamic';
 
@@ -133,6 +134,7 @@ export default async function AdminSquawksPage({
         eyebrow="Maintenance"
         title="Squawks"
         subtitle={`${rows.length} ${rows.length === 1 ? 'squawk' : 'squawks'} matching filter.`}
+        actions={<NewSquawkDialog />}
       />
       <div style={{ display: 'flex', gap: '0.4rem', margin: '0 0 1.25rem', flexWrap: 'wrap' }}>
         {chips.map(([v, label]) => {
