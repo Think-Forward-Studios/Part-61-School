@@ -47,7 +47,6 @@ export default async function AdminAircraftPage() {
           from public.maintenance_item mi
          where mi.aircraft_id = a.id
            and mi.deleted_at is null
-           and mi.status <> 'deferred'
            and mi.next_due_at is not null
       ) as next_due_at,
       (
@@ -55,7 +54,6 @@ export default async function AdminAircraftPage() {
           from public.maintenance_item mi
          where mi.aircraft_id = a.id
            and mi.deleted_at is null
-           and mi.status <> 'deferred'
            and mi.next_due_at is not null
          order by mi.next_due_at asc
          limit 1
