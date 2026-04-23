@@ -9,7 +9,7 @@
  */
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { studentCourseEnrollment, courseVersion } from '@part61/db';
 import { router } from '../../trpc';
 import { adminOrChiefInstructorProcedure } from '../../procedures';
@@ -27,21 +27,51 @@ export const adminEnrollmentsRouter = router({
     .query(async ({ ctx, input }) => {
       const tx = ctx.tx as Tx;
       const schoolId = ctx.session!.schoolId;
-      const where = input?.studentUserId
-        ? and(
-            eq(studentCourseEnrollment.schoolId, schoolId),
-            eq(studentCourseEnrollment.userId, input.studentUserId),
-            isNull(studentCourseEnrollment.deletedAt),
-          )
-        : and(
-            eq(studentCourseEnrollment.schoolId, schoolId),
-            isNull(studentCourseEnrollment.deletedAt),
-          );
-      const rows = await tx
-        .select()
-        .from(studentCourseEnrollment)
-        .where(where)
-        .orderBy(desc(studentCourseEnrollment.enrolledAt));
+      // Raw SQL so the caller gets enrollment rows pre-joined with the
+      // course code + title + version label. Drizzle's query builder
+      // gets ugly with three joins and a soft-delete filter on the
+      // chain; raw SQL keeps this readable and matches the shape
+      // /admin/enrollments has already been using.
+      const filter = input?.studentUserId
+        ? sql`and sce.user_id = ${input.studentUserId}::uuid`
+        : sql``;
+      const rows = (await tx.execute(sql`
+        select
+          sce.id,
+          sce.user_id                 as "userId",
+          sce.course_version_id       as "courseVersionId",
+          sce.primary_instructor_id   as "primaryInstructorId",
+          sce.enrolled_at             as "enrolledAt",
+          sce.completed_at            as "completedAt",
+          sce.withdrawn_at            as "withdrawnAt",
+          sce.notes                   as notes,
+          c.id                        as "courseId",
+          c.code                      as "courseCode",
+          c.title                     as "courseTitle",
+          cv.version_label            as "versionLabel",
+          cv.published_at             as "versionPublishedAt"
+        from public.student_course_enrollment sce
+        left join public.course_version cv on cv.id = sce.course_version_id
+        left join public.course c on c.id = cv.course_id
+        where sce.school_id = ${schoolId}::uuid
+          and sce.deleted_at is null
+          ${filter}
+        order by sce.enrolled_at desc
+      `)) as unknown as Array<{
+        id: string;
+        userId: string;
+        courseVersionId: string | null;
+        primaryInstructorId: string | null;
+        enrolledAt: string;
+        completedAt: string | null;
+        withdrawnAt: string | null;
+        notes: string | null;
+        courseId: string | null;
+        courseCode: string | null;
+        courseTitle: string | null;
+        versionLabel: string | null;
+        versionPublishedAt: string | null;
+      }>;
       return rows;
     }),
 
@@ -53,10 +83,7 @@ export const adminEnrollmentsRouter = router({
         .select()
         .from(studentCourseEnrollment)
         .where(
-          and(
-            eq(studentCourseEnrollment.id, input.id),
-            isNull(studentCourseEnrollment.deletedAt),
-          ),
+          and(eq(studentCourseEnrollment.id, input.id), isNull(studentCourseEnrollment.deletedAt)),
         )
         .limit(1);
       const enrollment = rows[0];

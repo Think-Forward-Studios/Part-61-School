@@ -7,13 +7,13 @@ import { NewEnrollmentDialog } from '../../enrollments/NewEnrollmentDialog';
 
 interface EnrollmentRow {
   id: string;
-  course_version_id: string | null;
-  course_code: string | null;
-  course_title: string | null;
-  version_label: string | null;
-  enrolled_at: string;
-  completed_at: string | null;
-  withdrawn_at: string | null;
+  courseVersionId: string | null;
+  courseCode: string | null;
+  courseTitle: string | null;
+  versionLabel: string | null;
+  enrolledAt: string;
+  completedAt: string | null;
+  withdrawnAt: string | null;
 }
 
 /**
@@ -29,54 +29,42 @@ export function StudentEnrollmentsPanel({
   userId: string;
   userDisplayName: string;
 }) {
-  // admin.enrollments.list accepts a studentUserId filter and returns
-  // the raw enrollment rows. We tack on a server-joined variant below
-  // via the training-record tRPC helper that already surfaces course
-  // code / title / version label. If that isn't available, we fall
-  // back to the plain list.
+  // admin.enrollments.list returns rows pre-joined with course.code,
+  // course.title, and course_version.version_label, so we can render
+  // 'PPL-ASEL — Private Pilot · v2.0' directly instead of a UUID.
   const listQuery = trpc.admin.enrollments.list.useQuery({ studentUserId: userId });
-
-  // Lazy lookup for version labels. Instead of N round-trips, we
-  // reuse the record router's listMine-style shape? That's user-scoped.
-  // Safer: iterate the enrollments and look each course version up.
-  // In practice schools run a handful of enrollments per student so
-  // this stays cheap; if it ever gets hot, promote to a server join.
-  // We display the raw courseVersionId until a future enhancement
-  // joins in the label. Caller passes down a pre-joined list when
-  // available.
 
   const rows = (listQuery.data ?? []) as Array<{
     id: string;
     courseVersionId: string | null;
-    enrolledAt: Date | string | null;
-    completedAt: Date | string | null;
-    withdrawnAt: Date | string | null;
-    notes?: string | null;
+    courseCode: string | null;
+    courseTitle: string | null;
+    versionLabel: string | null;
+    enrolledAt: string | Date | null;
+    completedAt: string | Date | null;
+    withdrawnAt: string | Date | null;
   }>;
+
+  const toIso = (v: string | Date | null | undefined): string | null => {
+    if (v == null) return null;
+    if (v instanceof Date) return v.toISOString();
+    return v;
+  };
 
   const mapped: EnrollmentRow[] = rows.map((r) => ({
     id: r.id,
-    course_version_id: r.courseVersionId,
-    course_code: null,
-    course_title: null,
-    version_label: null,
-    enrolled_at:
-      r.enrolledAt instanceof Date
-        ? r.enrolledAt.toISOString()
-        : ((r.enrolledAt as string | null) ?? new Date(0).toISOString()),
-    completed_at:
-      r.completedAt instanceof Date
-        ? r.completedAt.toISOString()
-        : (r.completedAt as string | null),
-    withdrawn_at:
-      r.withdrawnAt instanceof Date
-        ? r.withdrawnAt.toISOString()
-        : (r.withdrawnAt as string | null),
+    courseVersionId: r.courseVersionId,
+    courseCode: r.courseCode,
+    courseTitle: r.courseTitle,
+    versionLabel: r.versionLabel,
+    enrolledAt: toIso(r.enrolledAt) ?? new Date(0).toISOString(),
+    completedAt: toIso(r.completedAt),
+    withdrawnAt: toIso(r.withdrawnAt),
   }));
 
-  const active = mapped.filter((e) => !e.completed_at && !e.withdrawn_at);
-  const completed = mapped.filter((e) => e.completed_at);
-  const withdrawn = mapped.filter((e) => e.withdrawn_at);
+  const active = mapped.filter((e) => !e.completedAt && !e.withdrawnAt);
+  const completed = mapped.filter((e) => e.completedAt);
+  const withdrawn = mapped.filter((e) => e.withdrawnAt);
 
   return (
     <section style={s.section}>
@@ -167,7 +155,22 @@ function Group({
           <li key={r.id} style={s.listRow}>
             <div style={{ minWidth: 0 }}>
               <div style={{ color: '#f7f9fc', fontWeight: 500 }}>
-                {r.course_code ?? (
+                {r.courseCode ? (
+                  <>
+                    <span
+                      style={{
+                        fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+                        color: '#fbbf24',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      {r.courseCode}
+                    </span>
+                    {r.courseTitle ? (
+                      <span style={{ color: '#cbd5e1' }}> — {r.courseTitle}</span>
+                    ) : null}
+                  </>
+                ) : (
                   <span style={{ color: '#94a3b8' }}>
                     Course version{' '}
                     <code
@@ -176,25 +179,22 @@ function Group({
                         color: '#cbd5e1',
                       }}
                     >
-                      {r.course_version_id ? r.course_version_id.slice(0, 8) : '—'}
+                      {r.courseVersionId ? r.courseVersionId.slice(0, 8) : '—'}
                     </code>
                   </span>
                 )}
-                {r.course_title ? (
-                  <span style={{ color: '#cbd5e1' }}> — {r.course_title}</span>
-                ) : null}
-                {r.version_label ? (
+                {r.versionLabel ? (
                   <span style={{ color: '#7a869a', marginLeft: '0.4rem', fontSize: '0.8rem' }}>
-                    ({r.version_label})
+                    · {r.versionLabel}
                   </span>
                 ) : null}
               </div>
               <div style={s.listRowMeta}>
-                Enrolled {new Date(r.enrolled_at).toLocaleDateString()}
-                {r.completed_at
-                  ? ` · Completed ${new Date(r.completed_at).toLocaleDateString()}`
-                  : r.withdrawn_at
-                    ? ` · Withdrawn ${new Date(r.withdrawn_at).toLocaleDateString()}`
+                Enrolled {new Date(r.enrolledAt).toLocaleDateString()}
+                {r.completedAt
+                  ? ` · Completed ${new Date(r.completedAt).toLocaleDateString()}`
+                  : r.withdrawnAt
+                    ? ` · Withdrawn ${new Date(r.withdrawnAt).toLocaleDateString()}`
                     : ''}
               </div>
             </div>
