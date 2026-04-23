@@ -49,7 +49,15 @@ export function HoldsPanel({ userId, holds }: { userId: string; holds: HoldRow[]
   }
 
   return (
-    <section style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: 6 }}>
+    <section
+      style={{
+        marginTop: '1.25rem',
+        padding: '1.1rem 1.25rem',
+        background: 'rgba(18, 24, 38, 0.6)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 12,
+      }}
+    >
       <h2>Holds &amp; Groundings</h2>
       {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
       <form onSubmit={onCreate} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>

@@ -31,7 +31,13 @@ function status(expiresAt: string | null, kind: string): { label: string; color:
   return { label: 'current', color: '#0a7' };
 }
 
-export function CurrenciesPanel({ userId, currencies }: { userId: string; currencies: CurrencyRow[] }) {
+export function CurrenciesPanel({
+  userId,
+  currencies,
+}: {
+  userId: string;
+  currencies: CurrencyRow[];
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const create = trpc.people.currencies.create.useMutation();
@@ -63,10 +69,21 @@ export function CurrenciesPanel({ userId, currencies }: { userId: string; curren
   }
 
   return (
-    <section style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ddd', borderRadius: 6 }}>
+    <section
+      style={{
+        marginTop: '1.25rem',
+        padding: '1.1rem 1.25rem',
+        background: 'rgba(18, 24, 38, 0.6)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 12,
+      }}
+    >
       <h2>Instructor Currencies</h2>
       {error ? <p style={{ color: 'crimson' }}>{error}</p> : null}
-      <form onSubmit={onCreate} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      <form
+        onSubmit={onCreate}
+        style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}
+      >
         <select name="kind" defaultValue="medical">
           {KINDS.map((k) => (
             <option key={k} value={k}>
@@ -89,8 +106,7 @@ export function CurrenciesPanel({ userId, currencies }: { userId: string; curren
               <li key={c.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
                 <strong>{c.kind.toUpperCase()}</strong>{' '}
                 <span style={{ color: s.color, fontWeight: 'bold' }}>[{s.label}]</span>
-                {c.expiresAt ? ` · expires ${new Date(c.expiresAt).toLocaleDateString()}` : ''}
-                {' '}
+                {c.expiresAt ? ` · expires ${new Date(c.expiresAt).toLocaleDateString()}` : ''}{' '}
                 <button type="button" onClick={() => onDelete(c.id)}>
                   Remove
                 </button>
