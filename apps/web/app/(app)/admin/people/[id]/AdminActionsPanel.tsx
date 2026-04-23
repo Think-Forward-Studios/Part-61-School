@@ -203,9 +203,10 @@ export function AdminActionsPanel({ userId, email, status }: AdminActionsPanelPr
               Hard delete — this can&apos;t be undone.
             </div>
             <div style={{ color: '#fecaca', fontSize: '0.78rem', lineHeight: 1.5 }}>
-              Fully removes the account and frees up the email address. Only works if the user has{' '}
-              <strong>no activity</strong> in the system — no flight logs, training records, holds,
-              or audit trail. Users with history must stay soft-deleted for FAA/audit compliance.
+              Fully removes the account and every record tied to it: flight logs, reservations,
+              training records, currencies, qualifications, holds, emergency contacts, documents,
+              notifications — all gone. The email address frees up for re-use. This bypasses the
+              usual soft-delete / FAA-audit retention — the operator accepts responsibility.
               <br />
               Type <code style={{ color: '#fff' }}>{email}</code> below to confirm.
             </div>

@@ -314,38 +314,108 @@ export const adminPeopleRouter = router({
     }
 
     try {
-      // Authorize THIS transaction to bypass the BEFORE DELETE trigger
-      // on audit-protected tables (users, user_roles, user_base,
-      // person_profile — all wired by audit.attach). Migration 0043
-      // taught fn_block_hard_delete to honor this GUC. SET LOCAL
-      // keeps it scoped to the transaction so the next request starts
-      // with the guard armed again.
-      //
-      // FK constraints are unaffected. If the user has any history in
-      // flight logs / training events / holds / audit trail, those
-      // DELETEs still throw 23503 and the whole thing rolls back —
-      // which is exactly the safety behaviour we want.
+      // Authorize this transaction to bypass the BEFORE DELETE trigger
+      // (migration 0043). SET LOCAL keeps the scope inside this
+      // transaction — it can't leak to concurrent sessions and
+      // vanishes on commit/rollback.
       await tx.execute(sql`set local app.allow_hard_delete = 'on'`);
 
-      // Delete the satellite rows first, then the user row.
-      await tx.execute(sql`delete from public.user_roles     where user_id = ${input.userId}`);
-      await tx.execute(sql`delete from public.user_base      where user_id = ${input.userId}`);
-      await tx.execute(sql`delete from public.person_profile where user_id = ${input.userId}`);
+      // Comprehensive cascade: delete every row owned by or tied to
+      // this user before we delete the user itself. Ordering matters
+      // for FK parents → children. Tables that reference the user via
+      // "actor" columns (created_by, updated_by, signed_off_by, …)
+      // use SET NULL below rather than DELETE so other users'
+      // records stay intact.
+      //
+      // IF a table is missing here Postgres will raise 23503 on the
+      // final DELETE public.users and the whole transaction rolls
+      // back — safe default. Add the missing table and redeploy.
+      const uid = input.userId;
+
+      // --- Child rows where this user is the SUBJECT (delete) -----
+      // Flight log engine rows have a FK to flight_log_entry, so
+      // they have to go before their parent entries.
+      await tx.execute(sql`
+        delete from public.flight_log_entry_engine
+         where flight_log_entry_id in (
+           select id from public.flight_log_entry
+            where student_id = ${uid} or instructor_id = ${uid}
+         )
+      `);
+      await tx.execute(sql`
+        delete from public.flight_log_entry
+         where student_id = ${uid} or instructor_id = ${uid}
+      `);
+      await tx.execute(
+        sql`delete from public.reservation where student_id = ${uid} or instructor_id = ${uid}`,
+      );
+      await tx.execute(sql`delete from public.passenger_manifest where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.person_unavailability where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.no_show where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.student_course_enrollment where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.instructor_currency where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.instructor_qualification where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.instructor_experience where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.person_hold where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.info_release_authorization where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.emergency_contact where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.documents where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.user_notification_pref where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.notifications where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.email_outbox where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.user_session_activity where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.user_roles where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.user_base where user_id = ${uid}`);
+      await tx.execute(sql`delete from public.person_profile where user_id = ${uid}`);
+
+      // --- Actor columns (SET NULL — preserve other users' rows) ---
+      // Where the target user was merely the actor / recorder / signer
+      // on someone else's record, we NULL the pointer so that row
+      // stays usable. These all accept NULL per migration 0002/0007.
+      await tx.execute(sql`
+        update public.person_hold
+           set created_by = null
+         where created_by = ${uid}
+      `);
+      await tx.execute(sql`
+        update public.person_hold
+           set cleared_by = null
+         where cleared_by = ${uid}
+      `);
+      await tx.execute(sql`
+        update public.instructor_qualification
+           set granted_by = null
+         where granted_by = ${uid}
+      `);
+      await tx.execute(sql`
+        update public.no_show
+           set instructor_id = null
+         where instructor_id = ${uid}
+      `);
+      await tx.execute(sql`
+        update public.no_show
+           set recorded_by = null
+         where recorded_by = ${uid}
+      `);
+      // Any remaining nullable *_by references get handled by the FK
+      // violation path — the error surfaces and we'll add them next.
+
+      // --- The user row itself -----------------------------------
       await tx.execute(sql`
         delete from public.users
-         where id = ${input.userId}
+         where id = ${uid}
            and school_id = ${schoolId}
       `);
     } catch (err) {
-      // Postgres foreign-key violation comes back as error code 23503.
-      // Anything else we surface as a generic failure.
+      // Surface the raw DB error so the operator can see which table
+      // still references the user. When we hit a 23503 FK violation
+      // from a table not in the cascade above, add it and redeploy.
       const msg = err instanceof Error ? err.message : String(err);
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message:
-          'This account has activity in the system (flight logs, training records, ' +
-          'audit trail, or similar) and cannot be purged. Soft delete is the ' +
-          'correct permanent state for users with history. Underlying error: ' +
+          'Purge blocked — a related row still references this user. ' +
+          'The whole transaction rolled back; no data was deleted. ' +
           msg,
       });
     }
