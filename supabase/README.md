@@ -5,6 +5,14 @@ development. The actual Postgres schema lives in
 `../packages/db/migrations/`; this directory only configures the local
 stack (ports, auth hook registration, seed data).
 
+There is **deliberately no `supabase/migrations/` directory.** Drizzle
+is the single migration engine — when you run `pnpm dlx supabase start`
+followed by `drizzle-kit migrate`, drizzle applies every file under
+`packages/db/migrations/` and records them in `__drizzle_migrations`.
+If a duplicate of those files lands here, `supabase start` auto-applies
+them and the subsequent `drizzle-kit migrate` will collide on
+`CREATE TYPE "role" already exists`. Don't recreate this directory.
+
 ## Quick start
 
 ```bash
