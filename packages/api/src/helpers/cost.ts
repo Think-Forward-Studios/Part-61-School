@@ -38,12 +38,26 @@ export async function computeLiveCost(
   // Sum flight hours by category, matched against rates effective at
   // the time of each flight. Uses lateral join for rate resolution with
   // precedence: aircraft_id match > aircraft_make_model match > unscoped.
+  //
+  // Schema notes (post-Phase 5):
+  //   - flight_log_time stores per-row minute columns (day_minutes,
+  //     night_minutes, ...). There is no `hours` column. Total hours
+  //     for a row = (day_minutes + night_minutes) / 60.
+  //   - The flown date lives on flight_log_entry.flown_at, not on
+  //     flight_log_time.
+  //   - The flight_log_time_kind enum is constrained to:
+  //       dual_received, dual_given, pic, sic, solo
+  //     XC / night / IFR are NOT kinds — they're subset-minute columns
+  //     on each row. "Ground" instruction is not stored in this table.
+  //     Categorization here covers only what the kind enum exposes;
+  //     ground billing and IFR/XC surcharges are tracked as follow-up
+  //     work.
   const rows = (await tx.execute(sql`
     with student_times as (
       select
         flt.kind,
-        flt.hours,
-        flt.flown_at,
+        (flt.day_minutes + flt.night_minutes) / 60.0 as hours,
+        fle.flown_at,
         fle.aircraft_id,
         a.make_model as aircraft_make_model
       from public.flight_log_time flt
@@ -51,6 +65,7 @@ export async function computeLiveCost(
       left join public.aircraft a on a.id = fle.aircraft_id
       where flt.user_id = ${studentId}::uuid
         and fle.school_id = ${schoolId}::uuid
+        and flt.deleted_at is null
     ),
     rated as (
       select
@@ -61,12 +76,7 @@ export async function computeLiveCost(
           from public.school_rate sr
           where sr.school_id = ${schoolId}::uuid
             and sr.deleted_at is null
-            and sr.kind = case
-              when st.kind in ('pic','dual_received','solo','xc','night') then 'aircraft_wet'
-              when st.kind = 'ground' then 'ground_instructor'
-              when st.kind = 'ifr' then 'aircraft_wet'
-              else 'aircraft_wet'
-            end
+            and sr.kind = 'aircraft_wet'
             and sr.effective_from <= st.flown_at
             and (sr.effective_until is null or sr.effective_until > st.flown_at)
           order by
@@ -76,11 +86,7 @@ export async function computeLiveCost(
             sr.effective_from desc
           limit 1
         ) as rate_cents,
-        case
-          when st.kind in ('pic','dual_received','solo','xc','night','ifr') then 'aircraft'
-          when st.kind = 'ground' then 'ground'
-          else 'aircraft'
-        end as category,
+        'aircraft'::text as category,
         -- Also get instructor rate for dual_received
         case when st.kind = 'dual_received' then (
           select sr2.amount_cents
@@ -96,9 +102,9 @@ export async function computeLiveCost(
       from student_times st
     )
     select
-      coalesce(sum(case when category = 'aircraft' then (hours * coalesce(rate_cents, 0))::bigint else 0 end), 0)::bigint as aircraft_cents,
+      coalesce(sum((hours * coalesce(rate_cents, 0))::bigint), 0)::bigint as aircraft_cents,
       coalesce(sum(case when kind = 'dual_received' then (hours * coalesce(instructor_rate_cents, 0))::bigint else 0 end), 0)::bigint as instructor_cents,
-      coalesce(sum(case when category = 'ground' then (hours * coalesce(rate_cents, 0))::bigint else 0 end), 0)::bigint as ground_cents,
+      0::bigint as ground_cents,
       0::bigint as surcharge_cents,
       array_agg(distinct case when rate_cents is null then category else null end) filter (where rate_cents is null) as missing_rates
     from rated
