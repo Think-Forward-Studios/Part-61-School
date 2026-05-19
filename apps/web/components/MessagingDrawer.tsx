@@ -109,6 +109,17 @@ export function MessagingDrawer({ currentUserId }: { currentUserId: string | nul
     markRead.mutate({ conversationId: activeConversationId });
   }, [open, activeConversationId]);
 
+  // Esc closes the drawer. Mirrors the tooltip on the close button so the
+  // affordance and the keybinding stay aligned.
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, setOpen]);
+
   if (!currentUserId) return null;
 
   const conversations = (convQ.data ?? []) as unknown as ConversationRow[];
@@ -148,7 +159,17 @@ export function MessagingDrawer({ currentUserId }: { currentUserId: string | nul
           type="button"
           onClick={() => setOpen(false)}
           aria-label="Close messages"
-          style={{ background: 'transparent', border: 0, cursor: 'pointer', fontSize: '1rem' }}
+          title="Close (Esc)"
+          style={{
+            background: 'transparent',
+            border: '1px solid #e5e7eb',
+            cursor: 'pointer',
+            fontSize: '1.1rem',
+            lineHeight: 1,
+            color: '#374151',
+            padding: '0.25rem 0.55rem',
+            borderRadius: 6,
+          }}
         >
           {'\u2715'}
         </button>
