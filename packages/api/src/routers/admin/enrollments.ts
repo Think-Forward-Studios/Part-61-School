@@ -236,6 +236,64 @@ export const adminEnrollmentsRouter = router({
     }),
 
   /**
+   * Reassign (or clear) the primary instructor on an existing enrollment.
+   *
+   * The new instructor must belong to the caller's school AND carry the
+   * `instructor` role in user_roles. Passing null clears the assignment.
+   * The row's existing audit trigger (audit.attach on
+   * student_course_enrollment) records the change — no manual logging
+   * needed here.
+   */
+  reassignPrimaryInstructor: adminOrChiefInstructorProcedure
+    .input(
+      z.object({
+        enrollmentId: z.string().regex(/^[0-9a-fA-F-]{36}$/),
+        newPrimaryInstructorId: z
+          .string()
+          .regex(/^[0-9a-fA-F-]{36}$/)
+          .nullable(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const tx = ctx.tx as Tx;
+      const schoolId = ctx.session!.schoolId;
+
+      if (input.newPrimaryInstructorId !== null) {
+        const rows = (await tx.execute(sql`
+          select 1
+            from public.users u
+            join public.user_roles ur on ur.user_id = u.id
+            where u.id = ${input.newPrimaryInstructorId}::uuid
+              and u.school_id = ${schoolId}::uuid
+              and ur.role = 'instructor'
+            limit 1
+        `)) as unknown as Array<unknown>;
+        if (rows.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Selected user is not an instructor in this school',
+          });
+        }
+      }
+
+      const [row] = await tx
+        .update(studentCourseEnrollment)
+        .set({ primaryInstructorId: input.newPrimaryInstructorId })
+        .where(
+          and(
+            eq(studentCourseEnrollment.id, input.enrollmentId),
+            eq(studentCourseEnrollment.schoolId, schoolId),
+            isNull(studentCourseEnrollment.deletedAt),
+          ),
+        )
+        .returning();
+      if (!row) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Enrollment not found' });
+      }
+      return row;
+    }),
+
+  /**
    * Phase 6 — getProgressForecast (SYL-22/23).
    *
    * Returns the cached forecast for an enrollment; refreshes if missing.
