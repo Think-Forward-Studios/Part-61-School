@@ -405,7 +405,7 @@ export function NotificationPrefsMatrix() {
                     All sections · all events
                   </span>
                   <div style={{ fontSize: '0.72rem', color: '#7a869a', marginTop: '0.2rem' }}>
-                    Safety-critical in-app deliveries always remain enabled.
+                    Safety events always deliver <strong>in-app</strong>; email follows the toggle.
                   </div>
                 </td>
                 <td style={{ ...TD, textAlign: 'center' }}>

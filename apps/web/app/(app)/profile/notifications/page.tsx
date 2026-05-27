@@ -17,7 +17,7 @@ export default function NotificationPrefsPage() {
       <PageHeader
         eyebrow="Account"
         title="Notifications"
-        subtitle="Choose which alerts reach you and how. Safety-critical in-app alerts are always delivered even if you disable the channel."
+        subtitle="Choose which alerts reach you and how. Events flagged Safety always deliver in-app — the in-app tickbox is locked. Email still respects your choice for every event, safety or not."
       />
       <NotificationPrefsMatrix />
     </main>
