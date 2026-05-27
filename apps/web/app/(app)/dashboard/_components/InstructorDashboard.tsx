@@ -35,8 +35,11 @@ export function InstructorDashboard() {
           ) : (students.data as unknown as unknown[] | undefined)?.length ? (
             (students.data as unknown as Array<Record<string, unknown>>).slice(0, 8).map((s) => (
               <div key={s.student_id as string} style={{ marginBottom: '0.25rem' }}>
+                {/* Links to /students/[id] (not /admin/people/[id]).
+                    The admin route is gated to active_role='admin'
+                    and 404s for instructors — see /admin/layout.tsx. */}
                 <a
-                  href={`/admin/people/${s.student_id as string}`}
+                  href={`/students/${s.student_id as string}`}
                   style={{ color: '#38bdf8', textDecoration: 'none' }}
                 >
                   {s.student_name as string}
