@@ -7,7 +7,11 @@
  *   flight → aircraft + (optional XC expander)
  *   simulator → aircraft (sim tail)
  *   oral / academic → room
- *   misc → no resource required
+ *
+ * NOTE: the DB enum also includes `misc` — that value is reserved for
+ * internal use (person_unavailability blocks render as misc reservations).
+ * It is intentionally NOT offered as a user-selectable activity here.
+ *
  * Recurring expander posts a `recurrence` object to schedule.request
  * which the server expands into N child rows sharing a series_id.
  */
@@ -20,7 +24,7 @@ import { GrantOverrideDialog } from './_components/GrantOverrideDialog';
 import type { Blocker } from '@part61/domain';
 
 type FormValues = {
-  activityType: 'flight' | 'simulator' | 'oral' | 'academic' | 'misc';
+  activityType: 'flight' | 'simulator' | 'oral' | 'academic';
   startsAt: string;
   endsAt: string;
   aircraftId?: string;
@@ -134,7 +138,10 @@ export function ReservationForm({
               routeString: v.routeString ?? null,
               eteMinutes: v.eteMinutes ?? null,
               stops: v.stops
-                ? v.stops.split(',').map((s) => s.trim()).filter(Boolean)
+                ? v.stops
+                    .split(',')
+                    .map((s) => s.trim())
+                    .filter(Boolean)
                 : null,
               fuelStops: v.fuelStops
                 ? v.fuelStops
@@ -179,7 +186,6 @@ export function ReservationForm({
           <option value="simulator">Simulator</option>
           <option value="oral">Oral</option>
           <option value="academic">Academic</option>
-          <option value="misc">Misc</option>
         </select>
       </label>
       <label>
@@ -188,9 +194,7 @@ export function ReservationForm({
       <label>
         End <input type="datetime-local" {...register('endsAt')} />
         {errors.endsAt ? (
-          <span style={{ color: 'crimson', marginLeft: 8 }}>
-            {errors.endsAt.message}
-          </span>
+          <span style={{ color: 'crimson', marginLeft: 8 }}>{errors.endsAt.message}</span>
         ) : null}
       </label>
       {activityType === 'flight' || activityType === 'simulator' ? (
@@ -231,8 +235,7 @@ export function ReservationForm({
         </select>
       </label>
       <label>
-        Notes{' '}
-        <textarea rows={3} {...register('notes')} style={{ width: '100%' }} />
+        Notes <textarea rows={3} {...register('notes')} style={{ width: '100%' }} />
       </label>
       <fieldset style={{ padding: '0.5rem' }}>
         <legend>
