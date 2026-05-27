@@ -156,6 +156,11 @@ export const meRouter = router({
   getAssignedStudents: protectedProcedure.query(async ({ ctx }) => {
     const tx = ctx.tx as Tx;
     const userId = ctx.session!.userId;
+    // NOTE: `title` lives on the parent `course` table — `course_version`
+    // only carries `version_label`. We join through course to surface the
+    // human-readable course name on the instructor's dashboard tile, and
+    // fall back to the version_label (then the legacy enrollment.course_descriptor)
+    // so a missing course join never produces a blank chip.
     const rows = (await tx.execute(sql`
       select
         e.id           as enrollment_id,
@@ -163,13 +168,15 @@ export const meRouter = router({
         u.email        as student_email,
         coalesce(pp.first_name || ' ' || pp.last_name, u.full_name, u.email)
                        as student_name,
-        cv.title       as course_name,
+        coalesce(c.title, cv.version_label, e.course_descriptor)
+                       as course_name,
         -- stage progress placeholder
         null::text     as current_stage
       from public.student_course_enrollment e
       join public.users u on u.id = e.user_id
       left join public.person_profile pp on pp.user_id = u.id
       left join public.course_version cv on cv.id = e.course_version_id
+      left join public.course         c  on c.id  = cv.course_id
       where e.primary_instructor_id = ${userId}::uuid
         and e.deleted_at is null
         and e.completed_at is null
