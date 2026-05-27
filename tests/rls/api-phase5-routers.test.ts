@@ -195,6 +195,67 @@ describe('Phase 5-03 API routers', () => {
     expect(sc!.status).toBe('scheduled');
   });
 
+  it('admin.enrollments.reassignPrimaryInstructor swaps the primary CFI', async () => {
+    const caller = adminCaller({
+      userId: seed.userA,
+      schoolId: seed.schoolA,
+      activeBaseId: seed.baseA,
+    });
+    const row = await caller.admin.enrollments.reassignPrimaryInstructor({
+      enrollmentId,
+      newPrimaryInstructorId: otherInstructorId,
+    });
+    expect(row.primaryInstructorId).toBe(otherInstructorId);
+  });
+
+  it('admin.enrollments.reassignPrimaryInstructor clears the primary CFI when null', async () => {
+    const caller = adminCaller({
+      userId: seed.userA,
+      schoolId: seed.schoolA,
+      activeBaseId: seed.baseA,
+    });
+    const row = await caller.admin.enrollments.reassignPrimaryInstructor({
+      enrollmentId,
+      newPrimaryInstructorId: null,
+    });
+    expect(row.primaryInstructorId).toBeNull();
+  });
+
+  it('admin.enrollments.reassignPrimaryInstructor rejects a non-instructor user', async () => {
+    const caller = adminCaller({
+      userId: seed.userA,
+      schoolId: seed.schoolA,
+      activeBaseId: seed.baseA,
+    });
+    await expect(
+      caller.admin.enrollments.reassignPrimaryInstructor({
+        enrollmentId,
+        newPrimaryInstructorId: studentId, // student, not instructor
+      }),
+    ).rejects.toThrow(/instructor/i);
+  });
+
+  it('admin.enrollments.reassignPrimaryInstructor rejects a user from another school', async () => {
+    const caller = adminCaller({
+      userId: seed.userA,
+      schoolId: seed.schoolA,
+      activeBaseId: seed.baseA,
+    });
+    await expect(
+      caller.admin.enrollments.reassignPrimaryInstructor({
+        enrollmentId,
+        newPrimaryInstructorId: seed.userB, // admin of school B
+      }),
+    ).rejects.toThrow(/instructor/i);
+
+    // Restore primary instructor for subsequent tests that don't care
+    // either way, but it keeps the enrollment in a realistic shape.
+    await caller.admin.enrollments.reassignPrimaryInstructor({
+      enrollmentId,
+      newPrimaryInstructorId: instructorId,
+    });
+  });
+
   it('gradeSheet.createFromReservation + seal happy path', async () => {
     // Create a reservation tied to the lesson
     const caller = adminCaller({
@@ -287,9 +348,9 @@ describe('Phase 5-03 API routers', () => {
         gradeValue: 'I',
       });
     }
-    await expect(
-      caller.gradeSheet.seal({ gradeSheetId: sheet!.id }),
-    ).rejects.toThrow(/must-pass|must_pass/i);
+    await expect(caller.gradeSheet.seal({ gradeSheetId: sheet!.id })).rejects.toThrow(
+      /must-pass|must_pass/i,
+    );
   });
 
   it('admin.endorsements.issue renders {{placeholders}} into rendered_text', async () => {

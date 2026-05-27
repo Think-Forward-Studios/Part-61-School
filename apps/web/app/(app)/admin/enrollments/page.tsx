@@ -5,6 +5,7 @@ import { db, users, studentCourseEnrollment } from '@part61/db';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui';
 import { NewEnrollmentDialog } from './NewEnrollmentDialog';
+import { ReassignInstructorDialog } from './ReassignInstructorDialog';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +87,7 @@ export default async function EnrollmentsPage() {
     select
       sce.id,
       sce.user_id as student_id,
+      sce.primary_instructor_id,
       sce.enrolled_at,
       sce.completed_at,
       sce.withdrawn_at,
@@ -95,12 +97,19 @@ export default async function EnrollmentsPage() {
         u.full_name,
         u.email
       ) as student_name,
+      coalesce(
+        nullif(trim(concat_ws(' ', ipp.first_name, ipp.last_name)), ''),
+        iu.full_name,
+        iu.email
+      ) as instructor_name,
       c.code as course_code,
       c.title as course_title,
       cv.version_label
     from public.student_course_enrollment sce
     join public.users u on u.id = sce.user_id
     left join public.person_profile pp on pp.user_id = sce.user_id
+    left join public.users iu on iu.id = sce.primary_instructor_id
+    left join public.person_profile ipp on ipp.user_id = sce.primary_instructor_id
     left join public.course_version cv on cv.id = sce.course_version_id
     left join public.course c on c.id = cv.course_id
     where sce.school_id = ${me.schoolId}::uuid
@@ -109,7 +118,9 @@ export default async function EnrollmentsPage() {
   `)) as unknown as Array<{
     id: string;
     student_id: string;
+    primary_instructor_id: string | null;
     student_name: string | null;
+    instructor_name: string | null;
     course_code: string | null;
     course_title: string | null;
     version_label: string | null;
@@ -146,7 +157,9 @@ function Section({
   rows: Array<{
     id: string;
     student_id: string;
+    primary_instructor_id: string | null;
     student_name: string | null;
+    instructor_name: string | null;
     course_code: string | null;
     course_title: string | null;
     version_label: string | null;
@@ -173,6 +186,7 @@ function Section({
                 <th style={TH}>Student</th>
                 <th style={TH}>Course</th>
                 <th style={TH}>Version</th>
+                <th style={TH}>Primary instructor</th>
                 <th style={TH}>Enrolled</th>
                 <th style={TH}></th>
               </tr>
@@ -207,6 +221,26 @@ function Section({
                   </td>
                   <td style={TD}>
                     {r.version_label ?? <span style={{ color: '#5b6784' }}>—</span>}
+                  </td>
+                  <td style={TD}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span style={{ color: r.instructor_name ? '#f7f9fc' : '#5b6784' }}>
+                        {r.instructor_name ?? '—'}
+                      </span>
+                      <ReassignInstructorDialog
+                        enrollmentId={r.id}
+                        currentInstructorId={r.primary_instructor_id}
+                        currentInstructorName={r.instructor_name}
+                        studentName={r.student_name}
+                      />
+                    </div>
                   </td>
                   <td style={TD}>{new Date(r.enrolled_at).toLocaleDateString()}</td>
                   <td style={TD}>
