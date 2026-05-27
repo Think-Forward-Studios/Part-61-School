@@ -169,7 +169,14 @@ export function NotificationPrefsMatrix() {
   function groupState(kinds: string[], channel: Channel): { allOn: boolean; anyOn: boolean } {
     let on = 0;
     for (const k of kinds) {
-      if (findRow(k, channel)?.enabled) on += 1;
+      const row = findRow(k, channel);
+      // Safety-critical events on the in-app channel are always
+      // delivered regardless of the stored pref — count them as ON
+      // for the tri-state calculation so the section box reads
+      // truthfully ('all on') rather than showing indeterminate
+      // because of a stale enabled=false row.
+      const effectivelyOn = channel === 'in_app' && row?.is_safety_critical ? true : !!row?.enabled;
+      if (effectivelyOn) on += 1;
     }
     return { allOn: on === kinds.length && kinds.length > 0, anyOn: on > 0 };
   }
@@ -271,9 +278,21 @@ export function NotificationPrefsMatrix() {
                         <td style={{ ...TD, textAlign: 'center' }}>
                           <input
                             type="checkbox"
-                            checked={!!inApp?.enabled}
+                            // Safety events always deliver in-app per the
+                            // helper at packages/api/src/helpers/notifications.ts,
+                            // regardless of what the user has stored in
+                            // user_notification_pref.enabled. Render the
+                            // checkbox to MATCH the actual delivery
+                            // behaviour: force-checked when safety, so the
+                            // user doesn't see a misleading 'OFF and
+                            // locked' state.
+                            checked={safety ? true : !!inApp?.enabled}
                             disabled={safety}
-                            title={safety ? 'always delivered for safety' : undefined}
+                            title={
+                              safety
+                                ? 'Safety event — always delivered in-app, regardless of this toggle.'
+                                : undefined
+                            }
                             onChange={(e) =>
                               update.mutate({
                                 kind: kind as never,
