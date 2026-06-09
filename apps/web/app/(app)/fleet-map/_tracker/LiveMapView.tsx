@@ -652,13 +652,17 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
     if (filters.icao24) data = data.filter((d) => d.icao24.includes(filters.icao24));
     if (filters.callsign)
       data = data.filter((d) => (d.callsign || '').toUpperCase().includes(filters.callsign));
+    // baro_altitude is in FEET (providers normalize ADS-B to imperial
+    // at the boundary — see packages/api/src/providers/adsb/opensky.ts).
+    // filters.altMin / altMax are also in feet, so compare directly —
+    // no unit conversion needed.
     if (filters.altMin != null) {
-      const minM = filters.altMin / 3.281;
-      data = data.filter((d) => d.baro_altitude != null && d.baro_altitude >= minM);
+      const minFt = filters.altMin;
+      data = data.filter((d) => d.baro_altitude != null && d.baro_altitude >= minFt);
     }
     if (filters.altMax != null) {
-      const maxM = filters.altMax / 3.281;
-      data = data.filter((d) => d.baro_altitude != null && d.baro_altitude <= maxM);
+      const maxFt = filters.altMax;
+      data = data.filter((d) => d.baro_altitude != null && d.baro_altitude <= maxFt);
     }
     return data;
   }, [mergedStates, filters, homeAirport, homeRadiusNm]);
@@ -778,14 +782,15 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
               <div className="tooltip-row">
                 <span className="tooltip-label">Altitude</span>
                 <span className="tooltip-value">
-                  {Math.round(d.baro_altitude * 3.281).toLocaleString()} ft
+                  {/* baro_altitude is already feet — providers normalize. */}
+                  {Math.round(d.baro_altitude).toLocaleString()} ft
                 </span>
               </div>
             )}
             {d.velocity != null && (
               <div className="tooltip-row">
                 <span className="tooltip-label">Speed</span>
-                <span className="tooltip-value">{Math.round(d.velocity * 1.944)} kts</span>
+                <span className="tooltip-value">{Math.round(d.velocity)} kts</span>
               </div>
             )}
             {d.true_track != null && (
@@ -1018,7 +1023,8 @@ export default function LiveMapView({ fleetAircraft = [], geofence = null }: Liv
             if (fleetTailSet.has(normalizeTail(d.callsign))) {
               return [255, 145, 0, 255];
             }
-            const altFt = (d.baro_altitude ?? 0) * 3.281;
+            // baro_altitude is already feet — no conversion needed.
+            const altFt = d.baro_altitude ?? 0;
             if (altFt < 10000) return [0, 255, 100, 230];
             if (altFt < 33000) return [0, 200, 255, 230];
             return [200, 100, 255, 230];

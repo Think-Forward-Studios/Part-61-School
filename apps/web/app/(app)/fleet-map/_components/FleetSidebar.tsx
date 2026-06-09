@@ -49,14 +49,17 @@ function formatAge(apiTime: number): string {
   return `${Math.floor(minutes / 60)}h ago`;
 }
 
-function metersToFeet(m: number | null): string {
-  if (m == null) return '--';
-  return `${Math.round(m * 3.28084).toLocaleString()} ft`;
+// Providers normalize ADS-B feeds to imperial (feet + knots) at the
+// boundary — see packages/api/src/providers/adsb/opensky.ts. These
+// helpers are pure formatters.
+function formatFeet(ft: number | null): string {
+  if (ft == null) return '--';
+  return `${Math.round(ft).toLocaleString()} ft`;
 }
 
-function msToKnots(ms: number | null): string {
-  if (ms == null) return '--';
-  return `${Math.round(ms * 1.94384)} kts`;
+function formatKnots(kts: number | null): string {
+  if (kts == null) return '--';
+  return `${Math.round(kts)} kts`;
 }
 
 interface FleetSidebarProps {
@@ -165,7 +168,7 @@ export function FleetSidebar({ fleet, open, onToggle, onCenterAircraft }: FleetS
                 </div>
                 {(status === 'airborne' || status === 'ground') && (
                   <div style={{ fontSize: 11, color: '#aaa', paddingLeft: 16 }}>
-                    {metersToFeet(pos.baroAltitude)} / {msToKnots(pos.velocity)}
+                    {formatFeet(pos.baroAltitude)} / {formatKnots(pos.velocity)}
                   </div>
                 )}
                 {(status === 'stale' || status === 'no_signal') && (

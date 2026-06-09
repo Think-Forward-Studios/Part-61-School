@@ -22,14 +22,17 @@ function formatAge(apiTime: number): string {
   return `${hours}h ${minutes % 60}m ago`;
 }
 
-function metersToFeet(m: number | null): string {
-  if (m == null) return '--';
-  return `${Math.round(m * 3.28084).toLocaleString()} ft`;
+// AircraftPosition values are already in feet/knots (providers
+// normalize to imperial — see packages/api/src/providers/adsb/opensky.ts
+// header comment). These are pure formatters, not unit converters.
+function formatFeet(ft: number | null): string {
+  if (ft == null) return '--';
+  return `${Math.round(ft).toLocaleString()} ft`;
 }
 
-function msToKnots(ms: number | null): string {
-  if (ms == null) return '--';
-  return `${Math.round(ms * 1.94384)} kts`;
+function formatKnots(kts: number | null): string {
+  if (kts == null) return '--';
+  return `${Math.round(kts)} kts`;
 }
 
 interface AircraftPopupProps {
@@ -77,10 +80,10 @@ export function AircraftPopup({ aircraft, onClose, onNavigate }: AircraftPopupPr
         </div>
         <div style={{ fontSize: 12, lineHeight: 1.6 }}>
           <div>
-            <strong>Alt:</strong> {metersToFeet(aircraft.baroAltitude)}
+            <strong>Alt:</strong> {formatFeet(aircraft.baroAltitude)}
           </div>
           <div>
-            <strong>Speed:</strong> {msToKnots(aircraft.velocity)}
+            <strong>Speed:</strong> {formatKnots(aircraft.velocity)}
           </div>
           <div>
             <strong>Heading:</strong>{' '}

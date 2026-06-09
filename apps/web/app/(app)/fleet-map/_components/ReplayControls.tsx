@@ -43,9 +43,11 @@ function formatDuration(seconds: number): string {
   return `${s}s`;
 }
 
-function metersToFeet(m: number | null): string {
-  if (m == null) return '--';
-  return `${Math.round(m * 3.28084).toLocaleString()} ft`;
+// AircraftPosition altitudes are already in feet (providers normalize
+// to imperial at the boundary). Pure formatter.
+function formatFeet(ft: number | null): string {
+  if (ft == null) return '--';
+  return `${Math.round(ft).toLocaleString()} ft`;
 }
 
 const SPEEDS = [1, 2, 4];
@@ -167,7 +169,7 @@ export function ReplayControls({
         {/* Duration + altitude */}
         <div style={{ fontSize: 11, color: '#94a3b8', textAlign: 'right' }}>
           <div>Duration: {formatDuration(totalDuration)}</div>
-          <div>Alt: {metersToFeet(currentAltitude)}</div>
+          <div>Alt: {formatFeet(currentAltitude)}</div>
         </div>
       </div>
     </div>
